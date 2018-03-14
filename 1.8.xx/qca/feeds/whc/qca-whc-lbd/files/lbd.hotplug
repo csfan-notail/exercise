@@ -1,0 +1,82 @@
+#!/bin/sh
+
+. /lib/functions.sh
+. /lib/functions/whc-debug.sh
+
+dual_bands=0
+
+check_bands() {
+	local band_24g
+	local band_5g
+	BANDS=$(/usr/sbin/iwconfig | grep Frequency | cut -d':' -f 3 | cut -d'.' -f 1)
+	for band in $BANDS
+	do
+		if [ "$band" == "2" ]; then
+			band_24g=1
+		elif [ "$band" == "5" ]; then
+			band_5g=1
+		fi
+	done
+
+	if [ "$band_24g" == "1" ] && [ "$band_5g" == "1" ]; then
+		dual_bands=1
+	fi
+}
+
+lbd_restart_direct() {
+	local fileflag="/tmp/.lbd.restart.pending"
+
+	touch "$fileflag"
+
+	sleep 5
+
+	[ -f "$fileflag" ] || return
+
+	a=`stat -c %Y $fileflag`
+	b=`date +%s`
+	c=`expr $b - $a`
+	[ "$c" -ge 5 ] || return
+
+	[ -f "$fileflag" ] || return
+	rm -f $fileflag
+
+	/etc/init.d/lbd restart
+}
+
+lbd_restart() {
+	local exescript
+
+	exescript=`ls /etc/hotplug.d/net/*lbd* 2>&-`
+	[ -n "$exescript" ] || return
+
+	# Restart in the background
+	exescript="$exescript &"
+	eval $exescript
+}
+
+trap '' INT TERM ABRT QUIT ALRM
+
+local enabled
+config_load 'lbd'
+config_get_bool enabled config 'Enable' '0'
+[ "$enabled" -eq 0 ] && return
+
+if [ -n "$1" ] ; then # Called by hotplugd
+	case "$INTERFACE" in
+		ath*)
+		check_bands
+		if [ "$dual_bands" == "1" ]; then
+			lbd_restart
+		else
+			echo -e "\n" > /dev/console
+			whc_echo lbd "Not Dual Band supported: stop LBD"
+			/etc/init.d/lbd stop
+		fi
+		dual_bands=0
+		;;
+	esac
+else                  # Called directly
+
+	lbd_restart_direct
+fi
+

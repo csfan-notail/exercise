@@ -1,0 +1,236 @@
+<%+header%>
+
+<%
+	local uci = require "luci.model.uci".cursor()
+	local rp_sw                   = uci.get('config','muticast','rp_sw')
+	local muticast_sw             = uci.get('config','muticast','muticast_sw')
+	local bsr_prority             = uci.get('config','muticast','bsr_priority')
+	local rp_candidate_time       = uci.get('config','muticast','rp_time')
+	local rp_candidate_addr       = uci.get('config','muticast','rp_addr')
+	local rp_candidate_priority   = uci.get('config','muticast','rp_priority')
+	local interface_sw		      = uci.get('config','muticast','interface_sw')  
+	local group_addr              = uci.get('config','muticast','group_ip')
+	local group_masklen           = uci.get('config','muticast','group_mask')
+--	local rp_candidate_group_addr = uci.get('config','muticast','rp_group_addr')
+--	local rp_candidate_group_mask = uci.get('config','muticast','rp_group_mask')
+	local mutc_dr_interface = uci.get('config','muticast','dr_interface')
+	local mutc_dr_priority = uci.get('config','muticast','dr_priority')
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{	
+	document.getElementById('id_sw').options['<%=muticast_sw%>'].selected = true;
+	document.getElementById('id_int_sw').options['<%=interface_sw%>'].selected = true;
+//	document.getElementById('id_rp_sw').options['<%=rp_sw%>'].selected    = true;
+	document.getElementById('id_bsr_priority').value  = '<%=bsr_prority%>'
+	document.getElementById('id_rp_time').value       = '<%=rp_candidate_time%>'
+	document.getElementById('id_rp_addr').value       = '<%=rp_candidate_addr%>'
+	document.getElementById('id_rp_priority').value   = '<%=rp_candidate_priority%>'
+	document.getElementById('id_group_ip').value      = '<%=group_addr%>'
+	document.getElementById('id_group_mask').value    = '<%=group_masklen%>'
+//	document.getElementById('id_rp_group_addr').value = '<%=rp_candidate_group_addr%>'
+//	document.getElementById('id_rp_group_mask').value = '<%=rp_candidate_group_mask%>'
+	document.getElementById('id_dr_interface').value = '<%=mutc_dr_interface%>'
+	document.getElementById('id_dr_priority').value = '<%=mutc_dr_priority%>'
+	
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("id_button_muticast").disabled=true;
+	}
+}	
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+									}
+		);
+	}
+}
+
+function ajax_set(data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12,data13,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{param1:data1,param2:data2,param3:data3,param4:data4,param5:data5,param6:data6,param7:data7,param8:data8,param9:data9,param10:data10,param11:data11,param12:data12,param13:data13},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+
+function muticast_conf (select_sw,interface_sw) {
+
+	var bsr_priority  = document.getElementById('id_bsr_priority').value;
+	var rp_priority   = document.getElementById('id_rp_priority').value;
+	var rp_addr       = document.getElementById('id_rp_addr').value;
+	var rp_time       = document.getElementById('id_rp_time').value;
+	var group_ip      = document.getElementById('id_group_ip').value;
+	var group_mask    = document.getElementById('id_group_mask').value;
+//	var rp_group_addr = document.getElementById('id_rp_group_addr').value;
+//	var rp_group_mask = document.getElementById('id_rp_group_mask').value;
+	var dr_interface = document.getElementById('id_dr_interface').value;
+	var dr_priority = document.getElementById('id_dr_priority').value;
+	
+	if( bsr_priority > 255 || bsr_priority < 0 || rp_priority > 255 || rp_priority < 0 )
+	{
+		alert('<%:Priority Range 0-255%>');
+		return false;
+	}
+	if( !check_ipv4_addr(rp_addr))
+	{
+		alert('<%:input ip address not legal%>');
+		return false;
+	}
+	if( rp_time < 0 || rp_time > 16383 )
+	{
+		alert('<:Time Range 0-16383>');
+		return false;
+	}
+/*	
+	if( group_mask < 1 || group_mask > 32 || rp_group_mask < 1 || rp_group_mask >32)
+	{
+		alert('<%:Mask Range 1-32%>');
+		return false;
+	}
+*/
+//	ajax_set(select_sw,bsr_priority,group_ip,group_mask,rp_time,rp_priority,rp_addr,rp_group_addr,rp_group_mask,'<%=pcdata(luci.dispatcher.build_url("admin/config/muticast_set"))%>', '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+
+	ajax_set(select_sw,bsr_priority,interface_sw,0,rp_time,rp_priority,rp_addr,0,0,dr_interface,dr_priority,group_ip,group_mask,'<%=pcdata(luci.dispatcher.build_url("admin/config/muticast_set"))%>', '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+
+}
+
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+		<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Muticast%></a></h2><br/>
+		
+		<fieldset class="cbi-section">
+			<legend><%:Muticast Config%></legend><br/>
+
+				<div class="div_class">
+					<table class="table_class" >
+						<tr class="tr_class">
+							<td class="td_class" style="width:300px;text-indent:200px;"><%:on/off%>:</td>
+					 		<td class="td_class">
+					 			<select  name="name_sw" id="id_sw" style="width:180px;">
+									<option value="0"><%:off%></option>
+                					<option value="1"><%:on%></option>
+								</select>
+							</td>
+						</tr>
+<!--
+						<tr class="tr_class">
+							<td class="td_class" style="width:300px;text-indent:200px;"><%:RP%>:</td>
+					 		<td class="td_class">
+					 			<select  name="name_sw_rp" id="id_rp_sw" style="width:180px;">
+									<option value="0"><%:OFF%></option>
+                					<option value="1"><%:ON%></option>
+								</select>
+							</td>
+						</tr>
+-->
+						<tr class="tr_class">
+							<td class="td_class" style="width:300px;text-indent:200px;"><%:rp-candidate time%>:</td>
+							<td class="td_class"><input type="text" id="id_rp_time" sytle="width:180px;" />&nbsp;
+								<font color=" gray">0-16383</font></td>
+						</tr>
+
+						<tr class="tr_class">
+							<td class="td_class" style="width:300px;text-indent:200px;"><%:bsr-candidate priority%>:</td>
+							<td class="td_class"><input type="text" id="id_bsr_priority" sytle="width:180px;"/>&nbsp;
+								<font color=" gray"><%:Bigger value means higher priority%> (0-255)</font></td>
+						</tr>
+
+						<tr class="tr_class">
+							<td class="td_class" style="width:300px;text-indent:200px;"><%:rp-candidate priority%>:</td>
+							<td class="td_class"><input type="text" id="id_rp_priority" sytle="width:180px;"/>&nbsp;
+								<font color=" gray"><%:Smaller value means higher priority%> (0-255)</font></td>
+						</tr>						
+						
+						<tr class="tr_class">
+							<td class="td_class" style="width:300px;text-indent:200px;"><%:muticast interface%>:</td>
+					 		<td class="td_class">
+					 			<select  name="int_sw" id="id_int_sw" style="width:180px;">
+									<option value="0"><%:LAN%></option>
+                					<option value="1"><%:WAN%></option>
+								</select>
+							</td>
+						</tr>
+			
+						<tr class="tr_class">
+							<td class="td_class" style="width:300px;text-indent:200px;"><%:DR interface%>:</td>
+							<td class="td_class"><input type="text" id="id_dr_interface" sytle="width:180px;"/></td>
+						</tr>
+						
+						<tr class="tr_class">
+							<td class="td_class" style="width:300px;text-indent:200px;"><%:DR priority%>:</td>
+							<td class="td_class"><input type="text" id="id_dr_priority" sytle="width:180px;"/>&nbsp;
+								<font color=" gray"><%:Bigger value means higher priority%> (0-255)</font></td>
+						</tr>
+						
+						<tr class="tr_class">
+							<td class="td_class" style="width:300px;text-indent:200px;"><%:Route%>:</td>
+							<td class="td_class"><input type="text" id="id_group_ip" style="width:124px;" />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<%:interface%>:&nbsp;
+												<input type="text" id="id_group_mask" style="width:60px;"/></td>
+						</tr>
+<!--
+						<tr class="tr_class">
+							<td class="td_class" style="width:300px;text-indent:200px;"><%:rp-candidate group_addr%>:</td>
+							<td class="td_class">
+								<input type="text" id="id_rp_group_addr" style="width:124px;"/>&nbsp;/&nbsp;
+								<input type="text" id="id_rp_group_mask" style="width:18px;"/>&nbsp;&nbsp;								
+							</td>
+						</tr>
+-->							
+						<tr class="tr_class">
+							<td class="td_class" style="width:300px;text-indent:200px;"><%:rp-candidate addr%>:</td>
+							<td class="td_class"><input type="text" id="id_rp_addr" sytle="width:180px;"/>&nbsp;&nbsp;
+							<input type="button" id="id_button_muticast" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="muticast_conf(this.form.name_sw.selectedIndex,this.form.int_sw.selectedIndex)"/>
+							</td>
+						</tr>
+					</table>
+				</div>
+
+		</fieldset>
+		</div>
+
+		<script>all_init();</script>
+</form>
+
+<%+footer%>

@@ -1,0 +1,138 @@
+MYSRC=${SRC_PATH}/lib
+
+#WCDMA ÐÞ¸ÄÎªG3
+G3_SUPPORT=0
+#delete
+#EVDO_SUPPORT=0
+MYSCRIPTS=${MYSRC}/scripts
+
+CFLAGS+=-I$(LTE_INCLUDE)
+CFLAGS+=-I$(USB_INCLUDE)
+
+LIBSRC=$(shell find $(MYSRC)/core -name *.c)
+
+ifeq (${LTE}, longcheer)
+	MY_CFLAGES=-D__LONGCHEER__
+	LIBSRC+=$(shell find $(MYSRC)/longcheer -name *.c)
+else ifeq (${LTE}, leadcore)
+	MY_CFLAGES=-D__LEADCORE__
+	LIBSRC+=$(shell find $(MYSRC)/leadcore -name *.c)
+else ifeq (${LTE}, thinkwill)
+	MY_CFLAGES=-D__THINKWILL__
+	G3_SUPPORT=1
+	LIBSRC+=$(shell find $(MYSRC)/thinkwill -name *.c)
+else ifeq (${LTE}, altair)
+	#MY_CFLAGES=-D__ALTAIR__
+	#LIBSRC+=$(shell find $(MYSRC)/altair -name *.c)
+else ifeq (${LTE}, zte)
+	MY_CFLAGES=-D__ZTE__
+	G3_SUPPORT=1
+	LIBSRC+=$(shell find $(MYSRC)/zte -name *.c)
+else ifeq (${LTE}, zte-cdma2000)
+	MY_CFLAGES=-D__ZTE_CDMA2000__
+	G3_SUPPORT=1
+	LIBSRC+=$(shell find $(MYSRC)/zte-cdma2000 -name *.c)	
+else ifeq (${LTE}, thinkwill-mi660)
+	MY_CFLAGES=-D__THINKWILL_MI660__
+	G3_SUPPORT=1
+	LIBSRC+=$(shell find $(MYSRC)/thinkwill-cdma-mi660 -name *.c)	
+else ifeq (${LTE}, arccra)
+	MY_CFLAGES=-D__ARCCRA__
+	LIBSRC+=$(shell find $(MYSRC)/arccra -name *.c)	
+else ifeq (${LTE}, yuga-cem600)
+	MY_CFLAGES=-D__YUGA_CEM600__
+	G3_SUPPORT=1
+	LIBSRC+=$(shell find $(MYSRC)/yuga-cdma-cem600 -name *.c)	
+else ifeq (${LTE}, zte-micro)	
+	MY_CFLAGES=-D__ZTE_MICRO__
+	LIBSRC+=$(shell find $(MYSRC)/zte-micro -name *.c)
+else ifeq (${LTE}, huawei)
+	MY_CFLAGES=-D__HUAWEI__
+	G3_SUPPORT=1
+	LIBSRC+=$(shell find $(MYSRC)/huawei -name *.c)
+else ifeq (${LTE}, yuga)
+	MY_CFLAGES=-D__YUGA__
+	G3_SUPPORT=1
+	LIBSRC+=$(shell find $(MYSRC)/yuga -name *.c)
+else ifeq (${LTE}, marvell)
+	MY_CFLAGES=-D__MARVELL__
+	G3_SUPPORT=1
+	LIBSRC+=$(shell find $(MYSRC)/marvell -name *.c)
+else ifeq (${LTE}, huawei4G)
+	MY_CFLAGES=-D__HUAWEI4G__
+	G3_SUPPORT=1
+	LIBSRC+=$(shell find $(MYSRC)/huawei4G -name *.c)
+else
+	#MY_CFLAGES=-D__LONGCHEER__ -D__LEADCORE__ -D__THINKWILL__ -D__ALTAIR__ -D__ZTE__ -D__ZTE_CDMA2000__ -D__ARCCRA__ -D__THINKWILL_MI660__ -D__YUGA_CEM600__ -D__ZTE_MICRO__ -D__HUAWEI__
+	MY_CFLAGES=-D__LONGCHEER__ -D__LEADCORE__ -D__THINKWILL__ -D__ZTE__ -D__ZTE_CDMA2000__ -D__ARCCRA__ -D__THINKWILL_MI660__ -D__YUGA_CEM600__ -D__ZTE_MICRO__ -D__HUAWEI__ -D__YUGA__	-D__MARVELL__ -D__HUAWEI4G__
+	G3_SUPPORT=1
+	LIBSRC+=$(shell find $(MYSRC)/longcheer -name *.c)
+	LIBSRC+=$(shell find $(MYSRC)/leadcore -name *.c)
+	LIBSRC+=$(shell find $(MYSRC)/thinkwill -name *.c)
+	#LIBSRC+=$(shell find $(MYSRC)/altair -name *.c)
+	LIBSRC+=$(shell find $(MYSRC)/zte -name *.c)
+	LIBSRC+=$(shell find $(MYSRC)/zte-cdma2000 -name *.c)
+	LIBSRC+=$(shell find $(MYSRC)/arccra -name *.c)	
+	LIBSRC+=$(shell find $(MYSRC)/thinkwill-cdma-mi660 -name *.c)	
+	LIBSRC+=$(shell find $(MYSRC)/yuga-cdma-cem600 -name *.c)
+	LIBSRC+=$(shell find $(MYSRC)/zte-micro -name *.c)
+	LIBSRC+=$(shell find $(MYSRC)/huawei -name *.c)
+	LIBSRC+=$(shell find $(MYSRC)/yuga -name *.c)
+	LIBSRC+=$(shell find $(MYSRC)/marvell -name *.c)
+	LIBSRC+=$(shell find $(MYSRC)/huawei4G -name *.c)
+endif
+
+CFLAGS+=${MY_CFLAGES}
+CFLAGS+=-fPIC
+
+LIBOBJ=$(patsubst %.c,%.o, $(LIBSRC))
+
+STATIC ?= n
+ifeq ($(STATIC), y)
+	LIBTARGET=liblte.a
+else
+	LIBTARGET=liblte.so
+endif
+
+
+LIBINSTALL_PATH=${TOPDIR}/build/fsbase/rootfs/lib
+SCRIPTINSTALL_PATH=${TOPDIR}/build/fsbase/rootfs/etc
+
+build: all
+
+all: ${LIBTARGET}
+
+$(LIBTARGET): $(LIBOBJ)
+ifeq ($(STATIC), y)
+	$(AR) rcs $@ $^
+else
+	$(CC) $^ -o $@ -shared -L$(USB_LIB) -lusb-1.0
+endif
+
+install:
+	if [ -n "${LIB_PATH}" ]; then \
+		cp -f ${MYSRC}/${LIBTARGET} ${LIB_PATH}; \
+		cp -f ${USB_LIB}/libusb-1.0.so.0.1.0 ${LIB_PATH}; \
+		cd ${LIB_PATH} && ln -sf libusb-1.0.so.0.1.0 libusb-1.0.so.0 && ln -sf libusb-1.0.so.0.1.0 libusb-1.0.so; \
+	fi
+
+ifneq ($(STATIC), y)
+	cp -f ${MYSRC}/${LIBTARGET} ${LIBINSTALL_PATH}
+endif
+	cp -f ${USB_LIB}/libusb-1.0.so.0.1.0 ${LIBINSTALL_PATH}
+	cd ${LIBINSTALL_PATH} && ln -sf libusb-1.0.so.0.1.0 libusb-1.0.so.0 && ln -sf libusb-1.0.so.0.1.0 libusb-1.0.so
+
+	
+	if [ ${G3_SUPPORT} = 1 ];then \
+		rm -rf ${SCRIPTINSTALL_PATH}/ppp-lte/ ; \
+		mkdir -p ${SCRIPTINSTALL_PATH}/ppp-lte; \
+		mkdir -p ${SCRIPTINSTALL_PATH}/ppp-lte/chat; \
+		mkdir -p ${SCRIPTINSTALL_PATH}/ppp-lte/peers; \
+		cp -f ${MYSCRIPTS}/ppp/chat/* ${SCRIPTINSTALL_PATH}/ppp-lte/chat ; \
+		cp -f ${MYSCRIPTS}/ppp/peers/* ${SCRIPTINSTALL_PATH}/ppp-lte/peers  ; \
+		cp -f ${MYSCRIPTS}/ppp/chap-secrets ${SCRIPTINSTALL_PATH}/ppp-lte ; \
+	fi
+
+clean:
+	find . -follow $(REMOVE_PATTERN) | xargs rm -fr
+	rm -f $(LIBTARGET)

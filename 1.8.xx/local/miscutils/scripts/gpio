@@ -1,0 +1,124 @@
+cmd=`basename $0`
+gpio=$1
+subcmd=$2
+value=$3
+
+GPIO_OE_ADDRESS=0xb8040000
+GPIO_IN_ADDRESS=0xb8040004
+GPIO_OUT_ADDRESS=0xb8040008
+GPIO_SET_ADDRESS=0xb804000c
+GPIO_CLEAR_ADDRESS=0xb8040010
+
+GPIO_FUNC_BASE=0xb804002c
+gpio_func_addr()
+{
+	local gpio=$1
+	echo $((GPIO_FUNC_BASE + 4*(gpio/4)));
+}
+gpio_func_offset()
+{
+	local gpio=$1
+	echo $((8 * (gpio%4)))
+}
+
+show_help()
+{
+cat << EOF
+Usage:
+    ${cmd} [gpio] out [0/1]     -- enable gpio output, set output 0/1
+    ${cmd} [gpio] in [0/1]      -- enable gpio input, input 0/1
+    ${cmd} [gpio] func [value]  -- set gpio function
+    ${cmd} [gpio]               -- get gpio status
+EOF
+exit 1
+}
+
+reg_rd()
+{
+	devmem $1 32
+}
+
+reg_wr()
+{
+	devmem $1 32 $2
+}
+
+gpio_out()
+{
+	local gpio=$1;
+	local val=$2;
+	
+	[ -z "${gpio}" ] && show_help;
+	
+	reg_wr ${GPIO_OE_ADDRESS} $(( `reg_rd ${GPIO_OE_ADDRESS}` & (~(1<<gpio)) ))
+	
+	[ -z "${val}" ] && exit 0;
+	[ "${val}" -eq 0 ] && reg_wr ${GPIO_CLEAR_ADDRESS} $((1 << gpio)) || reg_wr ${GPIO_SET_ADDRESS} $((1 << gpio))
+}
+
+gpio_in()
+{
+	local gpio=$1;
+	local val=$2;
+	
+	[ -z "${gpio}" ] && show_help;
+	
+	reg_wr ${GPIO_OE_ADDRESS} $(( `reg_rd ${GPIO_OE_ADDRESS}` | (1<<gpio) ))
+	
+	[ -z "${val}" ] && exit 0;
+	[ "${val}" -eq 0 ] && reg_wr ${GPIO_CLEAR_ADDRESS} $((1 << gpio)) || reg_wr ${GPIO_SET_ADDRESS} $((1 << gpio))
+}
+
+gpio_func()
+{
+	local gpio=$1;
+	local val=$2;
+
+	[ -z "${gpio}" -o -z "${val}" ] && show_help;
+	
+	local addr=`gpio_func_addr ${gpio}`
+	local offset=`gpio_func_offset ${gpio}`
+	
+	reg_wr ${addr} $(( `reg_rd ${addr}` & (~(0xff << offset)) | (val << offset)))
+}
+
+gpio_status()
+{
+	local gpio=$1
+	
+	[ -z "${gpio}" ] && show_help;
+
+	local en=$(( `reg_rd ${GPIO_OE_ADDRESS}` & (1 << gpio) ))
+	local val;
+
+	if [ "${en}" -eq 0 ];then
+		val="out $(( (`reg_rd ${GPIO_OUT_ADDRESS}` & (1 << gpio)) >> gpio))"
+	else
+		#val="in $(( (`reg_rd ${GPIO_IN_ADDRESS}` & (1 << gpio)) >> gpio))"
+		val="in"
+	fi
+
+	local addr=`gpio_func_addr ${gpio}`
+	local offset=`gpio_func_offset ${gpio}`
+	local func=$(( (`reg_rd ${addr}` & (0xff << offset)) >> offset ))
+	
+	printf "GPIO${gpio} func %#x ${val}\n" ${func};
+}
+
+
+[ -z "${gpio}" ] && show_help;
+
+case ${subcmd} in
+	out)
+		gpio_out ${gpio} ${value}
+		;;
+	in)
+		gpio_in ${gpio} ${value}
+		;;
+	func)
+		gpio_func ${gpio} ${value}
+		;;
+	*)
+		gpio_status ${gpio};
+		;;
+esac

@@ -1,0 +1,61 @@
+
+WLAN_CFLAGS  = -I$(TOPDIR)/wifi/wlan/os/linux/include -I$(TOPDIR)/wifi/wlan/include -I$(TOPDIR)/wifi/wlan/lmac/ath_dev
+WLAN_CFLAGS += -I$(TOPDIR)/wifi/wireless_tools.29 -I$(TOPDIR)/wifi/gbcom_priv/include
+CFLAGS  = -I$(APP_INCLUDE) $(AP_FLAG) $(AC_BUILD_PREDEFINE) -I$(TOPDIR)/app/libevent/libevent -I$(TOPDIR)/app/libevent/libevent/include
+CFLAGS += $(WLAN_CFLAGS)
+
+ifeq ($(BOARD_TYPE),ap93fus)
+LDFLAGS = -Wl -static
+else
+LDFLAGS = -Wl 
+endif
+
+LDLIBS  = -L$(AC_LIB_DIR) -lpthread -lwifi_pal -levent -L$(TOPDIR)/wifi/wireless_tools.29 -liw
+DEST_PATH = $(BIN_PATH)/app/bin
+DEST_NAME = $(obj-app)
+
+	
+obj-app = aglink 
+#obj-dep = ag_module.o aglink.o $(TOPDIR)/app/common/nvram_flash.o
+
+ifeq ($(BOARD_TYPE),ap93fus)
+obj-dep = ag_module.o aglink.o $(TOPDIR)/app/common/nvram_flash_ap93.o
+endif
+
+ifeq ($(BOARD_TYPE),db12x)
+obj-dep = aglink.o ag_module.o  $(TOPDIR)/app/common/nvram_flash.o
+endif
+
+ifeq ($(BOARD_TYPE),ta40)
+obj-dep = ag_module.o aglink_temp.o $(TOPDIR)/app/common/nvram_flash.o
+endif
+
+
+#obj-dep += ag_wlan.o ag_iw.o ag_event.o ag_stadct.o
+#obj-dep += ag_wlan.o ag_iw.o
+
+include $(TOPDIR)/build/app.mk
+
+
+
+build: aglink libag_share.so
+
+install:
+	@echo "INSTALL       aglink libag_share.so"
+	@cp aglink $(DEST_PATH)/$(DEST_NAME)
+	@cp libag_share.so $(AC_LIB_DIR)
+	
+clean:
+	@echo "CLEAN         aglink libag_share.so"
+	@rm -f *.o aglink libag_share.so
+		
+aglink: $(obj-dep)
+	@echo "BUILD         $(obj-app)"
+	@$(CC) $(CFLAGS) $(LDFLAGS) $(LDLIBS) -o $(obj-app) $(obj-dep) $(LDLIBS)
+	@$(STRIP) -d $(obj-app)
+	
+libag_share.so:
+	@echo "BUILD        libag_share.so"
+	@$(CC) $(CFLAGS) -fpic -shared -o libag_share.so ag_module_share.c
+	@pwd
+	@cp libag_share.so $(AC_LIB_DIR)		

@@ -1,0 +1,527 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2011 OpenWrt.org
+
+SERVICE_MATCH_NAME=1
+SERVICE_DAEMONIZE=1
+START=98
+
+start() {
+	#echo 0 > /proc/sys/net/ipv4/ip_forward
+	#echo 0 > /proc/sys/net/ipv4/conf/usb0/forwarding
+	#echo 0 > /proc/sys/net/ipv4/conf/eth1/forwarding
+	#echo 0 > /proc/sys/net/ipv4/conf/br-lan/forwarding
+	pidof watchdog 2 >/dev/null && killall watchdog
+	service_start /usr/sbin/sysmonitor
+	
+	# Add: by xiaowei, 2016/05/09 10:49 PN: ospf start 
+	 ospf_switch=`uci get config.ospf.ospf_sw`
+  	if [ "1"x = "$ospf_switch"x ];then
+		/etc/init.d/quagga start 
+		/usr/sbin/ospfd -d -f /etc/quagga/ospfd.conf
+  	fi
+	
+	# Add: by xiaowei, 2016/04/22 09:22 PN: add default iptables
+	#iptables -t nat -A POSTROUTING -j MASQUERADE
+	
+	#add get gps date
+	/sbin/gpsctl -l 1 > /dev/null 2>&1 &  
+	ymd=`uci -c /tmp get gpsinfo.info.year`
+	hms=`uci -c /tmp get gpsinfo.info.time`
+	date -s '$ymd $hms'
+	
+	#add gdcontrl by xiaowei 2017-5-2
+	/sbin/gps > /dev/null 2>&1 &  
+	#/sbin/gdcontrl > /dev/null 2>&1 &  
+	
+	# add by xiaowei 2016-4-21
+	#mkdir -p /mnt/emmc/logsave
+	#mount -t ext4 -rw /dev/sda1  /mnt/emmc/logsave
+	#mkdir -p /mnt/emmc/packet
+	#mount -t ext4 -rw /dev/sda2  /mnt/emmc/packet
+	/sbin/logsave &
+	
+	filter_rule=`uci get config.packet.filter_sw`
+	filter_ip=`uci get config.packet.filter_ip`
+	remote_sw=`uci get config.packet.remote_sw`
+	remote_ip=`uci get config.packet.remote_ip`
+	packet_sw=`uci get config.packet.packet_sw`
+	lan_ip=`uci get config.packet.lan_ip`
+	wan_ip=`uci get config.packet.wan_ip`
+	packet_time=`uci get config.packet.packet_time`
+	packet_size=`uci get config.packet.packet_size`
+	packet_int=`uci get config.packet.packet_int`
+
+	
+	if [ "1"x = "$packet_sw"x ];then
+
+		/sbin/ethdump -l $lan_ip -w $wan_ip -t $packet_time -f $packet_size -i $packet_int> /dev/null 2>&1 &
+	fi
+	
+	#echo 30720 > /proc/sys/vm/min_free_kbytes
+	
+	# add by xiaowei 2016-3-9 
+	port_switch=`uci get config.mirror.mirror_switch` 
+	port_mirror=`uci get config.mirror.mirror_port`
+	port_lan1=`uci get config.mirror.lan1_status`
+	port_lan2=`uci get config.mirror.lan2_status`
+	port_lan3=`uci get config.mirror.lan3_status`
+	port_lan4=`uci get config.mirror.lan4_status`
+	
+	if [ "0"x = "$port_switch"x ];then
+		mirror stop 
+		mirror setmirror close
+		#mirror setobserve 1 close
+		#mirror setobserve 2 close
+		#mirror setobserve 3 close
+		#mirror setobserve 4 close
+	else
+		mirror start 
+		mirror setmirror $port_mirror
+		mirror setobserve 1 $port_lan1
+		mirror setobserve 2 $port_lan2
+		mirror setobserve 3 $port_lan3
+		mirror setobserve 4 $port_lan4
+	fi
+	
+	# add by xiaowei 2016-3-16
+	lastrouet_sw=`ltectl getpostroute | cut -d: -f 2`
+	uci set config.lastroute.switch=$lastrouet_sw
+	lastrouet_sw=`ltectl2 getpostroute | cut -d: -f 2`
+	uci set config.lastroute.switch2=$lastrouet_sw
+	
+	# Add: by xiaowei, 2016/03/25 10:07 PN: mini_snmpd
+	snmpd_sw=`uci get config.mini_snmpd.switch`
+	if [ "1"x = "$snmpd_sw"x ];then
+		/sbin/mini_snmpd &
+	fi
+
+	
+	#altered by caibing 2016-12-05
+	#Add: by zhanghao,2016/0419 11:23 PN:gre tunnel
+	gre_mtu=`uci get config.gre.mtu`
+	gre_port_sw=`uci get config.gre.switch`
+	gre_pipe_name=`uci get config.gre.pipe_name`
+	gre_init_src_ip=`uci get config.gre.init_src_ip`
+	gre_init_des_ip=`uci get config.gre.init_des_ip`
+	gre_enca_src_ip=`uci get config.gre.enca_src_ip`
+	gre_enca_des_ip=`uci get config.gre.enca_des_ip`
+
+	if [ "1"x = "$gre_port_sw"x ];then
+		ip tunnel add gre$gre_pipe_name remote $gre_init_des_ip local $gre_init_src_ip ttl 255
+		ip link set gre$gre_pipe_name multicast on
+		ip link set gre$gre_pipe_name up
+		ip addr add $gre_enca_src_ip peer $gre_enca_des_ip dev gre$gre_pipe_name
+		route del 0.0.0.0
+		#altered by ciabing 2016-12-05
+		#echo "route add default gw $gre_enca_src_ip"
+		#route add default gw $gre_enca_src_ip
+		ifconfig gre$gre_pipe_name mtu $gre_mtu
+	fi
+	
+	
+	# Add: by zhanghao,2016/6/7 14:14 PN: Muticast
+	muti_sw=`uci get config.muticast.muticast_sw`
+	rp_sw=`uci get config.muticast.rp_sw`
+	rp_addr=`uci get config.muticast.rp_addr`
+	dr_interface=`uci get config.muticast.dr_interface`
+
+	if [  "1"x = "$muti_sw"x ];then
+		/sbin/pimd &
+		#altered by caibing 2016-12-07
+		route_ip=`uci get config.muticast.group_ip`
+		route_int=`uci get config.muticast.group_mask`
+		route add $route_ip dev $route_int
+		udpxy -p 8080 -a $dr_interface > /dev/null 2>&1 &
+	fi
+	
+	#Add: by xw 2017/12/01 reset gre multicase
+	ip link set gre$gre_pipe_name down
+	ip link set gre$gre_pipe_name multicast off
+	ip link set gre$gre_pipe_name multicast on
+	ip link set gre$gre_pipe_name up
+	
+	
+	#Add: by zhanghao 2016/04/25 portcount
+	uci set port.rx.lan1=0
+	uci set port.rx.lan2=0
+	uci set port.rx.lan3=0
+	uci set port.rx.lan4=0
+	uci set port.tx.lan1=0
+	uci set port.tx.lan2=0
+	uci set port.tx.lan3=0
+	uci set port.tx.lan4=0
+
+	
+#	/sbin/portcount > /dev/null 2>&1 &	
+	/sbin/portrate > /dev/null 2>&1 &
+
+	#Add: by byy 2018/01/05  vlan_filter
+    num=`uci get secure.vlan.vlan_num`
+    
+    while [ "$num" -gt 0 ]
+    do
+            
+            echo "`uci get secure.vlan.vlanida_$num`"
+            echo "`uci get secure.vlan.vlanidb_$num`"
+			
+			a_if_name="eth1.`uci get secure.vlan.vlanida_$num`"
+			a_ip_addr="`ifconfig $a_if_name|grep \"inet addr\"|awk '{print \$2}'|cut -d \":\" -f 2`"
+			a_ip_mask="`ifconfig $a_if_name|grep \"inet addr\"|awk '{print \$4}'|cut -d \":\" -f 2`"
+			
+			b_if_name="eth1.`uci get secure.vlan.vlanidb_$num`"
+			b_ip_addr="`ifconfig $b_if_name|grep \"inet addr\"|awk '{print \$2}'|cut -d \":\" -f 2`"
+			b_ip_mask="`ifconfig $b_if_name|grep \"inet addr\"|awk '{print \$4}'|cut -d \":\" -f 2`"
+			
+			iptables -I FORWARD -s $a_ip_addr/$a_ip_mask -d $b_ip_addr/$b_ip_mask -j DROP 
+			iptables -I FORWARD -s $b_ip_addr/$b_ip_mask -d $a_ip_addr/$a_ip_mask -j DROP 
+ 
+			echo "iptables -I FORWARD -s $a_ip_addr/$a_ip_mask -d $b_ip_addr/$b_ip_mask -j DROP " >> /tmp/vlan_f.log
+			echo "iptables -I FORWARD -s $b_ip_addr/$b_ip_mask -d $a_ip_addr/$a_ip_mask -j DROP " >> /tmp/vlan_f.log
+
+            let num=num-1
+    done
+	
+	#Add: by byy 2017/12/21  Virtual IP
+    num=`uci get vip.@list[0].number`
+    
+    while [ "$num" -gt 0 ]
+    do
+            echo "`uci get vip.@list$num[0].vip_addr`"
+            echo "`uci get vip.@list$num[0].vip_mask`"
+            echo "`uci get vip.@list$num[0].vip_ifname`"
+            echo "`uci get vip.@list$num[0].vip_interface`"
+			
+			ifconfig `uci get vip.@list$num[0].vip_interface`:`uci get vip.@list$num[0].vip_ifname` `uci get vip.@list$num[0].vip_addr` netmask `uci get vip.@list$num[0].vip_mask` up
+
+            echo "ifconfig `uci get vip.@list$num[0].vip_interface`:`uci get vip.@list$num[0].vip_ifname` `uci get vip.@list$num[0].vip_addr` netmask `uci get vip.@list$num[0].vip_mask` up"
+
+            let num=num-1
+    done
+	
+    #Add: by xw 2017/11/29  router config
+    num=`uci get route.@list[0].number`
+    
+    while [ "$num" -gt 0 ]
+    do
+    		gateway=`uci get route.@list$num[0].gateway`
+            echo "`uci get route.@list$num[0].gateway`"
+            echo "`uci get route.@list$num[0].ip_addr`"
+            echo "`uci get route.@list$num[0].ip_mask`"
+            echo "`uci get route.@list$num[0].interface`"
+			
+            if [ "0"x = "$gateway"x ];then
+                    route add -net `uci get route.@list$num[0].ip_addr` netmask `uci get route.@list$num[0].ip_mask` dev `uci get route.@list$num[0].interface`
+            else
+                    route add -net `uci get route.@list$num[0].ip_addr` netmask `uci get route.@list$num[0].ip_mask` gw `uci get route.@list$num[0].gateway` dev `uci get route.@list$num[0].interface`
+            fi
+
+            echo "route add -net `uci get route.@list$num[0].ip_addr` netmask `uci get route.@list$num[0].ip_mask` gw `uci get route.@list$num[0].gateway` dev `uci get route.@list$num[0].interface`"
+
+            let num=num-1
+    done
+	
+	#Add: by xiaoyuxiao 2017/10/10 policy router
+	num=`uci get policy.@list[0].number`
+	while [ "$num" -gt 0 ] 
+	do
+		ip route add 0/0 via `uci get policy.@list$num[0].gateway` table `uci get policy.@list$num[0].table`
+		ip rule add `uci get policy.@list$num[0].way` `uci get policy.@list$num[0].net` table `uci get policy.@list$num[0].table`
+		echo "ip route add 0/0 via `uci get policy.@list$num[0].gateway` table `uci get policy.@list$num[0].table`"
+		echo "ip rule add `uci get policy.@list$num[0].way` `uci get policy.@list$num[0].net` table `uci get policy.@list$num[0].table`"
+		let num=num-1
+	done
+	
+	#Add: by zhanghao 2016/04/27 secure 
+	ip_num=`uci get secure.ip.ip_num`
+	mac_num=`uci get secure.mac.mac_num`
+	url_num=`uci get secure.url.url_num`
+	sev_num=`uci get secure.sev.sev_num`
+
+	ip_min=1
+	while [ $ip_min -le $ip_num ]
+	do 
+		
+  	 	 iptables -I FORWARD -p tcp -d `uci get secure.ip.ip_$ip_min` --dport  `uci get secure.ip.port_$ip_min` -j DROP	
+		 iptables -I FORWARD -p udp -d `uci get secure.ip.ip_$ip_min` --dport  `uci get secure.ip.port_$ip_min` -j DROP
+   		 ip_min=`expr $ip_min + 1`
+	done  
+
+	mac_min=1
+	while [ $mac_min -le $mac_num ]
+	do 
+  	 	 iptables -A FORWARD -m mac --mac-source `uci get secure.mac.mac_$mac_min` -j DROP
+  	 	 iptables -A INPUT -m mac --mac-source `uci get secure.mac.mac_$mac_min` -j DROP
+   		 mac_min=`expr $mac_min + 1`
+	done  
+
+	url_min=1
+	while [ $url_min -le $url_num ]
+	do 
+  	 	 iptables -I FORWARD -p tcp -d `uci get secure.url.url_$url_min` --dport 80 -j DROP
+   		 url_min=`expr $url_min + 1`
+	done  
+
+	sev_min=1
+	while [ $sev_min -le $sev_num ]
+	do 
+		 pro=`uci get secure.sev.protocol_$sev_min`
+		 intface=`uci get secure.sev.interface_$sev_min`
+		if [ "$intface" = "usb0" ];then
+			if [ $pro -eq 0 ];then
+				iptables -A INPUT -p tcp -i `uci get secure.sev.interface_$sev_min` -j DROP
+			fi
+			if [ $pro -eq 1 ];then
+				iptables -A INPUT -p udp -i `uci get secure.sev.interface_$sev_min` -j DROP
+			fi
+			if [ $pro -eq 2 ];then
+				iptables -A INPUT -p icmp -i `uci get secure.sev.interface_$sev_min` -j DROP
+			fi
+			if [ $pro -eq 3 ];then
+				iptables -A INPUT -i `uci get secure.sev.interface_$sev_min` -j DROP
+			fi
+			if [ $pro -eq 4 ];then
+				iptables -A INPUT -i `uci get secure.sev.interface_$sev_min` -j DROP
+			fi
+			
+			if [ $pro -eq 5 ];then
+				iptables -A FORWARD -p tcp -i `uci get secure.sev.interface_$sev_min` --dport 80 -j DROP
+			fi
+		fi
+		if [ "$intface" = "br-lan" ];then
+			if [ $pro -eq 0 ];then
+				iptables -A FORWARD -p tcp -i `uci get secure.sev.interface_$sev_min` -j DROP
+			fi
+			if [ $pro -eq 1 ];then
+				iptables -A FORWARD -p udp -i `uci get secure.sev.interface_$sev_min` -j DROP
+			fi
+			if [ $pro -eq 2 ];then
+				iptables -A FORWARD -p icmp -i `uci get secure.sev.interface_$sev_min` -j DROP
+			fi
+			if [ $pro -eq 3 ];then
+				iptables -A FORWARD -i `uci get secure.sev.interface_$sev_min` -j DROP
+			fi
+			if [ $pro -eq 4 ];then
+				iptables -A FORWARD -i `uci get secure.sev.interface_$sev_min` -j DROP
+			fi
+			
+			if [ $pro -eq 5 ];then
+				iptables -A FORWARD -p tcp -i `uci get secure.sev.interface_$sev_min` --dport 80 -j DROP
+			fi
+		fi
+			
+   		 sev_min=`expr $sev_min + 1`
+	done  
+	
+	#Add: by wangminglin 2016/07/25 secure 
+	
+	white_ip_num=`uci get secure.white_ip.ip_num`
+	white_mac_num=`uci get secure.white_mac.mac_num`
+	white_url_num=`uci get secure.white_url.url_num`
+	
+
+	white_ip_min=1
+	while [ $white_ip_min -le $white_ip_num ]
+	do 
+		
+  	 	 iptables -I FORWARD -p tcp -d `uci get secure.white_ip.ip_$white_ip_min` --dport  `uci get secure.white_ip.port_$white_ip_min` -j ACCEPT
+		 iptables -I FORWARD -p udp -d `uci get secure.white_ip.ip_$white_ip_min` --dport  `uci get secure.white_ip.port_$white_ip_min` -j ACCEPT
+   		 white_ip_min=`expr $white_ip_min + 1`
+	done  
+
+	white_mac_min=1
+	while [ $white_mac_min -le $white_mac_num ]
+	do 
+		
+		 
+		iptables -A FORWARD -m mac --mac-source `uci get secure.white_mac.mac_$white_mac_min` -j ACCEPT
+		iptables -A INPUT -m mac --mac-source `uci get secure.white_mac.mac_$white_mac_min` -j ACCEPT
+   		white_mac_min=`expr $white_mac_min + 1`
+	done  
+
+	white_url_min=1
+	while [ $white_url_min -le $white_url_num ]
+	do 
+		
+  	 	 iptables -I FORWARD -p tcp -d `uci get secure.white_url.url_$white_url_min` --dport 80 -j ACCEPT
+   		 white_url_min=`expr $white_url_min + 1`
+	done  
+	#Add: by wangminglin 2016/07/25 nat
+	nat_num=`uci get nat.nat.nat_num`
+
+	nat_min=1
+	while [ $nat_min -le $nat_num ]
+	do 
+		 srcip=`uci get nat.nat.srcip_$nat_min`
+		 dstip=`uci get nat.nat.dstip_$nat_min`
+		 type=`uci get nat.nat.type_$nat_min`
+		 srcnetmask=`uci get nat.nat.srcnetmask_$nat_min`
+		 index=`uci get nat.nat.index_$nat_min`
+
+		 if [ $type -eq 0 ];then
+  	 	 iptables -t nat -I POSTROUTING -s `uci get nat.nat.srcip_$nat_min` -j SNAT --to  `uci get nat.nat.dstip_$nat_min` 
+		 else
+		 iptables -t nat -I PREROUTING -d `uci get nat.nat.srcip_$nat_min` -j DNAT --to  `uci get nat.nat.dstip_$nat_min` 
+		 fi
+   		 nat_min=`expr $nat_min + 1`
+	done  
+	#Add: by wangminglin 2016/10/17 ntp
+	ntp_sw=`uci get  config.time_synchronization.time_synchronization_sw`
+	primary=`uci get  config.time_synchronization.primary_server`
+	standby=`uci get  config.time_synchronization.standby_server`
+	syntime=`uci get  config.time_synchronization.syntime`
+	server_port=`uci get  config.time_synchronization.server_port`
+	if [ "0"x = "$ntp_sw"x ];then
+		killall -9 ntpctl
+		killall -9 ntpclient
+		/sbin/ntpctl -i $syntime -p $server_port -f $primary -s $standby  > /dev/null 2>&1 &
+	else
+		killall -9 ntpctl
+		killall -9 ntpclient
+	fi
+	#Add: by zhanghao 2016/05/10
+	rsrp_sw=`uci get vrrp.sw.sw`
+	track_interface=`uci get vrrp.instance.track_interface`
+	lan=`uci get vrrp.instance.lan`
+	delay_time=`uci get vrrp.instance.delay_time`"00"
+	if [ "1"x = "$rsrp_sw"x ];then
+		/etc/init.d/keepalived start
+		ifconfig eth1.$track_interface down
+		sleep 1
+		ifconfig eth1.$track_interface up
+		trackint -i $track_interface -l $lan -t $delay_time  > /dev/null 2>&1 &
+	else 
+		/etc/init.d/keepalived stop
+	fi
+
+	# Add: by xiaowei, 2016/05/30 14:22 PN: add port map config
+	port_num=`uci get portmap.map.map_num`
+	while [ $port_num -gt 0 ]
+	do
+		sip=`uci get portmap.@port$port_num[0].sip`
+		sport=`uci get portmap.@port$port_num[0].sport`
+		dip=`uci get portmap.@port$port_num[0].dip`
+		dport=`uci get portmap.@port$port_num[0].dport`
+		prot=`uci get portmap.@port$port_num[0].map_prot`
+		nat=`uci get portmap.@port$port_num[0].map_trans`
+		
+		if [ "SNAT"x = "$nat"x ];then 
+			link="POSTROUTING"
+		else
+			link="PREROUTING"
+		fi
+		
+		iptables -t nat -I $link  -s $sip -p $prot --sport $sport -j $nat --to $dip:$dport
+		
+		#port_num=`expr $port_num - 1`
+		let "port_num--"
+	done
+	
+	#Add:by zhanghao 2016/06/7 PN:IPsec
+	ipsec_psk_sw=`uci get ipsec.psk.sw`
+	ipsec_rsa_sw=`uci get ipsec.rsa.sw`
+	ipsec_x509_sw=`uci get ipsec.x509.sw`
+	psk_src_subnet=`uci get ipsec.psk.src_subnet`
+	psk_src_mask=`uci get ipsec.psk.src_mask`
+	psk_des_nexthop=`uci get ipsec.psk.des_nexthop`
+	psk_des_mask=`uci get ipsec.psk.des_mask`
+	rsa_src_subnet=`uci get ipsec.rsa.src_subnet`
+	rsa_src_mask=`uci get ipsec.rsa.src_mask`
+	rsa_des_nexthop=`uci get ipsec.rsa.des_nexthop`
+	rsa_des_mask=`uci get ipsec.rsa.des_mask`
+
+	if [ 1 -eq $ipsec_psk_sw ]; then
+		if [ $ipsec_rsa_sw -eq 0 ] && [ $ipsec_x509_sw -eq 0 ]; then
+			ipsec setup restart
+			sleep 2
+			ipsec auto --up net-to-net
+#			iptables -t nat -A POSTROUTING -o usb0 -s $psk_src_subnet/$psk_src_mask -d $psk_des_nexthop/$psk_des_mask -j MASQUERADE
+		fi
+	elif [ 1 -eq $ipsec_rsa_sw ]; then
+		if [ $ipsec_psk_sw -eq 0 ] && [ $ipsec_x509_sw -eq 0 ]; then
+			ipsec setup restart
+			sleep 2
+			ipsec auto --up net-to-net
+#			iptables -t nat -A POSTROUTING -o usb0 -s $rsa_src_subnet/$rsa_src_mask -d  $rsa_des_nexthop/$rsa_des_mask -j MASQUERADE
+		fi
+	elif [ 1 -eq $ipsec_x509_sw ]; then
+		if [ $ipsec_psk_sw -eq 0 ] && [ $ipsec_rsa_sw -eq 0 ]; then
+			ipsec setup restart
+			sleep 2
+			ipsec auto --up net-to-net
+		fi
+	fi
+	
+	#lte sim switch status get 
+	simswitch=`ltectl simswitchget | cut -d: -f 2`
+	uci set config.lte.simswitch=$simswitch	
+	
+	#tr069 config
+	tr069_sw=`uci get tr069.config.switch`
+	if [  "1"x = "$tr069_sw"x ];then
+		/sbin/tr069 &
+		/sbin/tr69mon > /dev/null 2>&1 &
+	fi
+	
+	#Add by zhanghao 2016/7/15 PN:Get ltemodule info
+	lte_module_sw=`gpio 13|awk '{print$5}'`
+	if [ $lte_module_sw -eq 1 ];then
+	swver=`ltectl getdloadprotver | head -n 2 | tail -n 1 | cut -d':' -f2 `
+	isover=`ltectl getdloadprotver | head -n 3 | tail -n 1 | cut -d':' -f2`
+	product_name=`ltectl getdloadprotver | head -n 4 | tail -n 1 | cut -d':' -f2`
+	dload_type=`ltectl getdloadprotver | head -n 5 | tail -n 1 | cut -d':' -f2`
+	dload_ver_info=`ltectl getdloadverinfo | tail -n 1`
+
+	ver1=${swver%?}
+	ver2=${isover%?}
+	ver3=${product_name%?}
+	ver4=${dload_type%?}
+	ver5=$dload_ver_info
+
+	uci set lte.module_info.swver=$ver1
+	uci set lte.module_info.isover=$ver2
+	uci set lte.module_info.product_name=$ver3
+	uci set lte.module_info.dload_type=$ver4
+	uci set lte.module_info.dload_ver_info=$ver5
+	fi
+	
+	#Add by zhanghao 2016/7/15 PN:Get ltemodule info
+	lte_module_sw=`cat /sys/class/gpio/gpio49/value `
+	if [ $lte_module_sw -eq 1 ];then
+	swver=`ltectl2 getdloadprotver | head -n 2 | tail -n 1 | cut -d':' -f2 `
+	isover=`ltectl2 getdloadprotver | head -n 3 | tail -n 1 | cut -d':' -f2`
+	product_name=`ltectl2 getdloadprotver | head -n 4 | tail -n 1 | cut -d':' -f2`
+	dload_type=`ltectl2 getdloadprotver | head -n 5 | tail -n 1 | cut -d':' -f2`
+	dload_ver_info=`ltectl2 getdloadverinfo | tail -n 1`
+
+	ver1=${swver%?}
+	ver2=${isover%?}
+	ver3=${product_name%?}
+	ver4=${dload_type%?}
+	ver5=$dload_ver_info
+
+	uci set lte.module_info.swver2=$ver1
+	uci set lte.module_info.isover2=$ver2
+	uci set lte.module_info.product_name2=$ver3
+	uci set lte.module_info.dload_type2=$ver4
+	uci set lte.module_info.dload_ver_info2=$ver5
+	fi
+	
+	#echo 1 > /proc/sys/net/ipv4/ip_forward
+	#echo 1 > /proc/sys/net/ipv4/conf/usb0/forwarding
+	#echo 1 > /proc/sys/net/ipv4/conf/eth1/forwarding
+	#echo 1 > /proc/sys/net/ipv4/conf/br-lan/forwarding
+	uci commit lte
+	uci commit config
+	uci commit port
+	
+	#add write reboot info
+	echo "------------system reboot !!!------------" >> /mnt/emmc/logsave/00000000000000_sys_log
+	echo "md b8060008 = "`md b8060008` >> /mnt/emmc/logsave/00000000000000_sys_log
+	echo "reboot date = `date`" >> /mnt/emmc/logsave/00000000000000_sys_log
+	showreboot >> /mnt/emmc/logsave/00000000000000_sys_log
+	cat /proc/bb >> /mnt/emmc/logsave/00000000000000_sys_log
+	
+}
+stop() {
+	service_stop /usr/sbin/sysmonitor
+}

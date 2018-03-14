@@ -1,0 +1,38 @@
+#!/bin/sh
+
+
+
+mdmm_help() {
+	echo -e "Usage:\nmd address [count]\nmm address value";
+	exit 1;
+}
+
+md() {
+	count=${2:-1};
+	while [ ${count} -gt 0 ];
+	do
+	  value=`devmem ${addr} 32 || echo FAIL`
+	  if echo ${value} | grep -q FAIL;then
+	    echo "***ERROR,${value%%FAIL}***"
+	  	exit 255;
+	  else
+	  	printf "%08x : %s\n" ${addr} ${value}
+	  fi
+	  addr=$((addr + 4))
+	  count=$((count - 1))
+	done
+}
+
+mm() {
+	[ -n "$2" ] && value=$2 || mdmm_help
+	devmem ${addr} 32 ${value}
+}
+
+if [ $# -eq 0 ] || [ -z "$1" ];then
+	mdmm_help
+fi
+
+fname=`basename $0`
+addr=${1##0x}
+addr=$((0x${addr}))
+${fname} ${addr} $2

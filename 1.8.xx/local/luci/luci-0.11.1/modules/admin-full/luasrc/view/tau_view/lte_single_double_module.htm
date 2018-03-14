@@ -1,0 +1,153 @@
+<%+header%>
+
+<%
+	local uci = require "luci.model.uci".cursor()
+	local lte_single_double_switch    = uci.get('lte','set','single_double_switch')
+	local lte_module_status
+	if '1' == lte_single_double_switch then 
+		lte_module_status = translate("double module")
+	else	
+		lte_module_status = translate("single module")
+	end
+
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{	
+	if( '0' == '<%=lte_single_double_switch%>' )
+	{
+		document.getElementById('module_switch_id').options[0].selected=true;
+	}	
+	else {
+		document.getElementById('module_switch_id').options[1].selected=true;
+	}
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("id_button_lte_single_double").disabled=true;
+	}
+}	
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{param1:data1},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success Please Reboot ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+
+function module_set(module_switch)
+{
+	
+
+
+	ajax_set(module_switch,'<%=pcdata(luci.dispatcher.build_url("admin/lte/lte_single_double_set"))%>', '<%=luci.dispatcher.build_url("admin", "lte")%>/set_infos/');
+}
+
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a name="content"><%:Single Double Module Set%></a></h2><br/>
+		
+
+		<fieldset class="cbi-section">	
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:320px;text-indent:200px;"><%:Module Current Status%></td>
+						<td class="td_class"><%=lte_module_status%></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:320px;text-indent:200px;"><%:Single Double Module Set%>:</td>
+						<td class="td_class"><select  name="module_switch" id="module_switch_id" style="width:210px;">
+							<option value="0"><%:single module%></option>
+                    		<option value="1"><%:double module%></option>
+						</select>
+						&nbsp;<input type="button" id="id_button_lte_single_double" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="module_set(this.form.module_switch.selectedIndex)" /></td></tr>
+		
+				</table>
+			</div>			
+			</fieldset>
+
+	<!--
+		<fieldset class="cbi-section">
+			<div class="cbi-section-descr"><%:Dial Way%>:</div>
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+					<div class="cbi-value-field">
+						<select name="basic_dway" id="id_lte_basic_dailmode" style="width:180px;">
+							<option value="0"><%:manual%></option>
+                   			<option value="1"><%:auto%></option>
+						</select>
+						<input type="button" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="lte_dialmode_sw(this.form.basic_sw.selectedIndex)" />
+					</div>
+				</div>
+			</div>
+		</fieldset>
+	-->
+	</div>
+<!--
+		<fieldset class="cbi-section">
+			<div class="cbi-section-descr"></div>
+				<div class="cbi-value-field">	
+					<legend>
+						<font color="red">
+			 				<%:Note%><br>
+			 				<%:While zero is setted,means set by default value :10s%><br>
+			 		</legend>
+				</div>
+		</fieldset>
+	-->
+
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

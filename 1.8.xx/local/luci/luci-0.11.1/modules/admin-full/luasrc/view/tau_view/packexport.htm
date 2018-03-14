@@ -1,0 +1,597 @@
+<%+header%>
+<head>
+	
+</head>	
+<% -- Add: by xiaowei, 2016/07/22 19:33 PN: add packet export %>
+<%
+
+require "lfs"
+local dir_stat  = ""
+local emmc_stat  = ""
+local file_num  = 0
+local file_name = ""
+local file_leng  = ""
+local file_dir  = "/mnt/emmc/packet/"
+function attrdir (path)
+	local dirpath = io.open(path,"rb")
+	if dirpath then 
+		dirpath:close()
+	else
+		dir_stat="Not find /mnt/emmc/packet/ save packet !"
+		return 
+	end		
+
+	for file in lfs.dir(path) do
+		while true do
+		if file ~= "." and file ~= ".." then
+			local f = path..file
+			if io.open (f,"rb") then 
+				local s =io.open (path,"rb"):read("*a")
+				io.open (path,"rb"):close()
+			else
+				break
+			end		
+			
+			local attr = lfs.attributes (f)
+			assert (type(attr) == "table")
+			if attr.mode == "directory" then
+				attrdir (f,fn)
+			else
+				if string.find(f,"CBTC_") then
+					local fh =assert(io.open(f, "rb"))
+					local len =assert(fh:seek("end"))
+					if tonumber(len) <= tonumber(1073741824) then
+						len = string.format("%.1f", tonumber(len)/1024/1024).."M"	
+					else 
+						len = string.format("%.1f", tonumber(len)/1024/1024/1024).."G"	
+					end	
+					io.open (f,"rb"):close()
+
+					file_leng = file_leng..len..";"
+					file_num = file_num+1
+					file_name = file_name..file..";"
+				end	
+			end
+		end
+		break
+		end
+	end
+end	
+attrdir(file_dir)
+
+local filter_rule = uci.get('config','packet','filter_sw')
+local filter_ip = uci.get('config','packet','filter_ip')
+local remote_sw = uci.get('config','packet','remote_sw')
+local remote_ip = uci.get('config','packet','remote_ip')
+local packet_sw = uci.get('config','packet','packet_sw')
+local export_ip = uci.get('config','packet','export_ip')
+local lan_ip = uci.get('config','packet','lan_ip')
+local wan_ip = uci.get('config','packet','wan_ip')
+local packet_time = uci.get('config','packet','packet_time')
+local packet_size = uci.get('config','packet','packet_size')
+local packet_int = uci.get('config','packet','packet_int')
+
+packet_sw = packet_sw.gsub(packet_sw,"\n","")
+local packet_curr_filel = luci.util.exec("cat /tmp/CBTC_name")
+packet_curr_filel = packet_curr_filel.gsub(packet_curr_filel,"\n","")
+--print("packet_sw="..packet_sw)
+local packet_space = luci.util.exec("df -h | grep sda2 | awk '{print$4}'")
+local packet_total = luci.util.exec("df -h | grep sda2 | awk '{print$2}'")
+--print("packet_space="..packet_space)
+%>
+
+<script type="text/javascript">
+var interval;
+var down_file;
+function all_init()
+{
+	
+	if( '2' == '<%=filter_rule%>' )
+		document.getElementById('packet_filter_id').options[2].selected=true;
+	else if( '1' == '<%=filter_rule%>' )	
+		document.getElementById('packet_filter_id').options[1].selected=true;
+	else 
+		document.getElementById('packet_filter_id').options[0].selected=true;
+		
+	//if( '0' == '<%=remote_sw%>' )
+		//document.getElementById('packet_remote_sw_id').options[0].selected=true;
+	//else 
+		//document.getElementById('packet_remote_sw_id').options[1].selected=true;
+	
+	document.getElementById('packet_filter_ip_id').value = '<%=filter_ip%>';
+	//document.getElementById('packet_remote_id').value = '<%=remote_ip%>';
+	//document.getElementById('packet_export_id').value = '<%=export_ip%>';
+	document.getElementById('packet_lan_id').value = '<%=lan_ip%>';
+	document.getElementById('packet_wan_id').value = '<%=wan_ip%>';
+	document.getElementById('packet_time_id').value = '<%=packet_time%>';
+	document.getElementById('packet_size_id').value = '<%=packet_size%>';
+	document.getElementById('packet_int_id').value = '<%=packet_int%>';
+	
+	
+	if( '0' == '<%=packet_sw%>' )
+	{
+		document.getElementById('packet_sw_id').options[0].selected=true;
+		//document.getElementById("packet_filter_id").disabled=true;
+		//document.getElementById("packet_remote_sw_id").disabled=true;
+		//document.getElementById("packet_filter_ip_id").disabled=true;
+		//document.getElementById("packet_remote_id").disabled=true;
+	}
+	else 
+	{ 
+		document.getElementById('packet_sw_id').options[1].selected=true;
+		document.getElementById("submit_delete_id").style.background = "Gray";
+	}
+	
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("submit_id").disabled=true;
+		document.getElementById("submit_delete_id").disabled=true;
+	}
+}	
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{value1:data1,value2:data2,value3:data3,value4:data4,value5:data5,value6:data6,value7:data7,value8:data8,value9:data9,value10:data10},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+
+function packet_config()
+{
+	var filter_rule = document.getElementById("packet_filter_id").selectedIndex;
+	var filter_ip = document.getElementById("packet_filter_ip_id").value;
+	//var remote_sw = document.getElementById("packet_remote_sw_id").value;
+	//var remote_ip =	document.getElementById("packet_remote_id").value;
+	var packet_sw = document.getElementById("packet_sw_id").selectedIndex; 
+	var lan_ip = document.getElementById("packet_lan_id").value;
+	var wan_ip = document.getElementById("packet_wan_id").value;
+	var packet_time = document.getElementById("packet_time_id").value;
+	var packet_size = document.getElementById("packet_size_id").value;
+	var packet_int = document.getElementById("packet_int_id").value; 
+	
+	if(0!=filter_rule){
+		if( false == check_ipv4_addr(filter_ip) ){
+			alert('<%:input ip address not legal%>');
+			return false;
+		}
+	}
+	
+	//if(0!=remote_sw){
+	//	if( false == check_ipv4_addr(remote_ip) || false == check_ipv4_addr(lan_ip) || false == check_ipv4_addr(wan_ip)){
+	//		alert('<%:input ip address not legal%>');
+	//		return false;
+		//}
+	//}
+	if( !check_ipv4_addr(lan_ip) || !check_ipv4_addr(wan_ip) )
+	{
+		alert('<%:input ip address not legal%>');
+		return false;
+	}
+	if ( !check_int(packet_time) || packet_time == '' )
+	{
+		alert('<%:invalid argument %>');
+		return false;
+	}
+	if ( !check_int(packet_size) || packet_size == '' )
+	{
+		alert('<%:invalid argument %>');
+		return false;
+	}
+	
+	ajax_set(filter_rule,filter_ip,0,0,packet_sw,lan_ip,wan_ip,packet_time,packet_size,packet_int,'<%=pcdata(luci.dispatcher.build_url("admin/config/pack_config"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+
+function packet_delete()
+{
+	var filter_rule = document.getElementById("packet_filter_id").selectedIndex;
+	var filter_ip = document.getElementById("packet_filter_ip_id").value;
+	var packet_sw = document.getElementById("packet_sw_id").selectedIndex; 
+	var lan_ip = document.getElementById("packet_lan_id").value;
+	var wan_ip = document.getElementById("packet_wan_id").value;
+	var packet_time = document.getElementById("packet_time_id").value;
+	var packet_size = document.getElementById("packet_size_id").value;
+	var packet_int = document.getElementById("packet_int_id").value; 
+	
+	var packet_sw = document.getElementById("packet_sw_id").selectedIndex; 
+	if(packet_sw == 1)
+	{
+		return false;  //开启数据本地存储时，禁止使用“删除所有内部数据”
+	} 
+	ajax_set(filter_rule,filter_ip,0,0,packet_sw,lan_ip,wan_ip,packet_time,packet_size,packet_int,'<%=pcdata(luci.dispatcher.build_url("admin/config/packet_delete"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+
+function log_export(file_name)
+{
+	document.getElementById('file_name_id').value= file_name;
+	document.getElementById('file_oper_id').value= "0";
+	document.frmSetup.submit();
+}
+function log_delete(file_name)
+{
+	document.getElementById('file_name_id').value= file_name;
+	document.getElementById('file_oper_id').value= "1";
+	document.frmSetup.submit();
+}
+function showFileList()
+{
+	//var i,k,file,leng; 
+	var i,k,file,tmp,j,file1,key,n,filetemp,leng,lengtemp;
+	var strs= new Array(); //定义一数组 
+	var numArray= new Array(); //定义一数组
+	var legArray= new Array(); //定义一数组
+	var filenames = '<%=file_name%>'
+	var filelengs = '<%=file_leng%>'
+	var curr_write_filel = '<%=packet_curr_filel%>'
+	
+	
+	k="<span id='spanFirst' style='margin-left:100px;width:800px'><%:FirstPage%></span> <span id='spanPre'><%:PageUp%></span> <span id='spanNext'><%:PageDown%></span> <span id='spanLast'><%:EndPage%></span> <%:Current%> <span id='spanPageNum'></span> <%:Page%> <span id='spanTotalPage' style='display:none;'></span> <br> <br>";
+	
+	k+="<table  class='cbi-section-table' style='margin-left:100px;width:800px'><tr><td style='width:25px;'><%:Number%></td><td style='width:50px;'><%:FileName%></td><td style='width:38px;'><%:Export%></td><td style='width:23px;'><%:Delete%></td><td style='width:10px;'><%:size%></td></tr></table>";
+	k+="<table id='tablelsw' class='cbi-section-table' style='margin-left:100px;width:800px'>";
+	strs = filenames.split(";");
+	//mstrs= mfilenames.split(";");
+	legArray = filelengs.split(";");
+	
+	for(i=0;i<strs.length-1;i++)
+	{
+		for(j=0;j<strs.length-i-1;j++)
+		{
+			
+			numArr = strs[j].split("_");
+			tmp =numArr[1]
+			tmp =parseInt(tmp)
+			
+			numArray = strs[j+1].split("_");
+			key =numArray[1]
+			key =parseInt(key)
+			
+			if( key>tmp )
+			{
+				//strs[j+1] = strs[j]
+				filetemp = strs[j]
+				strs[j]  = strs[j+1]
+				strs[j+1] = filetemp
+				
+				lengtemp = legArray[j]
+				legArray[j]  = legArray[j+1]
+				legArray[j+1] = lengtemp
+				
+			}
+	
+		}	
+	}
+	for(i=1;i<strs.length;i++)
+	{
+		//if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+		//	k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:260px;'>"+strs[i-1]+"</td><td style='width:190px;'><style='background-color:#90f090;' onclick='log_export(\""+strs[i-1]+"\")'></td><td><style='background-color:#f09090' onclick='log_delete(\""+strs[i-1]+"\")'></td></tr>");
+		//else
+		//	k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:260px;'>"+strs[i-1]+"</td><td style='width:190px;'><input type='submit' name='export_file' value='<%:Export%>' style='background-color:#90f090;' onclick='log_export(\""+strs[i-1]+"\")'></td><td><input type='submit' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='log_delete(\""+strs[i-1]+"\")'></td></tr>");
+		
+		
+		if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:260px;'>"+strs[i-1]+"</td><td style='width:190px;'><style='background-color:#90f090;' onclick='return log_export(\""+strs[i-1]+"\")'></td><td><style='background-color:#f09090' ></td></tr>");
+		else
+		{
+			if((strs[i-1] == curr_write_filel )&& '<%=packet_sw%>' == '1')
+			{
+				k+=("<tr><td style='width:120px;' >&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:195px;'><font style='font-weight:bold;' color='red' size='2'>"+strs[i-1]+"</td><td style='width:150px;'><input type='hidden' name='export_file' value='<%:Export%>' style='background-color:#90f090;' onclick='return log_export(\""+strs[i-1]+"\")'></td><td><input type='hidden' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='log_delete(\""+strs[i-1]+"\")'></td><td style='width:120px;'>"+legArray[i-1]+"</font></td></tr>");
+			}else{
+				k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:195px;'>"+strs[i-1]+"</td><td style='width:150px;'><input type='submit' name='export_file' value='<%:Export%>' style='background-color:#90f090;' onclick='return log_export(\""+strs[i-1]+"\")'></td><td><input type='submit' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='log_delete(\""+strs[i-1]+"\")'></td><td style='width:120px;'>"+legArray[i-1]+"</td></tr>");
+			}
+		}
+	}
+	/*for(i=1;i<='<%=file_num%>';i++)
+	{
+		file = filenames.split(';')[0];
+		filenames = filenames.substring(file.length+1)
+		leng = filelengs.split(';')[0];
+		filelengs = filelengs.substring(leng.length+1)
+		//<td style='width:160px'><input type='checkbox'id='checkbox_id' name='checkbox"+i+"' value="+i+"></td>
+		if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:260px;'>"+file+"</td><td style='width:190px;'><style='background-color:#90f090;' onclick='return log_export(\""+file+"\")'></td><td><style='background-color:#f09090' onclick='log_delete(\""+file+"\")'></td></tr>");
+		else
+		{
+			if((file == curr_write_filel || file == curr_write_filew)&& '<%=packet_sw%>' == '1')
+			{
+				k+=("<tr><td style='width:120px;' >&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:195px;'><font style='font-weight:bold;' color='red' size='2'>"+file+"</td><td style='width:150px;'><input type='hidden' name='export_file' value='<%:Export%>' style='background-color:#90f090;' onclick='return log_export(\""+file+"\")'></td><td><input type='hidden' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='log_delete(\""+file+"\")'></td><td style='width:120px;'>"+leng+"</font></td></tr>");
+			}else{
+				k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:195px;'>"+file+"</td><td style='width:150px;'><input type='submit' name='export_file' value='<%:Export%>' style='background-color:#90f090;' onclick='return log_export(\""+file+"\")'></td><td><input type='submit' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='log_delete(\""+file+"\")'></td><td style='width:120px;'>"+leng+"</td></tr>");
+			}
+		}
+	}*/
+	
+	k+="<td></td><td></td><td></td><td></td>";
+	k+="</table>";
+	document.write(k);
+}
+</script>
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Packet%></a></h2><br/>
+		
+		<fieldset class="cbi-section">
+			<legend><%:Packet%></legend><br/>
+			
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="text-indent:100px;"><legend><%:Config%>:</legend></td></tr>
+					<td class="td_class" style="width:300px;text-indent:180px;"><%:total size%>:</td>
+						<td class="td_class" style="text-indent:10px;"><legend><%=packet_total%></legend></td></tr>	
+					<td class="td_class" style="width:300px;text-indent:180px;"><%:The current storage size%>:</td>
+						<td class="td_class" style="text-indent:10px;"><legend><%=packet_space%></legend></td></tr>	
+						
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:180px;"><%:packet delete%></td>
+						<td class="td_class">
+						<input type="button" id="submit_delete_id" class="cbi-button cbi-button-apply" value="<%:Delete%>" style="width:100px;" onclick="packet_delete()" /></td></tr>
+					
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:180px;"><%:filter rule set%>:</td>
+						<td class="td_class"><select  name="packet_filter" id="packet_filter_id" style="width:210px;">
+							<option value="0"><%:none%></option>
+                    		<option value="1"><%:dst ip%></option>
+                    		<option value="2"><%:src ip%></option>
+						</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:180px;"><%:filter set ip%>:</td>
+						<td class="td_class">
+						<input name="packet_filter_ip" id="packet_filter_ip_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<!--
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:remote switch%>:</td>
+						<td class="td_class"><select  name="packet_remote_sw" id="packet_remote_sw_id" style="width:210px;">
+							<option value="0"><%:off%></option>
+                    		<option value="1"><%:on%></option>
+						</select></td></tr>	
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:remote sever%>:</td>
+						<td class="td_class">
+						<input name="packet_remote" id="packet_remote_id" type="text" style="width:200px;margin-left:0px;"></td></tr>					
+					-->
+					<tr class="tr_class">	
+						<td class="td_class" style="width:300px;text-indent:180px;"><%:packet switch%>:</td>
+						<td class="td_class"><select  name="packet_sw" id="packet_sw_id" style="width:210px;">
+							<option value="0"><%:off%></option>
+                    		<option value="1"><%:on%></option>
+						</select>
+						<input type="button" id="submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="packet_config()" /></td></tr>
+					<tr class="tr_class">		
+						<td class="td_class" style="width:300px;text-indent:180px;"><%:interface%>:</td>
+						<td class="td_class">
+						<input name="packet_int" id="packet_int_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">		
+						<td class="td_class" style="width:300px;text-indent:180px;"><%:lan sever%>:</td>
+						<td class="td_class">
+						<input name="packet_lan" id="packet_lan_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">		
+						<td class="td_class" style="width:300px;text-indent:180px;"><%:wan sever%>:</td>
+						<td class="td_class">
+						<input name="packet_wan" id="packet_wan_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+						
+<!--					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:180px;"><%:export FTP%>:</td>
+						<td class="td_class">
+						<input name="packet_export_ip" id="packet_export_id" type="text" style="width:200px;margin-left:0px;"></td></tr>	
+-->					
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:180px;"><%:export time%>:</td>
+						<td class="td_class">
+						<input name="packet_export_time" id="packet_time_id" type="text" style="width:200px;margin-left:0px;"><%:  min%></br></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:180px;"><%:export size%>:</td>
+						<td class="td_class">
+						<input name="packet_export_size" id="packet_size_id" type="text" style="width:200px;margin-left:0px;"><%:  M%></br></td></tr>	
+<!--					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:180px;"><%:Note%>:</td>
+						<td class="td_class">
+						<font style="font-weight:bold;" color="red" size="3"><%:If you want to export file, please fill in the export file FTP server address!%></font></br>
+						<font style="font-weight:bold;" color="red" size="3"><%:log is lastest%></font></br>
+						<font style="font-weight:bold;" color="red" size="3"><%:The file with _w is the file that stores the downstream data, and the file with _l is the upload file!%></font></br>
+						<font style="font-weight:bold;" color="red" size="3"><%:Marked with the red file called packets that are being saved, if necessary please stop this function was derived, the configuration switch off!%></font></td></tr>	
+-->				
+				</table>
+			</div>
+			
+			<div id="pro_bar_1" class="black_overlay" style="position: absolute;display:none;width: 900px;
+    height: 300px;top: 120px;">
+</div>
+	<div id="pro_bar_2" class="white_content" style="position: absolute;display:none;width: 900px;
+    height: 300px;top: 120px;">
+	<div style="text-align: right; cursor: default;position: absolute;width: 900px;
+    height: 100px;top: 290px;">
+    <div class="progress">
+			  <b class="progress__bar">
+			    <span class="progress__text" style="right:0px;color:black;">
+			      Progress: <em>0%</em>
+			    </span>
+			  </b>
+			</div>
+	</div>
+</div>
+			<div class="cbi-section-descr"></div>
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+					<legend style="margin-left:100px;"><font style="font-weight:bold;" color="red" size="3"><%=dir_stat%> <%=emmc_stat%></font></legend><br/>
+					<script>showFileList();</script>
+					<input name="file_name" id="file_name_id" type="text" value="" style="margin-left:100px;width:200px;display:none;" size="12">
+					<input name="file_oper" id="file_oper_id" type="text" value="" style="margin-left:100px;width:200px;display:none;" size="12">
+				</div>
+			</div>
+		</fieldset>
+
+	</div>
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+<script>   
+  
+var theTable = document.getElementById("tablelsw");    
+var totalPage = document.getElementById("spanTotalPage");    
+var pageNum = document.getElementById("spanPageNum");    
+   
+var spanPre = document.getElementById("spanPre");    
+var spanNext = document.getElementById("spanNext");    
+var spanFirst = document.getElementById("spanFirst");    
+var spanLast = document.getElementById("spanLast");    
+   
+var numberRowsInTable = theTable.rows.length;    
+var pageSize = 10;	// Accommodate the number of each page 
+var page = 1;    	// The number of pages of the initial
+    
+function next(){    
+   
+    hideTable();    
+        
+    currentRow = pageSize * page;    
+    maxRow = currentRow + pageSize;    
+    if ( maxRow > numberRowsInTable ) maxRow = numberRowsInTable;    
+    for ( var i = currentRow; i< maxRow; i++ ){    
+        theTable.rows[i].style.display = '';    
+    }    
+    page++;    
+
+    if ( maxRow == numberRowsInTable ) { nextText(); lastText(); }  
+    showPage();    
+    preLink();    
+    firstLink();    
+}    
+      
+function pre(){    
+   
+    hideTable();    
+        
+    page--;    
+        
+    currentRow = pageSize * page;    
+    maxRow = currentRow - pageSize;    
+    if ( currentRow > numberRowsInTable ) currentRow = numberRowsInTable;    
+    for ( var i = maxRow; i< currentRow; i++ ){    
+        theTable.rows[i].style.display = '';    
+    }    
+        
+        
+    if ( maxRow == 0 ){ preText(); firstText(); }    
+    showPage();    
+    nextLink();    
+    lastLink();    
+}    
+      
+function first(){    
+    hideTable();    
+    page = 1;    
+    for ( var i = 0; i<pageSize; i++ ){    
+        theTable.rows[i].style.display = '';    
+    }    
+    showPage();    
+        
+    preText();    
+    nextLink();    
+    lastLink();    
+}    
+     
+function last(){    
+    hideTable();    
+    page = pageCount();    
+    currentRow = pageSize * (page - 1);    
+    for ( var i = currentRow; i<numberRowsInTable; i++ ){    
+        theTable.rows[i].style.display = '';    
+    }    
+    showPage();    
+        
+    preLink();    
+    nextText();    
+    firstLink();    
+}    
+   
+function hideTable(){    
+    for ( var i = 0; i<numberRowsInTable; i++ ){    
+        theTable.rows[i].style.display = 'none';    
+    }    
+}    
+   
+function showPage(){     
+ pageNum.innerHTML = page;
+}    
+   
+function pageCount(){    
+    var count = 0;    
+    if ( numberRowsInTable%pageSize != 0 ) count = 1;     
+    return parseInt(numberRowsInTable/pageSize) + count;    
+}    
+   
+function preLink(){ spanPre.innerHTML = "<a href='javascript:pre();'><%:PageUp%></a>";}    
+function preText(){ spanPre.innerHTML = "<%:PageUp%>";}    
+   
+function nextLink(){ spanNext.innerHTML = "<a href='javascript:next();'><%:PageDown%></a>";}    
+function nextText(){ spanNext.innerHTML = "<%:PageDown%>";}    
+   
+function firstLink(){ spanFirst.innerHTML = "<a href='javascript:first();'><%:FirstPage%></a>";}    
+function firstText(){ spanFirst.innerHTML = "<%:FirstPage%>";}    
+   
+function lastLink(){ spanLast.innerHTML = "<a href='javascript:last();'><%:EndPage%></a>";}    
+function lastText(){ spanLast.innerHTML = "<%:EndPage%>";}    
+     
+function hide(){    
+    for ( var i = pageSize; i<numberRowsInTable; i++ ){    
+        theTable.rows[i].style.display = 'none';    
+    }    
+        
+    totalPage.innerHTML = pageCount();
+    pageNum.innerHTML = '1';    
+        
+    nextLink();    
+    lastLink();    
+}    
+hide();    
+
+</script>
+<%+footer%>

@@ -1,0 +1,18 @@
+# Usage: root>pppd call td
+ttyACM0
+115200
+nocrtscts
+connect '/usr/sbin/chat -s -v -f /etc/ppp/chat/td-connect-chat'
+debug
+usepeerdns
+noauth
+nodetach
+noipdefault
+-chap
+user ascend
+password ascend
+ipcp-accept-local
+ipcp-accept-remote
+modem
+defaultroute
+

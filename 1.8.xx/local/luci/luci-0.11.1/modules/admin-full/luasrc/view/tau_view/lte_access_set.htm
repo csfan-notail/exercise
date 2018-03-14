@@ -1,0 +1,211 @@
+<%+header%>
+<%
+	local uci = require "luci.model.uci".cursor()
+
+	local lte_lockfrequency_sw = uci.get('lte','frequency','lock_sw')
+	local lte_lockbandend      = uci.get('lte','frequency','bandend')
+	local lte_lockbandstart    = uci.get('lte','frequency','bandstart')
+	local lte_lockfrequency    = uci.get('lte','frequency','frequency')
+	local lte_lockcommunity    = uci.get('lte','frequency','lock_community')
+	local lteinfo_physical_community_id = uci.get('lteinfo','info','physical_community_id')
+
+%>
+<script type="text/javascript">
+	
+
+function all_init()
+{
+	document.getElementById('id_lock_frequency_sw').options['<%=lte_lockfrequency_sw%>'].selected = true;
+	document.getElementById('id_lock_frequency').value     = '<%=lte_lockfrequency%>';
+	document.getElementById('id_physical_community').value = '<%=lte_lockcommunity%>';
+	document.getElementById('id_lock_band_start').value    = '<%=lte_lockbandstart%>';
+	document.getElementById('id_lock_band_end').value      = '<%=lte_lockbandend%>';
+
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("lte_accesss_add_submit_id").disabled=true;
+	}
+}
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,data6,data7,data8,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{param1:data1,param2:data2,param3:data3,param4:data4,param5:data5,param6:data6,param7:data7,param8:data8},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}		
+
+function lte_lock_frequency_sw(lockfrequency_sw)
+{
+	var band_end           = document.getElementById('id_lock_band_end').value;
+	var frequency          = document.getElementById('id_lock_frequency').value;
+	var band_start         = document.getElementById('id_lock_band_start').value;
+	var physical_community = document.getElementById('id_physical_community').value;
+	
+	if(!check_int(physical_community) || !check_int(frequency) || !check_int(band_end) || !check_int(band_start) )
+	{
+		alert('<%:invalid argument%>');
+		return -1;
+	}
+	if(band_end < band_start)
+	{
+		alert('<%:invalid argument%>');
+		return -1;
+	}
+	if(lockfrequency_sw == 1){
+		if(0 == band_start || 0 == band_end){
+			alert('<%:While select lock band mode,lock band start and lock band end must be infilled%>');	
+			return -1;
+		}
+	}
+	if(lockfrequency_sw == 2){
+		if(0 == frequency){
+			alert('<%:While select lock frequency mode,lock frequency must be infilled%>');	
+			return -1;
+		}
+	}
+	if(lockfrequency_sw == 3){
+		if(0 == frequency || 0 == physical_community){
+			alert('<%:While select lock cell mode,frequency and cellid must be infilled%>');
+			return -1;
+		}
+	}
+	
+	if(lockfrequency_sw == 0)	
+	{
+		band_end   = 0;
+		band_start = 0;
+		frequency  = 0;
+		physical_community = 0;
+
+		ajax_set(lockfrequency_sw,frequency,physical_community,band_start,band_end,0,0,0,'<%=pcdata(luci.dispatcher.build_url("admin/lte/lte_lock_frequency"))%>', '<%=luci.dispatcher.build_url("admin", "lte")%>/set_infos/');
+	}
+	else
+	{
+		ajax_set(lockfrequency_sw,frequency,physical_community,band_start,band_end,0,0,0,'<%=pcdata(luci.dispatcher.build_url("admin/lte/lte_lock_frequency"))%>', '<%=luci.dispatcher.build_url("admin", "lte")%>/set_infos/');
+	}
+
+}
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a><%:Access Setting%></a></h2><br/>
+
+		<fieldset class="cbi-section">	
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Network Access Mode%>:</td>
+						<td class="td_class">
+							<select name="net_access_sw" id="id_lte_access_mode" style="width:180px;">
+							<option value="0"><%:4G%></option>
+						</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Lock Frequency Switch%>:</td>
+						<td class="td_class">
+						<select name="lockfrequency_sw" id="id_lock_frequency_sw" style="width:180px;">
+							<option value="0"><%:disable%></option>
+                   			<option value="1"><%:lock band%></option>
+                   			<option value="2"><%:lock frequency%></option>
+                   			<option value="3"><%:lock cell%></option>
+						</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Access Community%>:</td>
+						<td class="td_class">
+						<%=lteinfo_physical_community_id%></td></tr>
+	<!--			<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Lock Bands%>:</td>
+						<td class="td_class">
+						<input type="radio" name="name_radio" id="id_radio_null"><%:Null%>&nbsp;
+						<input type="radio" name="name_radio" id="id_radio_39"><%:Band 39%>&nbsp;
+						<input type="radio" name="name_radio" id="id_radio_62"><%:Band 62%>
+						</td></tr>             -->				
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Lock Band start%>:</td>
+						<td class="td_class">
+						<input id="id_lock_band_start" type="text" style="width:180px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Lock Band end%>:</td>
+						<td class="td_class">
+						<input id="id_lock_band_end" type="text" style="width:180px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Lock physical community%>:</td>
+						<td class="td_class">
+						<input id="id_physical_community" type="text" style="width:180px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Lock Frequency%>:</td>
+						<td class="td_class">
+						<input id="id_lock_frequency" type="text" style="width:180px;">&nbsp;&nbsp;
+						<input type="button" id="lte_accesss_add_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="lte_lock_frequency_sw(this.form.lockfrequency_sw.selectedIndex)" /></td></tr>	
+				</table>
+			</div>			
+			</fieldset>
+
+		<fieldset class="cbi-section">
+			<div class="cbi-section-descr"></div>
+				<div class="cbi-value-field">	
+					<legend>
+						<font color="red">
+			 				<%:Note%><br>
+			 				<%:Setting completed,effect after restart%><br>
+			 				<%:While select lock mode,please unlock module%><br>
+			 				<%:While select lock band mode,lock band start and lock band end must be infilled%><br>
+			 				<%:While select lock frequency mode,lock frequency must be infilled%><br>
+			 				<%:While select lock cell mode,frequency and cellid must be infilled%><br>
+			 		</legend>
+				</div>
+		</fieldset>
+
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	
+	<script type="text/javascript">all_init();</script>
+
+	
+</form>
+
+<%+footer%>

@@ -1,0 +1,20 @@
+#!/bin/sh
+
+#
+# miscellaneous hooks used to init local environment
+#
+
+
+custom_oem_load()
+{
+	oem check
+
+	local logo_path='/www/luci-static/resources/custom_logo.jpg'
+	local logo_target=$(oem getfile logo.jpg)
+	[ -n "{logo_target}" ] && [ "$(readlink ${logo_path})" != "${logo_target}" ] && ln -sf "${logo_target}" "${logo_path}"
+}
+
+
+boot_hook_add preinit_main custom_oem_load
+
+

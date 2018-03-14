@@ -1,0 +1,36 @@
+<%
+local currauth = luci.http.getcookie("currauth")
+%>
+	<%- if pageaction then -%>
+	<div class="cbi-page-actions">
+		<% if redirect then %>
+		<div style="float:left">
+			<input class="cbi-button cbi-button-link" type="button" value="<%:Back to Overview%>" onclick="location.href='<%=pcdata(redirect)%>'" />
+		</div>
+		<% end %>
+
+		<% if flow.skip then %>
+			<%- if "0" == currauth or "1" == currauth then -%>
+				<input class="cbi-button cbi-button-skip" type="submit" name="cbi.skip" value="<%:Skip%>" />
+			<%- end -%>
+		<% end %>
+		<% if not autoapply and not flow.hideapplybtn then %>
+			<%- if "0" == currauth or "1" == currauth then -%>
+				<input id="saveApply_submit_id" class="cbi-button cbi-button-apply" type="submit" name="cbi.apply" value="<%:Save & Apply%>" />
+			<%- end -%>
+		<% end %>
+<!--		<% if not flow.hidesavebtn then %>
+			<%- if "0" == currauth or "1" == currauth then -%>
+				<input id="save_submit_id" class="cbi-button cbi-button-save" type="submit" value="<%:Save%>" />
+			<%- end -%>
+		<% end %>
+-->
+		<% if not flow.hideresetbtn then %>
+			<!--<input class="cbi-button cbi-button-reset" type="reset" value="<%:Reset%>" />-->
+		<% end %>
+
+		<script type="text/javascript">cbi_d_update();</script>
+	</div>
+	<%- end -%>
+</form>
+<%+footer%>

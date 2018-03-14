@@ -1,0 +1,17 @@
+<soap:Envelope 
+			soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" 
+			xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
+			xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" 
+			xmlns:cwmp="urn:dslforum-org:cwmp-1-0" 
+			xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <soap:Header>
+    <cwmp:ID soap:mustUnderstand="1">3D8D198B69F94D7BB2A9266408481BE9</cwmp:ID>
+  </soap:Header>
+  <soap:Body>
+    <cwmp:GetRPCMethods>
+    </cwmp:GetRPCMethods>
+  </soap:Body>
+</soap:Envelope>
+
+

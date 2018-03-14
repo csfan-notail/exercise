@@ -1,0 +1,24 @@
+#!/bin/sh
+# An unforunate wrapper script
+# so that the exit code of pppd may be retrieved
+
+# this is a workaround for issue #651747
+#trap "/system/bin/sleep 1;exit 0" TERM
+
+#export PATH=/system/bin
+
+PPPD_PID=
+
+#setprop "net.gprs.ppp-exit" ""
+
+echo "Starting pppd"
+
+#pppd $*
+pppd connect 'chat -v "" "ATE0V1" "" "ATS7=60S30=0" "" "ATS0=0" "" "AT" "" "ATE0V1" "" "ATS7=60S30=0" "" "AT" "" "ATDT#777 CONNECT"' user m2m password vnet.mobi /dev/ttyUSB0 115200 passive nodetach crtscts debug usepeerdns defaultroute noauth mru 1400 lcp-echo-failure 4 lcp-echo-interval 30 ipcp-max-failure 30 ipcp-max-configure 30 -pc -ac $* 
+
+PPPD_EXIT=$?
+PPPD_PID=$!
+
+echo  "pppd exited with $PPPD_EXIT"
+
+echo "$PPPD_EXIT"

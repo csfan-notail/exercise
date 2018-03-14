@@ -1,0 +1,675 @@
+Archive member included because of file (symbol)
+
+/usr/lib/i386-linux-gnu/libc_nonshared.a(elf-init.oS)
+                              /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o (__libc_csu_fini)
+/usr/lib/i386-linux-gnu/libc_nonshared.a(atexit.oS)
+                              pidfile.o (atexit)
+
+Allocating common symbols
+Common symbol       size              file
+
+dvmrp_group         0x4               igmp.o
+s2                  0x13              inet.o
+s4                  0x13              inet.o
+send_buf            0x4               igmp.o
+dvmrp_genid         0x4               igmp.o
+s1                  0x13              inet.o
+s3                  0x13              inet.o
+igmp_socket         0x4               igmp.o
+allhosts_group      0x4               igmp.o
+recv_buf            0x4               igmp.o
+our_addr            0x4               mapper.o
+numvifs             0x2               mapper.o
+allrtrs_group       0x4               igmp.o
+
+Discarded input sections
+
+ .note.GNU-stack
+                0x0000000000000000        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+ .gnu_debuglink
+                0x0000000000000000        0xc /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crti.o
+ .gnu_debuglink
+                0x0000000000000000        0xc /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crti.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/crtbegin.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 igmp.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 inet.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kern.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 mapper.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 strlcpy.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 pidfile.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 strtonum.o
+ .group         0x0000000000000000        0x8 /usr/lib/i386-linux-gnu/libc_nonshared.a(elf-init.oS)
+ .note.GNU-stack
+                0x0000000000000000        0x0 /usr/lib/i386-linux-gnu/libc_nonshared.a(elf-init.oS)
+ .group         0x0000000000000000        0x8 /usr/lib/i386-linux-gnu/libc_nonshared.a(atexit.oS)
+ .text.__i686.get_pc_thunk.bx
+                0x0000000000000000        0x4 /usr/lib/i386-linux-gnu/libc_nonshared.a(atexit.oS)
+ .note.GNU-stack
+                0x0000000000000000        0x0 /usr/lib/i386-linux-gnu/libc_nonshared.a(atexit.oS)
+ .note.GNU-stack
+                0x0000000000000000        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/crtend.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crtn.o
+ .gnu_debuglink
+                0x0000000000000000        0xc /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crtn.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+LOAD /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+LOAD /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crti.o
+LOAD /usr/lib/gcc/i486-linux-gnu/4.7/crtbegin.o
+LOAD igmp.o
+LOAD inet.o
+LOAD kern.o
+LOAD mapper.o
+LOAD strlcpy.o
+LOAD pidfile.o
+LOAD strtonum.o
+LOAD /usr/lib/gcc/i486-linux-gnu/4.7/libgcc.a
+LOAD /usr/lib/gcc/i486-linux-gnu/4.7/libgcc_s.so
+LOAD /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/libc.so
+START GROUP
+LOAD /lib/i386-linux-gnu/libc.so.6
+LOAD /usr/lib/i386-linux-gnu/libc_nonshared.a
+LOAD /lib/i386-linux-gnu/ld-linux.so.2
+END GROUP
+LOAD /usr/lib/gcc/i486-linux-gnu/4.7/libgcc.a
+LOAD /usr/lib/gcc/i486-linux-gnu/4.7/libgcc_s.so
+LOAD /usr/lib/gcc/i486-linux-gnu/4.7/crtend.o
+LOAD /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crtn.o
+                0x0000000008048000                PROVIDE (__executable_start, 0x8048000)
+                0x0000000008048134                . = (0x8048000 + SIZEOF_HEADERS)
+
+.interp         0x0000000008048134       0x13
+ *(.interp)
+ .interp        0x0000000008048134       0x13 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+
+.note.ABI-tag   0x0000000008048148       0x20
+ .note.ABI-tag  0x0000000008048148       0x20 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+
+.note.gnu.build-id
+                0x0000000008048168       0x24
+ *(.note.gnu.build-id)
+ .note.gnu.build-id
+                0x0000000008048168       0x24 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+
+.hash           0x000000000804818c      0x178
+ *(.hash)
+ .hash          0x000000000804818c      0x178 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+
+.gnu.hash       0x0000000008048304       0x3c
+ *(.gnu.hash)
+ .gnu.hash      0x0000000008048304       0x3c /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+
+.dynsym         0x0000000008048340      0x370
+ *(.dynsym)
+ .dynsym        0x0000000008048340      0x370 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+
+.dynstr         0x00000000080486b0      0x1e9
+ *(.dynstr)
+ .dynstr        0x00000000080486b0      0x1e9 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+
+.gnu.version    0x000000000804889a       0x6e
+ *(.gnu.version)
+ .gnu.version   0x000000000804889a       0x6e /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+
+.gnu.version_d  0x0000000008048908        0x0
+ *(.gnu.version_d)
+ .gnu.version_d
+                0x0000000000000000        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+
+.gnu.version_r  0x0000000008048908       0x40
+ *(.gnu.version_r)
+ .gnu.version_r
+                0x0000000008048908       0x40 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+
+.rel.dyn        0x0000000008048948       0x28
+ *(.rel.init)
+ *(.rel.text .rel.text.* .rel.gnu.linkonce.t.*)
+ .rel.text      0x0000000000000000        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+ .rel.text.startup
+                0x0000000000000000        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+ *(.rel.fini)
+ *(.rel.rodata .rel.rodata.* .rel.gnu.linkonce.r.*)
+ *(.rel.data.rel.ro* .rel.gnu.linkonce.d.rel.ro.*)
+ *(.rel.data .rel.data.* .rel.gnu.linkonce.d.*)
+ *(.rel.tdata .rel.tdata.* .rel.gnu.linkonce.td.*)
+ *(.rel.tbss .rel.tbss.* .rel.gnu.linkonce.tb.*)
+ *(.rel.ctors)
+ *(.rel.dtors)
+ *(.rel.got)
+ .rel.got       0x0000000008048948        0x8 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+ *(.rel.bss .rel.bss.* .rel.gnu.linkonce.b.*)
+ .rel.bss       0x0000000008048950       0x20 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+ *(.rel.ifunc)
+
+.rel.plt        0x0000000008048970      0x180
+ *(.rel.plt)
+ .rel.plt       0x0000000008048970      0x180 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+                0x0000000008048af0                PROVIDE (__rel_iplt_start, .)
+ *(.rel.iplt)
+ .rel.iplt      0x0000000000000000        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+                0x0000000008048af0                PROVIDE (__rel_iplt_end, .)
+
+.init           0x0000000008048af0       0x26
+ *(.init)
+ .init          0x0000000008048af0       0x22 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crti.o
+                0x0000000008048af0                _init
+ .init          0x0000000008048b12        0x4 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crtn.o
+
+.plt            0x0000000008048b20      0x310
+ *(.plt)
+ .plt           0x0000000008048b20      0x310 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+                0x0000000008048b30                setsockopt@@GLIBC_2.0
+                0x0000000008048b40                printf@@GLIBC_2.0
+                0x0000000008048b50                fflush@@GLIBC_2.0
+                0x0000000008048b60                free@@GLIBC_2.0
+                0x0000000008048b70                memcpy@@GLIBC_2.0
+                0x0000000008048b80                fclose@@GLIBC_2.1
+                0x0000000008048b90                time@@GLIBC_2.0
+                0x0000000008048ba0                select@@GLIBC_2.0
+                0x0000000008048bb0                ctime@@GLIBC_2.0
+                0x0000000008048bc0                recvfrom@@GLIBC_2.0
+                0x0000000008048bd0                gethostbyaddr@@GLIBC_2.0
+                0x0000000008048be0                getuid@@GLIBC_2.0
+                0x0000000008048bf0                geteuid@@GLIBC_2.0
+                0x0000000008048c00                unlink@@GLIBC_2.0
+                0x0000000008048c10                err@@GLIBC_2.0
+                0x0000000008048c20                getsockopt@@GLIBC_2.0
+                0x0000000008048c30                perror@@GLIBC_2.0
+                0x0000000008048c40                fwrite@@GLIBC_2.0
+                0x0000000008048c50                strtoll@@GLIBC_2.0
+                0x0000000008048c60                getpid@@GLIBC_2.0
+                0x0000000008048c70                __cxa_atexit@@GLIBC_2.1.3
+                0x0000000008048c80                malloc@@GLIBC_2.0
+                0x0000000008048c90                puts@@GLIBC_2.0
+                0x0000000008048ca0                strerror@@GLIBC_2.0
+                0x0000000008048cc0                exit@@GLIBC_2.0
+                0x0000000008048cd0                strlen@@GLIBC_2.0
+                0x0000000008048ce0                __libc_start_main@@GLIBC_2.0
+                0x0000000008048cf0                fprintf@@GLIBC_2.0
+                0x0000000008048d00                getopt@@GLIBC_2.0
+                0x0000000008048d10                setlinebuf@@GLIBC_2.0
+                0x0000000008048d20                warnx@@GLIBC_2.0
+                0x0000000008048d30                fopen@@GLIBC_2.1
+                0x0000000008048d40                snprintf@@GLIBC_2.0
+                0x0000000008048d50                putchar@@GLIBC_2.0
+                0x0000000008048d60                __errno_location@@GLIBC_2.0
+                0x0000000008048d70                asprintf@@GLIBC_2.0
+                0x0000000008048d80                sendto@@GLIBC_2.0
+                0x0000000008048d90                vfprintf@@GLIBC_2.0
+                0x0000000008048da0                fputc@@GLIBC_2.0
+                0x0000000008048db0                sscanf@@GLIBC_2.0
+                0x0000000008048dc0                setuid@@GLIBC_2.0
+                0x0000000008048dd0                getsockname@@GLIBC_2.0
+                0x0000000008048de0                socket@@GLIBC_2.0
+                0x0000000008048df0                inet_addr@@GLIBC_2.0
+                0x0000000008048e00                gethostbyname@@GLIBC_2.0
+                0x0000000008048e10                connect@@GLIBC_2.0
+                0x0000000008048e20                close@@GLIBC_2.0
+ *(.iplt)
+ .iplt          0x0000000000000000        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+
+.text           0x0000000008048e30     0x3dcc
+ *(.text.unlikely .text.*_unlikely)
+ *(.text.exit .text.exit.*)
+ *(.text.startup .text.startup.*)
+ .text.startup  0x0000000008048e30      0x553 mapper.o
+                0x0000000008048e30                main
+ *(.text.hot .text.hot.*)
+ *(.text .stub .text.* .gnu.linkonce.t.*)
+ *fill*         0x0000000008049383        0x1 90909090
+ .text          0x0000000008049384       0x24 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+                0x0000000008049384                _start
+ .text          0x00000000080493a8        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crti.o
+ *fill*         0x00000000080493a8        0x8 90909090
+ .text          0x00000000080493b0       0xbc /usr/lib/gcc/i486-linux-gnu/4.7/crtbegin.o
+ *fill*         0x000000000804946c        0x4 90909090
+ .text          0x0000000008049470      0xb95 igmp.o
+                0x0000000008049470                init_igmp
+                0x0000000008049580                igmp_packet_kind
+                0x0000000008049770                igmp_debug_kind
+                0x00000000080497c0                accept_igmp
+                0x0000000008049ce0                build_igmp
+                0x0000000008049d70                send_igmp
+ *fill*         0x000000000804a005        0xb 90909090
+ .text          0x000000000804a010      0x3e2 inet.o
+                0x000000000804a010                inet_valid_host
+                0x000000000804a040                inet_valid_mask
+                0x000000000804a060                inet_valid_subnet
+                0x000000000804a0f0                inet_fmt
+                0x000000000804a140                inet_fmts
+                0x000000000804a2a0                inet_parse
+                0x000000000804a380                inet_cksum
+ *fill*         0x000000000804a3f2        0xe 90909090
+ .text          0x000000000804a400      0x99f kern.o
+                0x000000000804a400                k_init_dvmrp
+                0x000000000804a490                k_stop_dvmrp
+                0x000000000804a4f0                k_set_rcvbuf
+                0x000000000804a650                k_hdr_include
+                0x000000000804a6c0                k_set_ttl
+                0x000000000804a740                k_set_loop
+                0x000000000804a7b0                k_set_if
+                0x000000000804a860                k_join
+                0x000000000804a920                k_leave
+                0x000000000804a9e0                k_add_vif
+                0x000000000804aa80                k_del_vif
+                0x000000000804ab30                k_add_rg
+                0x000000000804ac50                k_del_rg
+                0x000000000804ad30                k_get_version
+ *fill*         0x000000000804ad9f        0x1 90909090
+ .text          0x000000000804ada0     0x1992 mapper.o
+                0x000000000804ada0                find_node
+                0x000000000804ae10                find_interface
+                0x000000000804ae60                find_neighbor
+                0x000000000804aea0                logit
+                0x000000000804afa0                ask
+                0x000000000804afe0                ask2
+                0x000000000804b020                accept_group_report
+                0x000000000804b090                accept_probe
+                0x000000000804b110                accept_report
+                0x000000000804b190                accept_neighbor_request
+                0x000000000804b210                accept_neighbor_request2
+                0x000000000804b290                accept_neighbors
+                0x000000000804b830                accept_neighbors2
+                0x000000000804bd10                check_vif_state
+                0x000000000804bd40                retry_requests
+                0x000000000804bdd0                inet_name
+                0x000000000804be10                print_map
+                0x000000000804c160                graph_name
+                0x000000000804c1e0                graph_edges
+                0x000000000804c3f0                elide_aliases
+                0x000000000804c480                graph_map
+                0x000000000804c4f0                host_addr
+                0x000000000804c550                usage
+                0x000000000804c6b0                accept_prune
+                0x000000000804c6c0                accept_graft
+                0x000000000804c6d0                accept_g_ack
+                0x000000000804c6e0                add_table_entry
+                0x000000000804c6f0                accept_leave_message
+                0x000000000804c700                accept_mtrace
+                0x000000000804c710                accept_membership_query
+                0x000000000804c720                accept_info_request
+                0x000000000804c730                accept_info_reply
+ *fill*         0x000000000804c732        0xe 90909090
+ .text          0x000000000804c740       0x5d strlcpy.o
+                0x000000000804c740                strlcpy
+ *fill*         0x000000000804c79d        0x3 90909090
+ .text          0x000000000804c7a0      0x1d6 pidfile.o
+                0x000000000804c7d0                pidfile
+ *fill*         0x000000000804c976        0xa 90909090
+ .text          0x000000000804c980      0x1c5 strtonum.o
+                0x000000000804c980                strtonum
+ *fill*         0x000000000804cb45        0xb 90909090
+ .text          0x000000000804cb50       0x6a /usr/lib/i386-linux-gnu/libc_nonshared.a(elf-init.oS)
+                0x000000000804cb50                __libc_csu_fini
+                0x000000000804cb60                __libc_csu_init
+ .text.__i686.get_pc_thunk.bx
+                0x000000000804cbba        0x4 /usr/lib/i386-linux-gnu/libc_nonshared.a(elf-init.oS)
+                0x000000000804cbba                __i686.get_pc_thunk.bx
+ *fill*         0x000000000804cbbe        0x2 90909090
+ .text          0x000000000804cbc0       0x3b /usr/lib/i386-linux-gnu/libc_nonshared.a(atexit.oS)
+                0x000000000804cbc0                atexit
+ *fill*         0x000000000804cbfb        0x1 90909090
+ .text          0x000000000804cbfc        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/crtend.o
+ .text          0x000000000804cbfc        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crtn.o
+ *(.gnu.warning)
+
+.fini           0x000000000804cbfc       0x17
+ *(.fini)
+ .fini          0x000000000804cbfc       0x13 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crti.o
+                0x000000000804cbfc                _fini
+ .fini          0x000000000804cc0f        0x4 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crtn.o
+                0x000000000804cc13                PROVIDE (__etext, .)
+                0x000000000804cc13                PROVIDE (_etext, .)
+                0x000000000804cc13                PROVIDE (etext, .)
+
+.rodata         0x000000000804cc20      0xd5e
+ *(.rodata .rodata.* .gnu.linkonce.r.*)
+ .rodata        0x000000000804cc20        0x4 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+                0x000000000804cc20                _fp_hw
+ .rodata.cst4   0x000000000804cc24        0x4 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+                0x000000000804cc24                _IO_stdin_used
+ .rodata.str1.1
+                0x000000000804cc28      0x290 igmp.o
+ *fill*         0x000000000804ceb8        0x8 00
+ .rodata        0x000000000804cec0      0x12c igmp.o
+ .rodata.str1.4
+                0x000000000804cfec      0x128 igmp.o
+ .rodata.str1.1
+                0x000000000804d114       0x31 inet.o
+                                         0x4c (size before relaxing)
+ *fill*         0x000000000804d145        0x3 00
+ .rodata.str1.4
+                0x000000000804d148      0x224 kern.o
+ .rodata.str1.1
+                0x000000000804d36c       0x4e kern.o
+ .rodata.str1.1
+                0x000000000804d3ba      0x203 mapper.o
+                                        0x214 (size before relaxing)
+ *fill*         0x000000000804d5bd        0x3 00
+ .rodata.str1.4
+                0x000000000804d5c0      0x344 mapper.o
+ .rodata        0x000000000804d904       0x44 mapper.o
+ .rodata.str1.1
+                0x000000000804d948       0x1a pidfile.o
+ .rodata.str1.1
+                0x000000000804d962       0x1c strtonum.o
+
+.rodata1
+ *(.rodata1)
+
+.eh_frame_hdr   0x000000000804d980      0x214
+ *(.eh_frame_hdr)
+ .eh_frame_hdr  0x000000000804d980      0x214 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+
+.eh_frame       0x000000000804db94      0xa8c
+ *(.eh_frame)
+ .eh_frame      0x000000000804db94       0x3c /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+                                         0x40 (size before relaxing)
+ .eh_frame      0x000000000804dbd0      0x124 igmp.o
+                                        0x13c (size before relaxing)
+ .eh_frame      0x000000000804dcf4      0x130 inet.o
+                                        0x148 (size before relaxing)
+ .eh_frame      0x000000000804de24      0x258 kern.o
+                                        0x270 (size before relaxing)
+ .eh_frame      0x000000000804e07c      0x4d8 mapper.o
+                                        0x4f0 (size before relaxing)
+ .eh_frame      0x000000000804e554       0x34 strlcpy.o
+                                         0x4c (size before relaxing)
+ .eh_frame      0x000000000804e588       0x68 pidfile.o
+                                         0x80 (size before relaxing)
+ .eh_frame      0x000000000804e5f0       0x2c strtonum.o
+                                         0x44 (size before relaxing)
+ .eh_frame      0x000000000804e61c        0x4 /usr/lib/gcc/i486-linux-gnu/4.7/crtend.o
+
+.gcc_except_table
+ *(.gcc_except_table .gcc_except_table.*)
+
+.exception_ranges
+ *(.exception_ranges .exception_ranges*)
+                0x000000000804e620                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
+                0x000000000804f620                . = DATA_SEGMENT_ALIGN (0x1000, 0x1000)
+
+.eh_frame
+ *(.eh_frame)
+
+.gcc_except_table
+ *(.gcc_except_table .gcc_except_table.*)
+
+.exception_ranges
+ *(.exception_ranges .exception_ranges*)
+
+.tdata
+ *(.tdata .tdata.* .gnu.linkonce.td.*)
+
+.tbss
+ *(.tbss .tbss.* .gnu.linkonce.tb.*)
+ *(.tcommon)
+
+.preinit_array  0x000000000804f620        0x0
+                0x000000000804f620                PROVIDE (__preinit_array_start, .)
+ *(.preinit_array)
+                0x000000000804f620                PROVIDE (__preinit_array_end, .)
+
+.init_array     0x000000000804f620        0x4
+                0x000000000804f620                PROVIDE (__init_array_start, .)
+ *(SORT(.init_array.*) SORT(.ctors.*))
+ *(.init_array)
+ .init_array    0x000000000804f620        0x4 /usr/lib/gcc/i486-linux-gnu/4.7/crtbegin.o
+ *(EXCLUDE_FILE(*crtend?.o *crtend.o *crtbegin?.o *crtbegin.o) .ctors)
+                0x000000000804f624                PROVIDE (__init_array_end, .)
+
+.fini_array     0x000000000804f624        0x4
+                0x000000000804f624                PROVIDE (__fini_array_start, .)
+ *(SORT(.fini_array.*) SORT(.dtors.*))
+ *(.fini_array)
+ .fini_array    0x000000000804f624        0x4 /usr/lib/gcc/i486-linux-gnu/4.7/crtbegin.o
+ *(EXCLUDE_FILE(*crtend?.o *crtend.o *crtbegin?.o *crtbegin.o) .dtors)
+                0x000000000804f628                PROVIDE (__fini_array_end, .)
+
+.ctors
+ *crtbegin.o(.ctors)
+ *crtbegin?.o(.ctors)
+ *(EXCLUDE_FILE(*crtend?.o *crtend.o) .ctors)
+ *(SORT(.ctors.*))
+ *(.ctors)
+
+.dtors
+ *crtbegin.o(.dtors)
+ *crtbegin?.o(.dtors)
+ *(EXCLUDE_FILE(*crtend?.o *crtend.o) .dtors)
+ *(SORT(.dtors.*))
+ *(.dtors)
+
+.jcr            0x000000000804f628        0x4
+ *(.jcr)
+ .jcr           0x000000000804f628        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/crtbegin.o
+ .jcr           0x000000000804f628        0x4 /usr/lib/gcc/i486-linux-gnu/4.7/crtend.o
+
+.data.rel.ro
+ *(.data.rel.ro.local* .gnu.linkonce.d.rel.ro.local.*)
+ *(.data.rel.ro* .gnu.linkonce.d.rel.ro.*)
+
+.dynamic        0x000000000804f62c       0xf0
+ *(.dynamic)
+ .dynamic       0x000000000804f62c       0xf0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+                0x000000000804f62c                _DYNAMIC
+
+.got            0x000000000804f71c        0x8
+ *(.got)
+ .got           0x000000000804f71c        0x8 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+ *(.igot)
+                0x000000000804f724                . = DATA_SEGMENT_RELRO_END (., 0xc)
+
+.got.plt        0x000000000804f724       0xcc
+ *(.got.plt)
+ .got.plt       0x000000000804f724       0xcc /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+                0x000000000804f724                _GLOBAL_OFFSET_TABLE_
+ *(.igot.plt)
+ .igot.plt      0x0000000000000000        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+
+.data           0x000000000804f7f0       0x14
+ *(.data .data.* .gnu.linkonce.d.*)
+ .data          0x000000000804f7f0        0x4 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+                0x000000000804f7f0                data_start
+                0x000000000804f7f0                __data_start
+ .data          0x000000000804f7f4        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crti.o
+ .data          0x000000000804f7f4        0x4 /usr/lib/gcc/i486-linux-gnu/4.7/crtbegin.o
+                0x000000000804f7f4                __dso_handle
+ .data          0x000000000804f7f8        0x0 igmp.o
+ .data          0x000000000804f7f8        0x0 inet.o
+ .data          0x000000000804f7f8        0x0 kern.o
+ .data          0x000000000804f7f8        0xc mapper.o
+                0x000000000804f7f8                show_names
+                0x000000000804f7fc                timeout
+                0x000000000804f800                retries
+ .data          0x000000000804f804        0x0 strlcpy.o
+ .data          0x000000000804f804        0x0 pidfile.o
+ .data          0x000000000804f804        0x0 strtonum.o
+ .data          0x000000000804f804        0x0 /usr/lib/i386-linux-gnu/libc_nonshared.a(elf-init.oS)
+ .data          0x000000000804f804        0x0 /usr/lib/i386-linux-gnu/libc_nonshared.a(atexit.oS)
+ .data          0x000000000804f804        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/crtend.o
+ .data          0x000000000804f804        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crtn.o
+
+.tm_clone_table
+                0x000000000804f804        0x0
+ .tm_clone_table
+                0x000000000804f804        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/crtbegin.o
+ .tm_clone_table
+                0x000000000804f804        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/crtend.o
+
+.data1
+ *(.data1)
+                0x000000000804f804                _edata = .
+                0x000000000804f804                PROVIDE (edata, .)
+                0x000000000804f804                __bss_start = .
+
+.bss            0x000000000804f820       0xc4
+ *(.dynbss)
+ *fill*         0x000000000804f820        0x0 00
+ .dynbss        0x000000000804f820       0x24 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+                0x000000000804f820                __progname@@GLIBC_2.0
+                0x000000000804f820                program_invocation_short_name@@GLIBC_2.0
+                0x000000000804f824                stderr@@GLIBC_2.0
+                0x000000000804f830                optind@@GLIBC_2.0
+                0x000000000804f840                optarg@@GLIBC_2.0
+ *(.bss .bss.* .gnu.linkonce.b.*)
+ .bss           0x000000000804f844        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crt1.o
+ .bss           0x000000000804f844        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crti.o
+ .bss           0x000000000804f844        0x1 /usr/lib/gcc/i486-linux-gnu/4.7/crtbegin.o
+ *fill*         0x000000000804f845        0x3 00
+ .bss           0x000000000804f848       0x14 igmp.o
+ .bss           0x000000000804f85c        0x0 inet.o
+ .bss           0x000000000804f85c        0x4 kern.o
+                0x000000000804f85c                curttl
+ .bss           0x000000000804f860        0xc mapper.o
+                0x000000000804f860                debug
+                0x000000000804f864                target_addr
+                0x000000000804f868                routers
+ .bss           0x000000000804f86c        0x0 strlcpy.o
+ .bss           0x000000000804f86c        0x8 pidfile.o
+ .bss           0x000000000804f874        0x0 strtonum.o
+ .bss           0x000000000804f874        0x0 /usr/lib/i386-linux-gnu/libc_nonshared.a(elf-init.oS)
+ .bss           0x000000000804f874        0x0 /usr/lib/i386-linux-gnu/libc_nonshared.a(atexit.oS)
+ .bss           0x000000000804f874        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/crtend.o
+ .bss           0x000000000804f874        0x0 /usr/lib/gcc/i486-linux-gnu/4.7/../../../i386-linux-gnu/crtn.o
+ *(COMMON)
+ COMMON         0x000000000804f874       0x1c igmp.o
+                0x000000000804f874                dvmrp_group
+                0x000000000804f878                send_buf
+                0x000000000804f87c                dvmrp_genid
+                0x000000000804f880                igmp_socket
+                0x000000000804f884                allhosts_group
+                0x000000000804f888                recv_buf
+                0x000000000804f88c                allrtrs_group
+ COMMON         0x000000000804f890       0x4c inet.o
+                0x000000000804f890                s2
+                0x000000000804f8a3                s4
+                0x000000000804f8b6                s1
+                0x000000000804f8c9                s3
+ COMMON         0x000000000804f8dc        0x6 mapper.o
+                0x000000000804f8dc                our_addr
+                0x000000000804f8e0                numvifs
+                0x000000000804f8e4                . = ALIGN ((. != 0x0)?0x4:0x1)
+ *fill*         0x000000000804f8e2        0x2 00
+                0x000000000804f8e4                . = ALIGN (0x4)
+                0x000000000804f8e4                . = ALIGN (0x4)
+                0x000000000804f8e4                _end = .
+                0x000000000804f8e4                PROVIDE (end, .)
+                0x000000000804f8e4                . = DATA_SEGMENT_END (.)
+
+.stab
+ *(.stab)
+
+.stabstr
+ *(.stabstr)
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment        0x0000000000000000       0x38
+ *(.comment)
+ .comment       0x0000000000000000       0x1c /usr/lib/gcc/i486-linux-gnu/4.7/crtbegin.o
+                                         0x1d (size before relaxing)
+ .comment       0x0000000000000000       0x1d igmp.o
+ .comment       0x0000000000000000       0x1d inet.o
+ .comment       0x0000000000000000       0x1d kern.o
+ .comment       0x0000000000000000       0x1d mapper.o
+ .comment       0x0000000000000000       0x1d strlcpy.o
+ .comment       0x0000000000000000       0x1d pidfile.o
+ .comment       0x0000000000000000       0x1d strtonum.o
+ .comment       0x000000000000001c       0x1c /usr/lib/i386-linux-gnu/libc_nonshared.a(elf-init.oS)
+                                         0x1d (size before relaxing)
+ .comment       0x0000000000000000       0x1d /usr/lib/i386-linux-gnu/libc_nonshared.a(atexit.oS)
+ .comment       0x0000000000000000       0x1d /usr/lib/gcc/i486-linux-gnu/4.7/crtend.o
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges
+ *(.debug_aranges)
+
+.debug_pubnames
+ *(.debug_pubnames)
+
+.debug_info
+ *(.debug_info .gnu.linkonce.wi.*)
+
+.debug_abbrev
+ *(.debug_abbrev)
+
+.debug_line
+ *(.debug_line)
+
+.debug_frame
+ *(.debug_frame)
+
+.debug_str
+ *(.debug_str)
+
+.debug_loc
+ *(.debug_loc)
+
+.debug_macinfo
+ *(.debug_macinfo)
+
+.debug_weaknames
+ *(.debug_weaknames)
+
+.debug_funcnames
+ *(.debug_funcnames)
+
+.debug_typenames
+ *(.debug_typenames)
+
+.debug_varnames
+ *(.debug_varnames)
+
+.debug_pubtypes
+ *(.debug_pubtypes)
+
+.debug_ranges
+ *(.debug_ranges)
+
+.gnu.attributes
+ *(.gnu.attributes)
+
+/DISCARD/
+ *(.note.GNU-stack)
+ *(.gnu_debuglink)
+ *(.gnu.lto_*)
+OUTPUT(map-mbone elf32-i386)

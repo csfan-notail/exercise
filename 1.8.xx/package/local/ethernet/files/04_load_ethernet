@@ -1,0 +1,84 @@
+#!/bin/sh
+
+. /lib/ar71xx.sh
+. /lib/functions.sh
+
+
+art_read_mac()
+{
+	local offset=${1:-0}
+	local art_mtd=$(find_mtd_part "art")
+
+	[ -e "${art_mtd}" ] || return 1;
+
+	dd if=${art_mtd} bs=1 count=6 skip=${offset} 2>/dev/null | hexdump -v -n 6 -e '5/1 "%02x:" 1/1 "%02x\n"'
+}
+
+is_valid_ether_addr()
+{
+	local mac=$1
+	local byte0=${mac%%:*}
+
+	#assume mac format is correct
+	if [ -z "${mac}" ] || \
+	   [ "${mac}" = "00:00:00:00:00:00" ] || \
+	   [ "$(( 0x${byte0} & 0x1 ))" -eq 1 ];
+	then
+		return 1;
+	fi
+
+	return 0;
+}
+
+ethernet_set_mac()
+{
+	local eth=$1
+	local mac=$2
+
+	[ -z "${eth}" -o -z "${mac}" ] && return 1;
+
+	ifconfig ${eth} down
+	ifconfig ${eth} hw ether ${mac}
+	ifconfig ${eth} up
+
+}
+
+ethernet_init_mac()
+{
+
+	#######################################################
+	#get wifi0 mac address
+	wifi_mac=$(art_read_mac $((0x1002)) )
+	#TODO: what if wifi0 mac invalid??
+	is_valid_ether_addr ${wifi_mac} || return 1;
+
+	wifi_mac_byte0=${wifi_mac%%:*}
+	wifi_mac_byte1_5=${wifi_mac#*:}
+
+	#eth0
+	if [ -d /sys/class/net/eth0 ] && \
+	   ! is_valid_ether_addr "$(art_read_mac 0)" && 
+	   [ "${wifi_mac_byte0}" != "ac" ];
+	then
+		ethernet_set_mac "eth0" "ac:${wifi_mac_byte1_5}"
+	fi
+
+	#eth1
+	if [ -d /sys/class/net/eth1 ] && \
+	   ! is_valid_ether_addr "$(art_read_mac 6)" && 
+	   [ "${wifi_mac_byte0}" != "ae" ];
+	then
+		ethernet_set_mac "eth1" "ae:${wifi_mac_byte1_5}"
+	fi
+	#######################################################
+}
+
+preinit_load_ethernet_driver() {
+        insmod ar80xx
+        insmod ar8216
+        insmod ag71xx
+
+        ethernet_init_mac
+}
+
+boot_hook_add preinit_main preinit_load_ethernet_driver

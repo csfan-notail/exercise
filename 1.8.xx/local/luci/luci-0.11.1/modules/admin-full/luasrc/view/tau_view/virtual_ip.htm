@@ -1,0 +1,214 @@
+<%+header%>
+
+<%
+	local vip_ifconfig = ""
+	
+	local get_inter = luci.util.exec(tostring("ifconfig | grep HWaddr | awk '{print $1}'"))
+	local res = string.split(get_inter, "\n")
+	for k,v in ipairs(res) do 
+		if v ~= "" and v ~= "eth1" and v ~= "eth1.1"  then
+			vip_ifconfig = vip_ifconfig..luci.util.exec(tostring("ifconfig "..v))
+		end
+	end
+	
+	get_inter=string.gsub(get_inter, "\n"," ")
+%>
+
+<script type="text/javascript">
+
+function all_init (){
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("submit_id").disabled=true;
+	}
+	
+	var all_inter="<%=get_inter%>";
+	var number = (all_inter.split(' ')).length-1;
+
+	var i,interface;
+	for(i=0;i<number;i++)                                                                                                                                 
+    {                                                                                                                                                              
+		interface = all_inter.split(' ')[0];                                                                                                                             
+        all_inter = all_inter.substring(interface.length+1)
+		if("eth1" != interface && "eth1.1" != interface && interface.indexOf(":") <= 0)
+			document.getElementById("interface_id").add(new Option(interface,i));
+	}
+}
+
+function stxhr_get(datas)
+{
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,a_url,s_url){
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{param1:data1,param2:data2,param3:data3,param4:data4,param5:data5},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				if(r.errno == '1')
+				{
+					alert("<%:Configuration failed ...%>，<%:Vip Errno1%>");
+				}
+				else if(r.errno == '2')
+				{
+					alert("<%:Configuration failed ...%>，<%:Vip Errno2%>");
+				}
+				else if(r.errno == '3')
+				{
+					alert("<%:Configuration failed ...%>，<%:Vip Errno3%>");
+				}else
+				{
+					alert("<%:Configuration failed ...%>，<%:Vip Errno4%>");
+				}	
+			}
+		}
+	});
+}	
+
+function netmaskNum(ipAddress){
+	if( ipAddress != "0.0.0.0" )
+	{	
+		var numArray = ipAddress.split(".");
+		var returnIpStr = "";
+		for (var i = 0; i < 4; i++) {
+			var curr_num = numArray[i];
+			var number_Bin = parseInt(curr_num);
+			number_Bin = number_Bin.toString(2);
+			var iCount = 8-number_Bin.length;
+			for (var j = 0; j < iCount; j++) {
+				number_Bin = "0"+number_Bin;
+			}
+			returnIpStr += number_Bin;
+		}
+		return returnIpStr;
+		//var reg = /[a-zA-Z]/g;
+		//var reg = /[1]/g;
+		//return returnIpStr.match(reg).length;
+	}
+	else{
+		return 0;
+	}
+}
+function submit_config(){
+	
+	var actions = document.getElementById('action_id').value;
+	
+	var ip_addr = document.getElementById('ip_addr_id').value;
+	var ip_mask = document.getElementById('ip_mask_id').value;
+	var ifname = document.getElementById('ifname_id').value;
+	
+	var inter = document.getElementById('interface_id').options[document.getElementById('interface_id').selectedIndex].text; 
+	
+	if( !check_ipv4_addr(ip_addr) || !check_ipv4_addr(ip_mask) 
+		|| ip_addr == '' || ip_mask == '' )
+	{
+		alert('<%:input ip address not legal%>');
+		return false;
+	}
+	
+	if(ifname == ''|| -1 != ifname.indexOf(" ") || true == isNaN(ifname) || ifname < 0 || ifname > 254)
+	{
+		alert('<%:Configure the network interface name not legal%>');
+		return false;
+	}
+	
+	var mask_bit= netmaskNum(ip_mask);
+	if(-1 != mask_bit.indexOf("01")){
+		alert(" [netmask not legal!! netmask = "+mask_bit+"]");	
+		return false;
+	}
+	
+	ajax_set(actions,ip_addr,ip_mask,ifname,inter,'<%=pcdata(luci.dispatcher.build_url("admin/config/virtual_ip"))%>', '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Virtual IP%></a></h2><br/>
+		<fieldset class="cbi-section">
+			<legend><%:Virtual IP%></legend>
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:ip_addr%>:</td>
+						<td class="td_class"><input id="ip_addr_id" type="text" >
+						</tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:ip_mask%>:</td>
+						<td class="td_class"><input id="ip_mask_id" type="text" >
+						</tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:interface%>:</td>
+						<td class="td_class">
+						<select name="interface" id="interface_id" style="width:180px;">
+						</select></td></tr>					<tr class="tr_class">
+					<td class="td_class" style="width:300px;text-indent:200px;"><%:Virtual Interface Name%>:</td>
+						<td class="td_class"><input id="ifname_id" type="text" ></td>
+						</tr>
+
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"></td>
+						<td class="td_class"><select name="action" id="action_id" style="width:180px;">
+							<option value="0"><%:add%></option>
+                    		<option value="1"><%:del%></option>
+						</select>
+						<input type="button" id="submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;"  onclick="submit_config(this.form.action.selectedIndex)" /></td>
+					</tr>
+				</table>
+			</div>	
+			
+			<div class="div_class" style="margin-left:50px;">
+				<table class="table_class" style="width:880px;">
+					<tr class="tr_class" >
+					<td class="td_class" >
+					<pre><font size="3" id="ip_route_id" color="blue" ><%=vip_ifconfig%></font></pre>
+					</td></tr>
+				</table>
+			</div>
+					
+		</fieldset>
+
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>	
+</form>
+
+<%+footer%>

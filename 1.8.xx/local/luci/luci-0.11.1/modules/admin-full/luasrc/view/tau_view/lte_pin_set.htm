@@ -1,0 +1,170 @@
+<%+header%>
+
+<%
+	local uci = require "luci.model.uci".cursor()
+	local lte_simlock_sw     = uci.get('lte','sim','lock_sw')
+	local lte_pin_opt        = uci.get('lte','sim','pin_sw')
+	local lteinfo_pin_status = uci.get('lteinfo','info','pin_status')
+	local lteinfo_pin        = uci.get('lteinfo','info','pin')
+	if "0" == lteinfo_pin_status then
+		lteinfo_pin_status = 'ready'
+	end
+    if "1" == lteinfo_pin_status then
+		lteinfo_pin_status = 'Pin'
+	end
+	if "2" == lteinfo_pin_status then
+		lteinfo_pin_status = 'Puk'
+	end
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	document.getElementById('id_lte_simlock').options['<%=lte_simlock_sw%>'].selected = true;
+	document.getElementById('id_lte_pin_option').options['<%=lte_pin_opt%>'].selected = true;
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("sim_add_submit_id").disabled=true;
+		document.getElementById("id_button_pin_opt").disabled=true;
+	}
+	if('<%=lte_simlock_sw%>' == '1')
+	{
+		document.getElementById('id_button_pin_opt').disabled         = true;
+		document.getElementById('id_button_pin_opt').style.background = "Gray";
+	}
+}
+	
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,a_url,s_url) {
+
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{port_val:data1,port_val2:data2,port_val3:data3},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+
+}	
+function lte_simlock_switch(simlock_sw)
+{
+	ajax_set(simlock_sw,0,0,'<%=pcdata(luci.dispatcher.build_url("admin/lte/lte_higt_simlock_sw"))%>', '<%=luci.dispatcher.build_url("admin", "lte")%>/set_infos/');
+}
+
+function lte_pin_option(pin_opt)
+{
+	var PinCodeOld = document.getElementById('id_pincode_old').value;
+	var PinCodeNew = document.getElementById("id_pincode_new").value;
+	ajax_set(pin_opt,PinCodeOld,PinCodeNew,'<%=pcdata(luci.dispatcher.build_url("admin/lte/lte_higt_pin_opt"))%>', '<%=luci.dispatcher.build_url("admin", "lte")%>/set_infos/');
+}
+
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:PIN Setting%></a></h2><br/>
+
+		<fieldset class="cbi-section">	
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:sim Lock Switch%>:</td>
+						<td class="td_class">
+							<select name="simlock_sw" id="id_lte_simlock" style="width:180px;">
+							<option value="0"><%:Lock Disable%></option>
+							<option value="1"><%:Lock Enable%></option>
+							<option value="2"><%:Sim Exchange%></option>
+						</select>&nbsp;&nbsp;
+						<input type="button"  id="sim_add_submit_id" class="cbi-button cbi-button-apply" value="<%:sim lock Setting%>" style="width:100px;" onclick="lte_simlock_switch(this.form.simlock_sw.selectedIndex)" /></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:PIN Operation Choice%>:</td>
+						<td class="td_class">
+						<select name="pin_opt" id="id_lte_pin_option" style="width:180px;">
+							<option value="0"><%:PIN Function Disable%></option>
+							<option value="1"><%:PIN Function Enable%></option>
+							<option value="2"><%:Modify PIN%></option>
+						</select>
+						</td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Current PIN Status%>:</td>
+						<td class="td_class">
+						<%=lteinfo_pin_status%></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Old PIN Code%>:</td>
+						<td class="td_class">
+						<input type="text" id="id_pincode_old" style="width:180px;">
+						</td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:New PIN Code%>:</td>
+						<td class="td_class">
+						<input type="text" id="id_pincode_new" style="width:180px;">&nbsp;&nbsp;
+						<input type="button" id="id_button_pin_opt" class="cbi-button cbi-button-apply" value="<%:PIN Setting%>" style="width:100px;" onclick="lte_pin_option(this.form.pin_opt.selectedIndex)" /></td></tr>	
+				</table>
+			</div>			
+			</fieldset>
+
+		<fieldset class="cbi-section">
+			<div class="cbi-section-descr"></div>
+				<div class="cbi-value-field">	
+					<legend>
+						<font color="red">
+			 				<%:Note%><br>
+			 				<%="<1> 如果sim卡锁定启用，此时卡只能用于此设备！！"%><br>
+			 				<%="<2> 如果PIN码输入错误达3次，请找运营商解PUK码！"%><br>
+			 				<%="<3> 如果PUK码连续输入错误达10次，SIM卡将报废！"%><br>				
+			 			</font>
+			 		</legend>
+				</div>
+		</fieldset>
+
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+
+	<script type="text/javascript">all_init();</script>		
+
+</form>
+
+<%+footer%>

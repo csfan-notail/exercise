@@ -1,0 +1,89 @@
+<soap:Envelope 
+	soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" 
+	xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
+	xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" 
+	xmlns:cwmp="urn:dslforum-org:cwmp-1-0" 
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <soap:Header>
+    <cwmp:ID soap:mustUnderstand="1">01BD8563247F4D27B5C4D3392C71C6AE</cwmp:ID>
+  </soap:Header>
+  <soap:Body>
+    <cwmp:SetParameterValues>
+      <ParameterList soapenc:arrayType="cwmp:ParameterValueStruct[1]">
+        <ParameterValueStruct>
+          <Name>InternetGatewayDevice.DeviceSummary</Name>
+          <Value>1</Value>
+		<Name>InternetGatewayDevice.LANDeviceNumberOfEntries</Name>
+          <Value>1</Value>
+		<Name>InternetGatewayDevice.WANDeviceNumberOfEntries</Name>
+          <Value>1</Value>
+
+	<Name>InternetGatewayDevice.ManagementServer.URL</Name><Value>192.168.1.31</Value>
+	<Name>InternetGatewayDevice.ManagementServer.Username</Name><Value>cms_1</Value>
+	<Name>InternetGatewayDevice.ManagementServer.Password</Name><Value>cms_1</Value>
+	<Name>InternetGatewayDevice.ManagementServer.PeriodicInformEnable</Name><Value>1</Value>
+	<Name>InternetGatewayDevice.ManagementServer.PeriodicInformInterval</Name><Value>301</Value>
+	<Name>InternetGatewayDevice.ManagementServer.PeriodicInformTime</Name><Value>1970-01-01T08:00:01</Value>
+	<Name>InternetGatewayDevice.ManagementServer.ConnectionRequestURL</Name><Value>1</Value>
+	<Name>InternetGatewayDevice.ManagementServer.ConnectionRequestPassword</Name><Value>cpe_1</Value>
+	<Name>InternetGatewayDevice.ManagementServer.ConnectionRequestUsername</Name><Value>cpe_1</Value>	
+	<Name>InternetGatewayDevice.ManagementServer.UpgradesManaged</Name><Value>1</Value>
+	<Name>InternetGatewayDevice.ManagementServer.UDPConnectionRequestAddressNotificationLimit</Name><Value>1</Value>
+	<Name>InternetGatewayDevice.ManagementServer.STUNEnable</Name><Value>1</Value>
+	<Name>InternetGatewayDevice.ManagementServer.STUNServerAddress</Name><Value>1</Value>
+	<Name>InternetGatewayDevice.ManagementServer.STUNServerPort</Name><Value>1</Value>
+	<Name>InternetGatewayDevice.ManagementServer.STUNUsername</Name><Value>1</Value>
+	<Name>InternetGatewayDevice.ManagementServer.STUNPassword</Name><Value>1</Value>
+	<Name>InternetGatewayDevice.ManagementServer.STUNMaximumKeepAlivePeriod</Name><Value>1</Value>
+	<Name>InternetGatewayDevice.ManagementServer.STUNMinimumKeepAlivePeriod</Name><Value>1</Value>
+
+
+	<Name>InternetGatewayDevice.Time.NTPServer1</Name><Value>time.tim.gv</Value>
+	<Name>InternetGatewayDevice.Time.NTPServer2</Name><Value>time.tim2.gv</Value>
+
+
+		
+	<Name>InternetGatewayDevice.LANConfigSecurity.ConfigPassword</Name><Value>asd12sd21d2s</Value>
+
+
+	<Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DHCPServerConfigurable</Name><Value>1</Value>
+ 	<Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DHCPServerEnable</Name><Value>12</Value>
+ 	<Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.MinAddress</Name><Value>192.168.2.2</Value>
+ 	<Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.MaxAddress</Name><Value>192.168.2.100</Value>
+ 	<Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.ReservedAddresses</Name><Value>1.1.1.1</Value>
+	<Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.SubnetMask</Name><Value>255.255.0.0</Value>
+	<Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DNSServers</Name><Value>202.96.209.7,0.0.0.0</Value>
+	<Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DomainName</Name><Value>1</Value>
+	<Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.IPRouters</Name><Value>192.168.1.252</Value>
+	<Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DHCPLeaseTime</Name><Value>86300</Value>
+	<Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.AllowedMACAddresses</Name><Value>12</Value>
+
+
+	<Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.IPInterface.1.IPInterfaceIPAddress</Name><Value>192.168.1.251</Value>
+	<Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.IPInterface.1.IPInterfaceSubnetMask</Name><Value>255.255.0.0</Value>
+
+
+	<Name>InternetGatewayDevice.X_PPPoE2L2TP.Enable</Name><Value>1</Value>
+	<Name>InternetGatewayDevice.X_PPPoE2L2TP.MTUOfUser</Name><Value>1300</Value>
+
+	<Name>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.TunnelMode</Name><Value>1</Value>
+	 <Name>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.LNSServerIPAddress</Name><Value>192.168.3.21</Value>
+	 <Name>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.LNSServerHostName</Name><Value>dgy01</Value>
+	 <Name>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.LNSServerPortName</Name><Value>1</Value>
+	 <Name>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.TunnelAuthenticateEnable</Name><Value>1</Value>
+	 <Name>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.PasswordOfTunnel</Name><Value>mm123456</Value>
+
+
+        </ParameterValueStruct>
+      </ParameterList>
+      <ParameterKey xsi:type="xsd:string"></ParameterKey>
+    </cwmp:SetParameterValues>
+  </soap:Body>
+</soap:Envelope>	
+
+Interface
+
+
+ 

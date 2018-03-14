@@ -1,0 +1,242 @@
+<%+header%>
+
+<%
+local gdconfig = luci.util.exec("cat /etc/gdcontrl")
+--print(gdconfig)
+
+require "lfs"
+local file_num = 0
+local file_name = "/etc/gdcontrl"
+local gdconfig = ""
+function get_nbr (path)
+	file = io.open(path,"r")
+	if file then
+		for lines in file:lines() do
+			file_num = file_num+1
+			--print(" file_num="..file_num)
+			if 1 ~= file_num then 
+				gdconfig = gdconfig..lines	
+			end
+			--print(" gdconfig="..gdconfig)
+		end
+		file:close()
+	else
+		gdconfig = ""	
+	end
+end	
+
+get_nbr(file_name)
+
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("gdctl_opr_id").disabled=true;
+	}
+	
+}	
+function show_list() {
+	var i,m="";
+	var all_value = "<%=gdconfig%>"
+	var all_number = "<%=file_num%>"-1;
+	
+	if("" == all_value)
+		return ;
+	
+	for(i=1;i<=all_number*9;i++)
+	{	
+		file = all_value.split(';')[i-1];
+		if(i%9 == 1){
+			file = file.split("index")[1];
+			m += "<tr class='tr_class'>";
+		}
+		if(i%9 == 5 || i%9 == 0 ){
+			if(0 == file)
+				file= "<%:stop%>";
+			else
+				file= "<%:start%>";
+		}
+		m += "<td class='td_class'>"+file+"</td>";
+		if(i%9 == 0)
+			m += "</tr>";
+	}
+	document.write(m);
+}
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{value1:data1,value2:data2,value3:data3,value4:data4,value5:data5,value6:data6,value7:data7,value8:data8,value9:data9,value10:data10},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+function zebra_config(operate)
+{
+	var index_num 		= document.getElementById("index_id").value;
+	var cross_id 		= document.getElementById("cross_id").value;
+	var cross_name 		= document.getElementById("cross_name_id").value;
+	var contrl_ip 		= document.getElementById("contrl_ip_id").value;
+	var gps_position 	= document.getElementById("gps_position_id").value;
+	var gps_longitude 	= document.getElementById("gps_longitude_id").value;
+	var gps_latitude 	= document.getElementById("gps_latitude_id").value;
+	var sensor_id 		= document.getElementById("sensor_id").value;
+	var sensor_status	= document.getElementById("sensor_status_id").value;
+	var gdctl_opr		= document.getElementById("gdctl_opr_id").value;
+	
+	if( false == check_ipv4_addr(contrl_ip) ){
+		alert('<%:input ip address not legal%>');
+		return false;
+	}
+
+	ajax_set(index_num,cross_id,cross_name,contrl_ip,gps_position,gps_longitude,gps_latitude,
+			 sensor_id,sensor_status,gdctl_opr,
+			'<%=pcdata(luci.dispatcher.build_url("admin/config/gd_contrl"))%>', 
+			'<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:GD Contrl%></a></h2><br/>
+		<fieldset class="cbi-section">
+			
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="text-indent:100px;"><legend><%:Config%>:</legend></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Index%>:</td>
+						<td class="td_class">
+						<input name="index" id="index_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Crossing ID%>:</td>
+						<td class="td_class">
+						<input name="cross" id="cross_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Crossing Name%>:</td>
+						<td class="td_class">
+						<input name="cross_name" id="cross_name_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class"style="width:300px;text-indent:200px;"><%:Contrl IP%>:</td>
+						<td class="td_class">
+						<input name="contrl_ip" id="contrl_ip_id" type="text" style="width:200px;margin-left:0px;"></td></tr>	
+					<tr class="tr_class">
+						<td class="td_class"style="width:300px;text-indent:200px;"><%:GPS position%>:</td>
+						<td class="td_class"><select name="gps_position" id="gps_position_id" style="width:210px;">
+							<option value="1"><%:start%></option>
+                    		<option value="0"><%:stop%></option>
+						</select></td></tr>
+					<tr class="tr_class">
+					   <td class="td_class"style="width:300px;text-indent:200px;"><%:GPS longitude%>:</td>
+						<td class="td_class">
+						<input name="gps_longitude" id="gps_longitude_id" type="text" style="width:200px;margin-left:0px;"></td></tr>	
+					<tr class="tr_class">
+						<td class="td_class"style="width:300px;text-indent:200px;"><%:GPS latitude%>:</td>
+						<td class="td_class">
+						<input name="gps_latitude" id="gps_latitude_id" type="text" style="width:200px;margin-left:0px;"></td></tr>	
+					<tr class="tr_class">
+						<td class="td_class"style="width:300px;text-indent:200px;"><%:Sensor ID%>:</td>
+						<td class="td_class">
+						<input name="sensor" id="sensor_id" type="text" style="width:200px;margin-left:0px;"></td></tr>	
+					<tr class="tr_class">
+					   <td class="td_class"style="width:300px;text-indent:200px;"><%:Sensor Status%>:</td>
+						<td class="td_class"><select name="sensor_status" id="sensor_status_id" style="width:210px;">
+							<option value="1"><%:start%></option>
+                    		<option value="0"><%:stop%></option>
+						</select></td></tr>	
+					<tr class="tr_class">	
+						<td class="td_class" style="width:300px;text-indent:200px;"></td>
+						<td class="td_class"><select  name="gdctl_opr" id="gdctl_opr_id" style="width:210px;">
+							<option value="0"><%:add%></option>
+                    		<option value="1"><%:del%></option>
+						</select>
+						<input type="button" id="zebra_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="zebra_config(this.form.gdctl_opr.selectedIndex)" /></td></tr>
+				</table>
+			</div>
+		</fieldset>
+	</div>
+			<div class="cbi-value-field" style="margin-top: -20px;">	
+					<legend>
+						<font size="4" color="red" style="">
+			 				<%:Note%><br>
+			 				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			 				<%:Add data according to the sequence number!%><br>
+			 				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			 				<%:After the configuration is added or deleted, reboot the device to take effect!%><br> 			
+			 			</font>
+			 		</legend>
+			</div>
+			<div class="div_class" style="width: 800px;margin-left: 100px; margin-top:-35px;">
+				<table class="table_class" style="margin-top: 35px;">
+					<tr class="tr_class">
+						<td class="td_class" >
+							<font size="3" color="blue" style="margin-left:-25px;"><%:GD Contrl List%></font>
+						</td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:120px;"><%:Index%></td>
+						<td class="td_class" style="width:80px;"><%:Crossing ID%></td>
+						<td class="td_class" style="width:100px;"><%:Crossing Name%></td>
+						<td class="td_class" style="width:120px;"><%:Contrl IP%></td>
+						<td class="td_class" style="width:160px;"><%:GPS position%></td>
+						<td class="td_class" style="width:130px;"><%:GPS longitude%></td>
+						<td class="td_class" style="width:130px;"><%:GPS latitude%></td>
+						<td class="td_class" style="width:100px;"><%:Sensor ID%></td>
+						<td class="td_class" style="width:120px;"><%:Sensor Status%></td>
+					</tr>
+					<script type="text/javascript">show_list();</script>
+				</table>
+			</div>
+			
+		<fieldset class="cbi-section" style="display:none">
+			<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>	
+</form>
+
+<%+footer%>

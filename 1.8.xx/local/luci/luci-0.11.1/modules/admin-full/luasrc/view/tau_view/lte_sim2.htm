@@ -1,0 +1,172 @@
+<%+header%>
+
+<%
+	local lte_sim_switch = uci.get('lte','simswitch','switch2')
+	local lte_sim_imsi   = uci.get('lte','simswitch','imsi2')
+	local lte_sim_mnc_len = uci.get('lte','simswitch','mnc_len2')
+	local lte_sim_suauthpara = uci.get('lte','simswitch','suauthpara2')
+	local lte_sim_sualg = uci.get('lte','simswitch','sualg2')
+	local lte_sim_key = uci.get('lte','simswitch','key2')
+	local lte_sim_op = uci.get('lte','simswitch','op2')
+	local lte_single_double_switch    = uci.get('lte','set','single_double_switch')
+
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	if( '0' == '<%=lte_sim_switch%>' )
+	{
+		document.getElementById('sim_switch_id').options[0].selected=true;
+	}	
+	else {
+		document.getElementById('sim_switch_id').options[1].selected=true;
+	}
+	
+	document.getElementById('sim_imsi_id').value='<%=lte_sim_imsi%>'
+	document.getElementById('sim_mnc_len_id').value='<%=lte_sim_mnc_len%>'
+	document.getElementById('sim_key_id').value='<%=lte_sim_key%>'
+	document.getElementById('sim_op_id').value='<%=lte_sim_op%>'
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("sim_switch_id").disabled=true;
+	}
+	
+	if('0' == '<%=lte_single_double_switch%>')
+	{
+		document.getElementById("sim_switch_id").disabled=true;
+		document.getElementById("sim_switch_id").style.background = "Gray";
+	}
+	
+}	
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,data6,data7,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{value1:data1,value2:data2,value3:data3,value4:data4,value5:data5,value6:data6,value7:data7},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ... please reboor !%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+
+function sim_config(sim_switch)
+{
+	//var sim_switch = 0;
+	var sim_imsi = document.getElementById('sim_imsi_id').value;
+	var sim_mnc_len = document.getElementById('sim_mnc_len_id').value;
+	//var sim_suauthpara = document.getElementById('sim_suauthpara_id').value;
+	//var sim_sualg = document.getElementById('sim_sualg_id').value;
+	var sim_key = document.getElementById('sim_key_id').value;
+	var sim_op = document.getElementById('sim_op_id').value;
+	
+	if( 0 == sim_switch && ( ""==sim_imsi || ""==sim_mnc_len || ""==sim_key || ""==sim_op ))
+	{
+		alert("<%:please input all data !%>");
+		return false;
+	}
+	
+	ajax_set(sim_switch,sim_imsi,sim_mnc_len,"","",sim_key,sim_op,'<%=pcdata(luci.dispatcher.build_url("admin/lte/sim_switch2"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "lte")%>/set_infos/');
+}
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Lte2 sim config%></a></h2><br/>
+		<fieldset class="cbi-section">
+			
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:sim_switch%>:</td>
+						<td class="td_class"><select  name="sim_switch" id="sim_switch_id" style="width:210px;">
+							<option value="0"><%:soft%></option>
+                    		<option value="1"><%:hard%></option>
+						</select>
+						<input type="button" id="sim_set_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="sim_config(this.form.sim_switch.selectedIndex)" /></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:sim_imsi%>:</td>
+						<td class="td_class">
+						<input name="sim_imsi" id="sim_imsi_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:sim_mnc_len%>:</td>
+						<td class="td_class">
+						<input name="sim_mnc_len" id="sim_mnc_len_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<!--
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:sim_suauthpara%>:</td>
+						<td class="td_class">
+						<input name="sim_suauthpara" id="sim_suauthpara_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:sim_sualg%>:</td>
+						<td class="td_class">
+						<input name="sim_sualg" id="sim_sualg_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					-->
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:sim_key%>:</td>
+						<td class="td_class">
+						<input name="sim_key" id="sim_key_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:sim_op%>:</td>
+						<td class="td_class">
+						<input name="sim_op" id="sim_op_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Note%>:</td>
+						<td class="td_class">
+						<font style="font-weight:bold;" color="red" size="3"><%:If setting sim soft mode , please reboot !%></font></br>
+				</table>
+			</div>
+		</fieldset>
+	</div>
+	
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

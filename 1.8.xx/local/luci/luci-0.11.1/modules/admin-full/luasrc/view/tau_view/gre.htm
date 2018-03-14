@@ -1,0 +1,160 @@
+<%+header%>
+
+<%
+	local uci = require "luci.model.uci".cursor()
+	local gre_mtu       = uci.get('config','gre','mtu')
+	local port_sw_init  = uci.get('config','gre','switch')
+	local gre_pipe_name = uci.get('config','gre','pipe_name')
+	local gre_pipe_init_src_ip = uci.get('config','gre','init_src_ip')   
+	local gre_pipe_init_des_ip = uci.get('config','gre','init_des_ip')   
+	local gre_pipe_enca_src_ip = uci.get('config','gre','enca_src_ip')   
+	local gre_pipe_enca_des_ip = uci.get('config','gre','enca_des_ip')  
+%>
+
+<script type="text/javascript">
+function all_init()
+{
+	document.getElementById('port_sw_id').options['<%=port_sw_init%>'].selected=true;
+    document.getElementById('name_id').value        = '<%=gre_pipe_name%>';
+    document.getElementById('init_srcip_id').value  = '<%=gre_pipe_init_src_ip%>';
+    document.getElementById('init_desip_id').value  = '<%=gre_pipe_init_des_ip%>';
+    document.getElementById('enca_srcip_id').value  = '<%=gre_pipe_enca_src_ip%>';
+    document.getElementById('enca_desip_id').value  = '<%=gre_pipe_enca_des_ip%>';
+    document.getElementById('mtu_id').value         = '<%=gre_mtu%>';
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("gre_add_submit_id").disabled=true;
+	}
+
+}
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,data6,data7,data8,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{param1:data1,param2:data2,param3:data3,param4:data4,param5:data5,param6:data6,param7:data7,param8:data8},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}
+function port_switch(port_sw)
+{
+	var name = document.getElementById('name_id').value;
+	var init_src_ip = document.getElementById('init_srcip_id').value;
+	var init_des_ip = document.getElementById('init_desip_id').value;
+	var enca_src_ip = document.getElementById('enca_srcip_id').value;
+	var enca_des_ip = document.getElementById('enca_desip_id').value;
+	var mtu = document.getElementById('mtu_id').value;
+
+    if(!check_ipv4_addr(init_src_ip)|| !check_ipv4_addr(init_des_ip) || !check_ipv4_addr(enca_src_ip) || !check_ipv4_addr(enca_des_ip))  
+	{
+  	  	alert('<%:input ip address not legal%>');
+  	  	return false;
+	}
+		
+	ajax_set(port_sw,name,init_src_ip,init_des_ip,enca_src_ip,enca_des_ip,mtu,0,'<%=pcdata(luci.dispatcher.build_url("admin/config/gre_switch"))%>', '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+		<div class="cbi-map"><h2><a id="content" name="content"><%:GRE%></a></h2></br>
+		<fieldset class="cbi-section">
+			<legend><%:Configure%></legend>
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:GRE on/off%>:</td>
+						<td class="td_class"><select  name="port_sw" id="port_sw_id" style="width:180px;">
+								<option value="0"><%:off%></option>
+                    			<option value="1"><%:on%></option>
+							</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:MTU%>:</td>
+						<td class="td_class">
+						<input name="mtu_name" id="mtu_id" type="text"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Tunnel Name%>:</td>
+						<td class="td_class">
+						<input name="input_name" id="name_id" type="text" value="gre"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Initial Address%>:</td>
+						<td class="td_class">
+						<input name="input_srcip" id="init_srcip_id" type="text"><%: Please input actual source ip%></br></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"></td>
+						<td class="td_class">
+						<input name="input_desip" id="init_desip_id" type="text"><%: Please input actual destination sip%></td></tr>
+					</br>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Encapsulated Address%>:</td>
+						<td class="td_class">
+						<input name="input_srcip" id="enca_srcip_id" type="text"><%: Please input encapsulated source ip%></br></td></tr>
+					<tr class="tr_class">	
+						<td class="td_class" style="width:300px;text-indent:200px;">				
+						<td class="td_class">
+						<input name="input_desip" id="enca_desip_id" type="text"><%: Please input encapsulated destination ip%></td></tr>
+					<tr class="tr_class">
+						<td class="td_class"></td>
+						<td style="left:50pt;left:100pt">
+						<center>
+            	     		<input type="button" id="gre_add_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" right="1000px;" onclick="port_switch(this.form.port_sw.selectedIndex)" />
+             			</center>
+         				</td></tr>	
+				</table>
+			</div>	
+
+		</fieldset>	
+	
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	
+		<script type="text/javascript">
+		all_init();
+		</script>	
+			
+</form>
+
+<%+footer%>

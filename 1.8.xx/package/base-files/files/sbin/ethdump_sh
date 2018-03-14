@@ -1,0 +1,10 @@
+#!/bin/sh
+
+
+echo "-------------`pwd`"
+paths=`pwd`
+cd /tmp
+
+/sbin/ethdump $1 $2 $3 > /dev/null 2>&1 &
+
+cd $paths

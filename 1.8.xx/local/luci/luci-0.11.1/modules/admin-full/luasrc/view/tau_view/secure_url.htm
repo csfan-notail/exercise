@@ -1,0 +1,343 @@
+<%+header%>
+
+<%
+local uci = require "luci.model.uci".cursor()
+local url_all  = ""
+local sercure_url_num = ""
+local white_url_all  = ""
+local white_sercure_url_num = ""
+function secure_get ()
+	sercure_url_num = uci.get("secure","url","url_num")
+	local url_addr = ""
+	for num=1 , tonumber(sercure_url_num) do
+		local url_str = "url_"..num
+		
+		url_addr = uci.get("secure","url",url_str)
+		if url_addr == nil then 
+			sercure_url_num = num-1
+			return
+		end
+		url_all = url_all..url_addr..";"
+	end	
+end
+function white_secure_get ()
+	white_sercure_url_num = uci.get("secure","white_url","url_num")
+	local url_addr = ""
+	for num=1 , tonumber(white_sercure_url_num) do
+		local url_str = "url_"..num
+		
+		url_addr = uci.get("secure","white_url",url_str)
+		if url_addr == nil then 
+			white_sercure_url_num = num-1
+			return
+		end
+		white_url_all = white_url_all..url_addr..";"
+	end	
+end
+
+secure_get();
+white_secure_get();
+%>
+
+<script type="text/javascript">
+
+function all_init ()
+{	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("black_url_add_submit_id").disabled=true;
+		document.getElementById("white_url_add_submit_id").disabled=true;
+	}
+}
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{port_val:data1,port_val2:data2},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+
+function add_black_url_web()
+{
+	var i,k,file,file1,Urlhead,Urltail; 
+	var filenames = '<%=white_url_all%>'
+	var filenames1 = '<%=url_all%>'
+	var addurl = document.getElementById("id_addurl").value;
+	document.getElementById('action_id').value="0";
+
+	/*if(!check_mac_addr(addurl))
+	{
+		alert('<%:input url not legal%>');
+		return false;
+	}*/
+	if (addurl == '')
+	{
+		alert('<%:input url not legal%>');
+		return false;
+	}
+	else
+		{
+			Urlhead = addurl.split('.')[0];
+			//Urlbody = addurl.substring(Urlhead.length+1)
+			if(Urlhead == 'www' || Urlhead == 'http://www' || Urlhead == 'https://www')
+			{
+						Urltail = addurl.split('.').pop();
+						
+					if(!(Urltail == 'com' || Urltail == 'net' || Urltail == 'org' || Urltail == 'int' || Urltail == 'edu' || Urltail == 'gov' || Urltail == 'jobs' || Urltail == 'cn' || Urltail == 'mobi' || Urltail == 'travel' || Urltail == 'biz'))
+					{
+							alert('<%:input url not legal%>');
+							return false;
+						
+					}
+			}
+			else
+			{
+					alert('<%:input url not legal%>');
+					return false;
+					
+			}
+			
+			
+		}
+	for(i=1;i<='<%=white_sercure_url_num%>';i++)
+	{
+		file = filenames.split(';')[0];
+		filenames = filenames.substring(file.length+1)
+		if( addurl == file )
+		{
+			
+			alert("<%:This url is in the whitelist%>");
+			return false;
+		}
+	}
+	
+	for(i=1;i<='<%=sercure_url_num%>';i++)
+	{
+		file1 = filenames1.split(';')[0];
+		filenames1 = filenames1.substring(file1.length+1)
+		if( addurl == file1 )
+		{
+			
+			alert("<%:This url is in the blacklist%>");
+			return false;
+		}
+	}
+	ajax_set(addurl,0,'<%=pcdata(luci.dispatcher.build_url("admin/secure/url_filter"))%>', '<%=luci.dispatcher.build_url("admin", "secure")%>/set_infos/');
+
+}
+function add_white_url_web()
+{
+	var i,k,file,file1; 
+	var filenames = '<%=url_all%>'
+	var filenames1 = '<%=white_url_all%>'
+	var addurl = document.getElementById("id_addurl").value;
+	document.getElementById('action_id').value="0";
+/*if(!check_mac_addr(addurl))
+	{
+		alert('<%:input url not legal%>');
+		return false;
+	}*/
+	if (addurl == '')
+	{
+		alert('<%:input url not legal%>');
+		return false;
+	}
+	else
+		{
+			Urlhead = addurl.split('.')[0];
+			//Urlbody = addurl.substring(Urlhead.length+1)
+			if(Urlhead == 'www' || Urlhead == 'http://www' || Urlhead == 'https://www')
+			{
+						Urltail = addurl.split('.').pop();
+						
+					if(!(Urltail == 'com' || Urltail == 'net' || Urltail == 'org' || Urltail == 'int' || Urltail == 'edu' || Urltail == 'gov' || Urltail == 'jobs' || Urltail == 'cn' || Urltail == 'mobi' || Urltail == 'travel' || Urltail == 'biz'))
+					{
+							alert('<%:input url not legal%>');
+							return false;
+						
+					}
+			}
+			else
+			{
+					alert('<%:input url not legal%>');
+					return false;
+					
+			}
+			
+			
+		}
+	for(i=1;i<='<%=sercure_url_num%>';i++)
+	{
+		file = filenames.split(';')[0];
+		filenames = filenames.substring(file.length+1)
+		if( addurl == file )
+		{
+			alert("<%:This url is in the blacklist%>");
+			return false;
+		}
+	}
+	
+	for(i=1;i<='<%=white_sercure_url_num%>';i++)
+	{
+		file1 = filenames1.split(';')[0];
+		filenames1 = filenames1.substring(file1.length+1)
+		if( addurl == file1 )
+		{
+			alert("<%:This url is in the whitelist%>");
+			return false;
+		}
+	}
+	ajax_set(addurl,1,'<%=pcdata(luci.dispatcher.build_url("admin/secure/url_filter"))%>', '<%=luci.dispatcher.build_url("admin", "secure")%>/set_infos/');
+
+}
+function del_black_url_web(del_url)
+{		
+
+	ajax_set(del_url,3,'<%=pcdata(luci.dispatcher.build_url("admin/secure/url_filter"))%>', '<%=luci.dispatcher.build_url("admin", "secure")%>/set_infos/');
+}
+function del_white_url_web(del_url)
+{		
+
+	ajax_set(del_url,2,'<%=pcdata(luci.dispatcher.build_url("admin/secure/url_filter"))%>', '<%=luci.dispatcher.build_url("admin", "secure")%>/set_infos/');
+}
+function showFileList1()
+{
+	var i,k,file; 
+	var filenames = '<%=url_all%>'
+
+	k="<table  class='cbi-section-table' style='margin-left:100px;width:800px'><tr><td style='width:35px;'><%:Number%></td><td style='width:60px;'><%:Url%></td><td style='width:48px;'><%:Export%></td><td style='width:33px;'><%:Delete%></td></tr></table>";
+	k+="<table id='tablelsw' class='cbi-section-table' style='margin-left:100px;width:800px'>";
+	for(i=1;i<='<%=sercure_url_num%>';i++)
+	{
+		file = filenames.split(';')[0];
+		filenames = filenames.substring(file.length+1)
+		if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:260px;'>"+file+"</td><td><style='background-color:#f09090' onclick='del_black_url_web(\""+file+"\")'></td></tr>");
+		else
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:260px;'>"+file+"</td><td><input type='submit' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='del_black_url_web(\""+file+"\")'></td></tr>");
+	}
+	k+="<td></td><td></td><td></td><td></td>";
+	k+="</table>";
+	document.write(k);
+}
+function showFileList2()
+{
+	var i,k,file; 
+	var filenames = '<%=white_url_all%>'
+
+	k="<table  class='cbi-section-table' style='margin-left:100px;width:800px'><tr><td style='width:35px;'><%:Number%></td><td style='width:60px;'><%:Url%></td><td style='width:48px;'><%:Export%></td><td style='width:33px;'><%:Delete%></td></tr></table>";
+	k+="<table id='tablelsw' class='cbi-section-table' style='margin-left:100px;width:800px'>";
+	for(i=1;i<='<%=white_sercure_url_num%>';i++)
+	{
+		file = filenames.split(';')[0];
+		filenames = filenames.substring(file.length+1)
+		if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:260px;'>"+file+"</td><td><style='background-color:#f09090' onclick='del_white_url_web(\""+file+"\")'></td></tr>");
+		else
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:260px;'>"+file+"</td><td><input type='submit' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='del_white_url_web(\""+file+"\")'></td></tr>");
+	}
+	k+="<td></td><td></td><td></td><td></td>";
+	k+="</table>";
+	document.write(k);
+}
+function timer(event)  {   
+	if(event.keyCode==13){
+		event.preventDefault();
+		return false;
+	}
+} 
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+		<div class="cbi-map">
+			<h2>	
+		 	  <a id="content" name="content"><%:URL Filter%>
+		 	  </a>
+			</h2>
+		<br/>
+
+		<fieldset class="cbi-section">
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="text-indent:90px;"><%:Input URL Address%>:
+						<input type="text" id="action_id" style="width:20px;display:none;" />&nbsp;&nbsp;&nbsp;&nbsp;
+						<input type="text" id="id_addurl" style="width:180px;" onkeypress="timer(event)" />&nbsp;&nbsp;
+						<input type="button"  id="black_url_add_submit_id" class="cbi-button cbi-button-apply" value="<%:Black Add%>" style="width:100px;" onclick="add_black_url_web()"/>
+						<input type="button"  id="white_url_add_submit_id" class="cbi-button cbi-button-apply" value="<%:White Add%>" style="width:100px;" onclick="add_white_url_web()"/>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</fieldset>
+			
+		<fieldset class="cbi-section">
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+				<td class="td_class"><%:Black list%>:</td>
+					<script>showFileList1();</script>
+			</div>
+		</div>
+		</fieldset>
+		<fieldset class="cbi-section">
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">	
+				<td class="td_class"><%:White list%>:</td>
+					<script>showFileList2();</script>
+			</div>
+		</div>
+		</fieldset>
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+
+		<script>
+			all_init();
+		</script>
+</form>
+
+<%+footer%>

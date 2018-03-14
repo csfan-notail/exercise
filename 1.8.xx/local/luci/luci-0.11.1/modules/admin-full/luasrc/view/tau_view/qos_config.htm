@@ -1,0 +1,215 @@
+<%+header%>
+
+<%
+	local uci = require "luci.model.uci".cursor()
+	local lte_qos_cid = tonumber(uci.get('epsqos','qos','lte_qos_cid'))
+	local lte_qos_qci = tonumber(uci.get('epsqos','qos','lte_qos_qci'))
+	local lte_qos_dlgbr = tonumber(uci.get('epsqos','qos','lte_qos_dlgbr'))
+	local lte_qos_ulgbr = tonumber(uci.get('epsqos','qos','lte_qos_ulgbr'))
+	local lte_qos_dlmbr = tonumber(uci.get('epsqos','qos','lte_qos_dlmbr'))
+	local lte_qos_ulmbr = tonumber(uci.get('epsqos','qos','lte_qos_ulmbr'))
+
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	document.getElementById('lte_qos_cid_id').value='<%=lte_qos_cid%>';
+    document.getElementById('lte_qos_qci_id').value        = '<%=lte_qos_qci%>';
+    document.getElementById('lte_qos_dlgbr_id').value  = '<%=lte_qos_dlgbr%>';
+    document.getElementById('lte_qos_ulgbr_id').value  = '<%=lte_qos_ulgbr%>';
+    document.getElementById('lte_qos_dlmbr_id').value  = '<%=lte_qos_dlmbr%>';
+    document.getElementById('lte_qos_ulmbr_id').value  = '<%=lte_qos_ulmbr%>';
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		
+		document.getElementById("ospfd_submit_id").disabled=true;
+		document.getElementById("qos_submit_id").disabled=true;
+	}
+	
+}	
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,data6,data7,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{value1:data1,value2:data2,value3:data3,value4:data4,value5:data5,value6:data6,value7:data7},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+function lte_qos_config(operate)
+{
+	
+	var qos_cid_id = document.getElementById('lte_qos_cid_id').value;
+	var qos_qci_id = document.getElementById('lte_qos_qci_id').value;
+	var qos_dlgbr_id = document.getElementById('lte_qos_dlgbr_id').value;
+	var qos_ulgbr_id = document.getElementById('lte_qos_ulgbr_id').value;
+	var qos_dlmbr_id = document.getElementById('lte_qos_dlmbr_id').value;
+	var qos_ulmbr_id = document.getElementById('lte_qos_ulmbr_id').value;
+	
+	if(qos_cid_id < 1 || qos_cid_id > 32)
+	{
+		alert('<%:Cid Range 1-32%>');
+		return false;
+	}
+	if(qos_qci_id < 0 || qos_qci_id > 9)
+	{
+		alert('<%:Qci Range 0-9%>');
+		return false;
+	}
+	if(qos_dlgbr_id < 0 || qos_dlgbr_id > 262144)
+	{
+		alert('<%:Dlgbr Range 0-262144%>');
+		return false;
+	}
+	if(qos_ulgbr_id < 0 || qos_ulgbr_id > 262144)
+	{
+		alert('<%:Ulgbr Range 0-262144%>');
+		return false;
+	}
+	if(qos_dlmbr_id < 0 || qos_dlmbr_id > 262144)
+	{
+		alert('<%:Dlmbr Range 0-262144%>');
+		return false;
+	}
+	if(qos_ulmbr_id < 0 || qos_ulmbr_id > 262144)
+	{
+		alert('<%:Ulmbr Range 0-262144%>');
+		return false;
+	}
+	if(qos_cid_id == '' || qos_qci_id == '' || qos_dlgbr_id == '' || qos_ulgbr_id == '' || qos_dlmbr_id == '' || qos_ulmbr_id == '')
+	{
+		alert('<%:Illegal configuration%>');
+		return false;
+	}
+	ajax_set(qos_cid_id,qos_qci_id,qos_dlgbr_id,qos_ulgbr_id,qos_dlmbr_id,qos_ulmbr_id,0,'<%=pcdata(luci.dispatcher.build_url("admin/lte/qos_config"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "lte")%>/set_infos/');
+}
+function lte_qos_del(operate)
+{
+	var qos_cid_id = document.getElementById('lte_qos_cid_id').value;
+	var qos_qci_id = document.getElementById('lte_qos_qci_id').value;
+	var qos_dlgbr_id = document.getElementById('lte_qos_dlgbr_id').value;
+	var qos_ulgbr_id = document.getElementById('lte_qos_ulgbr_id').value;
+	var qos_dlmbr_id = document.getElementById('lte_qos_dlmbr_id').value;
+	var qos_ulmbr_id = document.getElementById('lte_qos_ulmbr_id').value;
+	if( qos_cid_id == '0' && qos_qci_id == '0' && qos_dlgbr_id == '0' && qos_ulgbr_id == '0' && qos_dlmbr_id == '0' && qos_ulmbr_id == '0' )
+	{
+		alert('<%:No qos configuration to be deleted%>');
+		return false;
+	}
+	ajax_set(qos_cid_id,qos_qci_id,qos_dlgbr_id,qos_ulgbr_id,qos_dlmbr_id,qos_ulmbr_id,1,'<%=pcdata(luci.dispatcher.build_url("admin/lte/qos_config"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "lte")%>/set_infos/');
+}
+
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:QOS config%></a></h2><br/>
+		<fieldset class="cbi-section">
+			
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:qos_cid%>:</td>
+						<td class="td_class">
+						<input name="qos_cid" id="lte_qos_cid_id" type="text" style="width:200px;margin-left:0px;">
+						<font color=" gray"><%:QOS CID 范围%> 1-32</font></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:qos_qci%>:</td>
+						<td class="td_class">
+						<input name="zebra_mas" id="lte_qos_qci_id" type="text" style="width:200px;margin-left:0px;">
+						<font color=" gray"><%:QOS QCI范围%> 0-9</font></td></tr>	
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:qos dl_gbr%>:</td>
+						<td class="td_class"><input name="ospf_id" id="lte_qos_dlgbr_id" type="text" style="width:200px;margin-left:0px;">
+						<font color=" gray"><%:DL_GBR范围%> 1-262144</font></</td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:qos ul_gbr%>:</td>
+						<td class="td_class">
+						<input name="ospf_ip" id="lte_qos_ulgbr_id" type="text" style="width:200px;margin-left:0px;">
+						<font color=" gray"><%:UL_GBR范围%> 1-262144</font></td></tr>
+						<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:qos dl_mbr%>:</td>
+						<td class="td_class">
+						<input name="ospf_mask" id="lte_qos_dlmbr_id" type="text" style="width:200px;margin-left:0px;">
+						<font color=" gray"><%:DL_MBR范围%> 1-262144</font></td></tr>
+					<tr class="tr_class">	
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:qos ul_mbr%>:</td>
+						<td class="td_class">
+						<input name="ospf_area" id="lte_qos_ulmbr_id" type="text" style="width:200px;margin-left:0px;">
+						<font color=" gray"><%:UL_MBR范围%> 1-262144</font></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"></td>	
+						<td class="td_class">
+						<input type="button" name="ospf_opr" id="ospfd_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="lte_qos_config(this.form.ospf_opr.selectedIndex)" />
+						<input type="button" name="qos_delete" id="qos_submit_id" class="cbi-button cbi-button-apply" value="<%:Delete%>" style="width:100px;" onclick="lte_qos_del(this.form.qos_delete.selectedIndex)" />
+						</td></tr>
+					
+				</table>
+			</div>
+				
+			<div class="div_class" style="margin-left:100px;">
+				<table class="table_class" style="margin-left:100px;">
+					<tr class="tr_class" >
+						<td class="td_class" >
+							<font size="3" id="legend_ospf_nbr" color="blue" ></font>
+						</td></tr>
+				</table>
+			</div>
+				
+		</fieldset>
+	</div>
+	
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

@@ -1,0 +1,258 @@
+<%+header%>
+
+<%
+local ip_route = luci.util.exec(tostring("ip route show"))
+local ip_rule = luci.util.exec(tostring("ip rule show"))
+
+local gateway_all  = ""
+local table_all  = ""
+local way_all  = ""
+local net_all  = ""
+local policy_num = ""
+
+function policy_get ()
+	policy_num = luci.sys.exec("uci get policy.@list[0].number")
+
+	local gateway_val  = ""
+	local table_val  = ""
+	local way_val  = ""
+	local net_val  = ""
+	for num=1 , tonumber(policy_num) do
+		gateway_val = luci.sys.exec("uci get policy.@list"..num.."[0].gateway")
+		table_val = luci.sys.exec("uci get policy.@list"..num.."[0].table")
+		way_val = luci.sys.exec("uci get policy.@list"..num.."[0].way")
+		net_val = luci.sys.exec("uci get policy.@list"..num.."[0].net")
+				
+		if table_val == nil then 
+			policy_num = num-1
+			return
+		end
+		
+		gateway_val=string.gsub(gateway_val, "\n","")
+		table_val=string.gsub(table_val, "\n","")
+		way_val=string.gsub(way_val, "\n","")
+		net_val=string.gsub(net_val, "\n","")
+
+		gateway_all = gateway_all..gateway_val..";"
+		table_all = table_all..table_val..";"
+		way_all = way_all..way_val..";"
+		net_all = net_all..net_val..";"
+	end	
+	policy_num=string.gsub(policy_num, "\n","")
+end
+policy_get()
+%>
+
+<script type="text/javascript">
+
+function all_init (){
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("submit_id").disabled=true;
+	}
+}
+
+function stxhr_get(datas){
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,a_url,s_url){
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{param1:data1,param2:data2,param3:data3,param4:data4,param5:data5},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	 
+function netmaskNum(ipAddress){
+	if( ipAddress != "0.0.0.0" )
+	{	
+		var numArray = ipAddress.split(".");
+		var returnIpStr = "";
+		for (var i = 0; i < 4; i++) {
+			var curr_num = numArray[i];
+			var number_Bin = parseInt(curr_num);
+			number_Bin = number_Bin.toString(2);
+			var iCount = 8-number_Bin.length;
+			for (var j = 0; j < iCount; j++) {
+				number_Bin = "0"+number_Bin;
+			}
+			returnIpStr += number_Bin;
+		}
+		//return returnIpStr;
+		//var reg = /[a-zA-Z]/g;
+		var reg = /[1]/g;
+		return returnIpStr.match(reg).length;
+	}
+	else{
+		return 0;
+	}
+}
+function submit_config(){
+	
+	var actions = document.getElementById('action_id').value;
+	var gateway = document.getElementById('gateway_id').value;
+	var table = document.getElementById('table_id').value;
+	var ip_way = document.getElementById('ip_way_id').value;
+	var ip_addr = document.getElementById('ip_addr_id').value;
+	var ip_mask = document.getElementById('ip_mask_id').value;
+	
+	if( !check_ipv4_addr(gateway) || !check_ipv4_addr(ip_addr) || !check_ipv4_addr(ip_mask) 
+		|| gateway == '' || ip_addr == '' || ip_mask == '' )
+	{
+		alert('<%:input ip address not legal%>');
+		return false;
+	}
+	
+	var re = /^[0-9]+.?[0-9]*$/; //判断字符串是否为数字 //判断正整数 /^[1-9]+[0-9]*]*$/ 
+	if( !re.test(table) || table < 100 || table > 1000)
+	{
+		alert('<%:Table name only numbers, range is 100 ~ 1000%>');
+		document.getElementById(table_id).value = "";
+		return false;
+	}
+
+	var ip_net = ip_addr +'/'+netmaskNum(ip_mask);
+
+	if(actions == 0)
+	{
+		var i,file,file1,file2,file3,file4,tmpway; 
+		var filenames1 = '<%=gateway_all%>'
+		var filenames2 = '<%=table_all%>'
+		var filenames3 = '<%=way_all%>'
+		var filenames4 = '<%=net_all%>'	
+		if (ip_way == 0)
+		{
+			tmpway = "from"
+		}
+		else
+		{
+			tmpway = "to"
+		} 
+		for(i=1;i<='<%=policy_num%>';i++)
+		{
+			file1 = filenames1.split(';')[0];
+			filenames1 = filenames1.substring(file1.length+1)
+		
+			file2 = filenames2.split(';')[0];
+			filenames2 = filenames2.substring(file2.length+1)
+			
+			file3 = filenames3.split(';')[0];
+			filenames3 = filenames3.substring(file3.length+1)
+		
+			file4 = filenames4.split(';')[0];
+			filenames4 = filenames4.substring(file4.length+1)
+			if((file1 == gateway)&&(file2 == table)&&(file3 == tmpway)&&(file4 == ip_net))
+			{
+				alert("<%:Existing configuration, please check the route list%>");
+				return false;
+			}
+			
+		}
+	}
+	
+	ajax_set(actions,gateway,table,ip_way,ip_net,'<%=pcdata(luci.dispatcher.build_url("admin/config/policy_router"))%>', '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Policy Router%></a></h2><br/>
+		<fieldset class="cbi-section">
+			<legend><%:Policy Router Config%></legend>
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:gateway%>:</td>
+						<td class="td_class"><input id="gateway_id" type="text" ></td>
+						</tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:table%>:</td>
+						<td class="td_class"><input id="table_id" type="text" >
+						</tr>	
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:ip_way%>:</td>
+						<td class="td_class"><select id="ip_way_id" style="width:180px;">
+							<option value="0"><%:src%></option>
+                    		<option value="1"><%:dst%></option>
+						</select></td>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:ip_addr%>:</td>
+						<td class="td_class"><input id="ip_addr_id" type="text" >
+						</tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:ip_mask%>:</td>
+						<td class="td_class"><input id="ip_mask_id" type="text" >
+						</tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"></td>
+						<td class="td_class"><select name="action" id="action_id" style="width:180px;">
+							<option value="0"><%:add%></option>
+                    		<option value="1"><%:del%></option>
+						</select>
+						<input type="button" id="submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;"  onclick="submit_config(this.form.action.selectedIndex)" /></td>
+					</tr>
+				</table>
+			</div>	
+			
+			<div class="div_class" style="margin-left:50px;">
+				<table class="table_class" style="width:880px;">
+					<tr class="tr_class" >
+					<td class="td_class" >
+					<pre><font size="3" id="ip_route_id" color="blue" ><%=ip_route%></font></pre>
+					</td></tr>
+					<tr class="tr_class" >
+					<td class="td_class" >
+					<pre><font size="3" id="ip_rule_id" color="blue" ><%=ip_rule%></font></pre>
+					</td></tr>
+				</table>
+			</div>
+					
+		</fieldset>
+
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>	
+</form>
+
+<%+footer%>

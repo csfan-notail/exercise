@@ -1,0 +1,342 @@
+<%+header%>
+
+<%
+	local uci = require "luci.model.uci".cursor()
+	local rsa_sw          = uci.get('ipsec','rsa','sw')
+	local x509_sw         = uci.get('ipsec','x509','sw')
+	local psk_sw          = uci.get('ipsec','psk','sw')
+	local psk_pfs         = uci.get('ipsec','psk','pfs')
+	local psk_psk         = uci.get('ipsec','psk','psk')
+	local psk_ike1        = uci.get('ipsec','psk','ike1')
+	local psk_ike2        = uci.get('ipsec','psk','ike2')
+	local psk_phase2      = uci.get('ipsec','psk','phase2')
+	local psk_authby      = uci.get('ipsec','psk','authby')
+	local psk_src_ip      = uci.get('ipsec','psk','src_ip')
+	local psk_des_ip      = uci.get('ipsec','psk','des_ip')
+	local psk_src_mask    = uci.get('ipsec','psk','src_mask')
+	local psk_des_mask    = uci.get('ipsec','psk','des_mask')
+	local psk_phase2alg1  = uci.get('ipsec','psk','phase2alg1')
+	local psk_phase2alg2  = uci.get('ipsec','psk','phase2alg2')
+	local psk_des_subnet  = uci.get('ipsec','psk','des_subnet')
+	local psk_src_subnet  = uci.get('ipsec','psk','src_subnet')
+	local psk_salifetime  = uci.get('ipsec','psk','salifetime')
+	local psk_ikelifetime = uci.get('ipsec','psk','ikelifetime')
+	local psk_src_nexthop = uci.get('ipsec','psk','src_nexthop')
+	local psk_des_nexthop = uci.get('ipsec','psk','des_nexthop')
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	if('<%=rsa_sw%>' != 0 || '<%=x509_sw%>' != 0)
+	{
+		document.getElementById('id_button_psk').disabled = true;
+		document.getElementById('id_button_psk').style.background = 'Gray';
+	}
+
+	document.getElementById('id_sw').options['<%=psk_sw%>'].selected                 = true;
+	document.getElementById('id_pfs').options['<%=psk_pfs%>'].selected               = true;
+	document.getElementById('id_ike_1').options['<%=psk_ike1%>'].selected            = true;
+	document.getElementById('id_ike_2').options['<%=psk_ike2%>'].selected            = true;
+	document.getElementById('id_phase').options['<%=psk_phase2%>'].selected          = true;
+//	document.getElementById('id_authby').options['<%=psk_authby%>'].selected         = true;
+	document.getElementById('id_phasealg_1').options['<%=psk_phase2alg1%>'].selected = true;
+	document.getElementById('id_phasealg_2').options['<%=psk_phase2alg2%>'].selected = true;
+    
+    document.getElementById('id_psk').value         = '<%=psk_psk%>'
+    document.getElementById('id_src_ip').value      = '<%=psk_src_ip%>'
+    document.getElementById('id_des_ip').value      = '<%=psk_des_ip%>'
+    document.getElementById('id_src_mask').value    = '<%=psk_src_mask%>'
+    document.getElementById('id_des_mask').value    = '<%=psk_des_mask%>'
+    document.getElementById('id_des_subnet').value  = '<%=psk_des_subnet%>'
+    document.getElementById('id_src_subnet').value  = '<%=psk_src_subnet%>'
+    document.getElementById('id_salifetime').value  = '<%=psk_salifetime%>'
+    document.getElementById('id_ikelifetime').value = '<%=psk_ikelifetime%>'
+    document.getElementById('id_des_nexthop').value = '<%=psk_des_nexthop%>'
+    document.getElementById('id_src_nexthop').value = '<%=psk_src_nexthop%>'
+
+    if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("id_button_psk").disabled=true;
+	}
+}	
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+									}
+		);
+	}
+}
+
+function ajax_set(data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12,data13,data14,data15,data16,data17,data18,data19,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{param1:data1,param2:data2,param3:data3,param4:data4,param5:data5,param6:data6,param7:data7,param8:data8,param9:data9,param10:data10,param11:data11,param12:data12,param13:data13,param14:data14,param15:data15,param16:data16,param17:data17,param18:data18,param19:data19},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+
+function psk_conf (select_sw,pfs_sw,ike1_sw,ike2_sw,phase_sw,phasealg1_sw,phasealg2_sw) {
+
+	var ikelifetime = document.getElementById('id_ikelifetime').value;
+	var salifetime  = document.getElementById('id_salifetime').value;
+	var psk         = document.getElementById('id_psk').value;
+	var src_ip      = document.getElementById('id_src_ip').value;
+	var src_mask    = document.getElementById('id_src_mask').value;
+	var src_subnet  = document.getElementById('id_src_subnet').value;
+	var src_nexthop = document.getElementById('id_src_nexthop').value;
+	var des_ip      = document.getElementById('id_des_ip').value;
+	var des_mask    = document.getElementById('id_des_mask').value;
+	var des_subnet  = document.getElementById('id_des_subnet').value;
+	var des_nexthop = document.getElementById('id_des_nexthop').value;
+
+	if(src_mask < 8 || src_mask > 32 || des_mask < 8 || des_mask > 32)
+	{
+		alert('<%:Mask 8-32%>');
+		return false;
+	}
+
+	if(ikelifetime > 25 || salifetime > 25 || ikelifetime < 1 || salifetime < 1)
+	{
+		alert('<%:Lifetime 1-24%>');
+		return false;
+	}
+
+	if(!check_ipv4_addr(src_ip) || !check_ipv4_addr(des_ip) || !check_ipv4_addr(src_subnet) || !check_ipv4_addr(des_subnet) || !check_ipv4_addr(src_nexthop) || !check_ipv4_addr(des_nexthop))
+	{
+		alert('<%:input ip address not legal%>');
+		return false;
+	}
+/*	
+	if(!check_int_letter(psk))
+	{
+		alert('<%:Only LETTER and NUMBER%>');
+		return false;
+	}
+*/
+	ajax_set(select_sw,0,pfs_sw,ike1_sw,ike2_sw,phase_sw,phasealg1_sw,phasealg2_sw,ikelifetime,salifetime,psk,src_ip,src_mask,src_subnet,src_nexthop,des_ip,des_mask,des_subnet,des_nexthop,'<%=pcdata(luci.dispatcher.build_url("admin/config/psk_auth"))%>', '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+		<div class="cbi-map">
+
+ <script type="text/javascript">
+ var apply_xhr = new XHR(); 
+       
+	var get_vflag_progress = function() {
+		
+		apply_xhr.get('<%=luci.dispatcher.build_url("admin", "config", "ipsec_set", "status")%>', null,
+			function(x) {
+				var e = document.getElementById('ipsec_status');
+				
+				response_msg = x.responseText
+				if( e ) 
+				{
+					if( response_msg.match(/^disconnect/))
+					{
+						e.innerHTML = '<%:DISCONNECT%>';
+					}
+					else
+					{
+						e.innerHTML = '<%:CONNECT%>';
+					}
+						
+				}	
+				window.setTimeout(get_vflag_progress, 1000);
+			}
+			
+		);
+	}
+	window.setTimeout(get_vflag_progress, 1000);
+</script>
+
+		<h2><a id="content" name="content"><%:PSK%></a></h2>
+	
+		<fieldset class="cbi-section"><legend><%:PSK Auth Config%></legend></fieldset>
+
+		<fieldset class="cbi-section">	
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:IPsec status%>:</td>
+						<td class="td_class">
+						<span id="ipsec_status"></span></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:on/off%>:</td>
+						<td class="td_class">
+							<select  name="name_sw" id="id_sw" style="width:180px;">
+							<option value="0"><%:off%></option>
+                			<option value="1"><%:on%></option>
+							</select></td></tr>
+				<!--	<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Authby%>:</td>
+						<td class="td_class">
+						<select  name="name_authby" id="id_authby" style="width:180px;">
+						<option value="0"><%:rassig%></option>
+                		<option value="1"><%:secret%></option>
+                		<option value="2"><%:rassig/secret%></option>   
+						</select></td></tr>         -->
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Pfs%>:</td>
+						<td class="td_class">
+						<select  name="name_pfs" id="id_pfs" style="width:180px;">
+							<option value="0"><%:Yes%></option>
+                			<option value="1"><%:No%></option>
+						</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Ike%>:</td>
+						<td class="td_class">
+						<select  name="name_ike_1" id="id_ike_1" style="width:88px;">
+	<!--					<option value="0"><%:OFF%></option>                -->
+                			<option value="0"><%:des-sha1%></option>
+                			<option value="1"><%:des-md5%></option>
+                			<option value="2"><%:3des-sha1%></option>
+                			<option value="3"><%:3des-md5%></option>
+                			<option value="4"><%:aes-sha1%></option>
+                			<option value="5"><%:aes-md5%></option>
+                			<option value="6"><%:aes128-sha1%></option>
+                			<option value="7"><%:aes128-md5%></option>
+                			<option value="8"><%:aes256-sha1%></option>
+                			<option value="9"><%:aes256-md5%></option>
+						</select>
+						<select  name="name_ike_2" id="id_ike_2" style="width:88px;">
+<!--						<option value="0"><%:OFF%></option>                -->
+							<option value="0"><%:MODP-768%></option>
+                			<option value="1"><%:MODP-1024%></option>
+                			<option value="2"><%:MODP-2048%></option>
+						</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Ikelifetime%>:</td>
+						<td class="td_class">
+						<input id="id_ikelifetime" type="text" value="0" sytle="width:180px">&nbsp;&nbsp;<%:hour%>
+						</td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Salifetime%>:</td>
+						<td class="td_class">
+						<input id="id_salifetime" type="text" value="0" sytle="width:180px">&nbsp;&nbsp;<%:hour%></td></tr>
+
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Phase2%>:</td>
+						<td class="td_class">
+						<select  name="name_phase" id="id_phase" style="width:180px;">
+							<option value="0"><%:ESP%></option>
+                			<option value="1"><%:AH%></option>
+						</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Phase2alg%>:</td>
+						<td class="td_class">
+						<select  name="name_phasealg_1" id="id_phasealg_1" style="width:89px;">
+<!--					<option value="0"><%:OFF%></option>                  -->
+                			<option value="0"><%:des-sha1%></option>
+                			<option value="1"><%:des-md5%></option>
+                			<option value="2"><%:3des-sha1%></option>
+                			<option value="3"><%:3des-md5%></option>
+                			<option value="4"><%:aes-sha1%></option>
+                			<option value="5"><%:aes-md5%></option>
+                			<option value="6"><%:aes128-sha1%></option>
+                			<option value="7"><%:aes128-md5%></option>
+                			<option value="8"><%:aes256-sha1%></option>
+                			<option value="9"><%:aes256-md5%></option>
+						</select>
+						<select  name="name_phasealg_2" id="id_phasealg_2" style="width:85px;">
+<!--					<option value="0"><%:OFF%></option>                   -->
+							<option value="0"><%:MODP-768%></option>
+                			<option value="1"><%:MODP-1024%></option>
+                			<option value="2"><%:MODP-2048%></option>
+                			<option value="3"><%:OFF%></option> 
+						</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:psk%>:</td>
+						<td class="td_class">
+						<input id="id_psk" type="text" value="0" sytle="width:180px;"></td></tr>
+				</table>
+			</div>			
+			</fieldset>
+
+			<fieldset class="cbi-section"><legend><%:PSK basic setting%></legend></fieldset>
+
+			<fieldset class="cbi-section">	
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Source IP%>:</td>
+						<td class="td_class">
+						<input id="id_src_ip" type="text" value="0.0.0.0" sytle="width:180px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Source subnet/Mask%>:</td>
+						<td class="td_class">
+						<input type="text" id="id_src_subnet" style="width:124px;"/>&nbsp;/&nbsp;
+						<input type="text" id="id_src_mask" style="width:18px;"/>&nbsp;
+						<font color=" gray">example :192.168.1.0/24</font></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Source nexthop%>:</td>
+						<td class="td_class">
+						<input id="id_src_nexthop" type="text" value="0.0.0.0" sytle="width:180px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Destination IP%>:</td>
+						<td class="td_class">
+						<input id="id_des_ip" type="text" value="0.0.0.0" sytle="width:180px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Destination subnet/Mask%>:</td>
+						<td class="td_class">
+						<input type="text" id="id_des_subnet" style="width:124px;"/>&nbsp;/&nbsp;
+						<input type="text" id="id_des_mask" style="width:18px;"/>&nbsp;
+						<font color=" gray">example :192.168.1.0/24</font></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Destination nexthop%>:</td>
+						<td class="td_class">
+						<input id="id_des_nexthop" type="text" value="0.0.0.0" sytle="width:180px;">&nbsp;&nbsp;&nbsp;
+               			<input type="button" id="id_button_psk" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="psk_conf(this.form.name_sw.selectedIndex,this.form.name_pfs.selectedIndex,this.form.name_ike_1.selectedIndex,this.form.name_ike_2.selectedIndex,this.form.name_phase.selectedIndex,this.form.name_phasealg_1.selectedIndex,this.form.name_phasealg_2.selectedIndex)"/></td></tr>	
+				</table>
+			</div>			
+			</fieldset>
+
+			<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+			</fieldset>
+		
+		<script>all_init();</script>
+
+</form>
+
+<%+footer%>

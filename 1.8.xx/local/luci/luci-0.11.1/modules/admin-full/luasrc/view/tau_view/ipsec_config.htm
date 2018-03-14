@@ -1,0 +1,111 @@
+<%+header%>
+<%
+	local ipsec_sw = uci.get('ipsec','config','ipsec_sw')
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("submit_id").disabled=true;
+	}
+	if( '0' == '<%=ipsec_sw%>' )
+		document.getElementById('ipsec_sw_id').options[0].selected=true;
+	else
+		document.getElementById('ipsec_sw_id').options['<%=ipsec_sw%>'].selected=true;
+		
+}	
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{param1:data1},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}
+function ipsec_config()
+{
+	var ipsec_sw = document.getElementById('ipsec_sw_id').value;
+	
+	ajax_set(ipsec_sw,'<%=pcdata(luci.dispatcher.build_url("admin/config/ipsec_config"))%>',
+				'<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:IPSec Config%></a></h2><br/>
+		
+		<fieldset class="cbi-section">
+			
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:IPSec Switch%>:</td>
+						<td class="td_class" >
+						<select  name="ipsec_sw" id="ipsec_sw_id" style="width:180px;">
+								<option value="0"><%:off%></option>
+                    			<option value="1"><%:on%></option>
+						</select>
+						<input type="button" id="submit_id" class="cbi-button" value="<%:Setting%>" style="width:100px;" onclick="ipsec_config()" />
+						</br></br>
+						</td></tr>
+				</table>
+			</div>
+			
+		</fieldset>
+		
+	</div>
+	
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"></font></legend>
+				<span id="diag-rc-output"></span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

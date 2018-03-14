@@ -1,0 +1,344 @@
+<soap:Envelope 
+			soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" 
+			xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
+			xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" 
+			xmlns:cwmp="urn:dslforum-org:cwmp-1-0" 
+			xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <soap:Header>
+    <cwmp:ID soap:mustUnderstand="1">3D8D198B69F94D7BB2A9266408481BE9</cwmp:ID>
+  </soap:Header>
+  <soap:Body>
+    <cwmp:GetParameterValues>
+      <ParameterNames soapenc:arrayType="xsd:string[1]">
+//*******************  deviceInfo**************************************/
+        <string>InternetGatewayDevice.DeviceSummary</string>
+	  <string>InternetGatewayDevice.LANDeviceNumberOfEntries</string>
+	  <string>InternetGatewayDevice.WANDeviceNumberOfEntries</string>
+	  <string>InternetGatewayDevice.DeviceInfo.Manufacturer</string>
+	  <string>InternetGatewayDevice.DeviceInfo.OUI</string>
+	  <string>InternetGatewayDevice.DeviceInfo.ModelName</string>
+	  <string>InternetGatewayDevice.DeviceInfo.Description</string>
+	  <string>InternetGatewayDevice.DeviceInfo.ProductClass</string>
+	  <string>InternetGatewayDevice.DeviceInfo.SerialNumber</string>
+	  <string>InternetGatewayDevice.DeviceInfo.HardwareVersion</string>
+	  <string>InternetGatewayDevice.DeviceInfo.SoftwareVersion</string>
+	  <string>InternetGatewayDevice.DeviceInfo.ModemFirmwareVersion</string>
+	  <string>InternetGatewayDevice.DeviceInfo.ProvisioningCode</string>
+	  <string>InternetGatewayDevice.DeviceInfo.UpTime</string>
+	  <string>InternetGatewayDevice.DeviceInfo.SpecVersion</string>
+//*******************  X_deviceInfo **************************************/
+	<string>InternetGatewayDevice.X_DeviceInfo.DeviceStatus</string>
+	<string>InternetGatewayDevice.X_DeviceInfo.UserName</string>
+//*******************  ManagementServer **************************************/
+	<string>InternetGatewayDevice.ManagementServer.URL</string>
+	<string>InternetGatewayDevice.ManagementServer.Username</string>
+	<string>InternetGatewayDevice.ManagementServer.Password</string>
+	<string>InternetGatewayDevice.ManagementServer.PeriodicInformEnable</string>
+	<string>InternetGatewayDevice.ManagementServer.PeriodicInformInterval</string>
+	<string>InternetGatewayDevice.ManagementServer.PeriodicInformTime</string>
+	<string>InternetGatewayDevice.ManagementServer.ParameterKey</string>
+	<string>InternetGatewayDevice.ManagementServer.ConnectionRequestURL</string>
+	<string>InternetGatewayDevice.ManagementServer.ConnectionRequestPassword</string>
+	<string>InternetGatewayDevice.ManagementServer.ConnectionRequestUsername</string>	
+	<string>InternetGatewayDevice.ManagementServer.UpgradesManaged</string>
+	<string>InternetGatewayDevice.ManagementServer.UDPConnectionRequestAddress</string>
+	<string>InternetGatewayDevice.ManagementServer.UDPConnectionRequestAddressNotificationLimit</string>
+	<string>InternetGatewayDevice.ManagementServer.STUNEnable</string>
+	<string>InternetGatewayDevice.ManagementServer.STUNServerAddress</string>
+	<string>InternetGatewayDevice.ManagementServer.STUNServerPort</string>
+	<string>InternetGatewayDevice.ManagementServer.STUNUsername</string>
+	<string>InternetGatewayDevice.ManagementServer.STUNPassword</string>
+	<string>InternetGatewayDevice.ManagementServer.STUNMaximumKeepAlivePeriod</string>
+	<string>InternetGatewayDevice.ManagementServer.STUNMinimumKeepAlivePeriod</string>
+	<string>InternetGatewayDevice.ManagementServer.NATDetected</string>
+
+
+//*******************  Time  **************************************/
+	<string>InternetGatewayDevice.Time.NTPServer1</string>
+	<string>InternetGatewayDevice.Time.NTPServer2</string>
+	<string>InternetGatewayDevice.Time.CurrentLocalTime</string>
+	<string>InternetGatewayDevice.Time.LocalTimeZone</string>
+	<string>InternetGatewayDevice.Time.LocalTimeZoneName</string>
+//*******************  LANConfigsSecurity *********************************/
+	<string>InternetGatewayDevice.LANConfigSecurity.ConfigPassword</string>
+//******************* InternetGatewayDevice.LANDevice.1.   *********************************/
+
+	<string>InternetGatewayDevice.LANDevice.1.LANWLANConfigurationNumberOfEntries</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceNumberOfEntries</string>
+//*******************  LANDevice.1.LANHostConfigManagement **************************************/
+
+	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.MACAddress</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DHCPServerConfigurable</string>
+ 	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DHCPServerEnable</string>
+ 	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DHCPRelay</string>
+ 	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.MinAddress</string>
+ 	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.MaxAddress</string>
+ 	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.ReservedAddresses</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.SubnetMask</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DNSServers</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DomainName</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.IPRouters</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DHCPLeaseTime</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.AllowedMACAddresses</string>
+
+
+//******************* LANDevice.1.LANHostConfigManagement.IPInterface.1 **************************************/
+	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.IPInterface.1.Enable</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.IPInterface.1.IPInterfaceIPAddress</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.IPInterface.1.IPInterfaceSubnetMask</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.IPInterface.1.IPInterfaceAddressingType</string>
+//******************* InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1. **************************************/
+	
+	<string>InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.Enable</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.Status</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.MACAddress</string>
+
+//******************* LANDevice.1.LANEthernetInterfaceConfig.1.Status **************************************/
+	<string>InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.Status</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.MACAddress</string>
+
+	<string>InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.Status.BytesSent</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.Status.BytesReceived</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.Status.PacketsSent</string>
+	<string>InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.Status.PacketsReceived</string>
+
+//*******************  InternetGatewayDevice.WANDevice.1.WANCommonInterfaceConfig. **************************************/
+
+	<string>InternetGatewayDevice.WANDevice.1.WANCommonInterfaceConfig.Layer1UpstreamMaxBitRate</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANCommonInterfaceConfig.Layer1DownstreamMaxBitRate</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANCommonInterfaceConfig.PhysicalLinkStatus</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANCommonInterfaceConfig.TotalBytesSent</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANCommonInterfaceConfig.TotalBytesReceived</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANCommonInterfaceConfig.TotalPacketsSent</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANCommonInterfaceConfig.TotalPacketsReceived</string>
+
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnectionNumberOfEntries</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnectionNumberOfEntries</string>
+
+//******************* WANDevice.1.WANConnectionDevice.1.WANIPConnection.1 **************************************/
+
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Enable</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Reset</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ConnectionStatus</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.PossibleConnectionTypes</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ConnectionType</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Name</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Uptime</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.LastConnectionError</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.RSIPAvailable</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.NATEnabled</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.AddressingType</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ExternalIPAddress</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.SubnetMask</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.DefaultGateway</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.DNSEnabled</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.DNSOverrideAllowed</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.DNSServers</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.MACAddress</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ConnectionTrigger</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.RouteProtocolRx</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.PortMappingNumberOfEntries</string>  
+
+//*******************InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Stats.**************************************/
+
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Stats.EthernetBytesSent</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Stats.EthernetBytesReceived</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Stats.EthernetPacketsSent</string>
+	<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Stats.EthernetPacketsReceived</string>
+
+//*******************   InternetGatewayDevice.IPPingDiagnostics.   **************************************/
+InternetGatewayDevice.IPPingDiagnostics.
+	
+	<string>InternetGatewayDevice.IPPingDiagnostics.DiagnosticsState</string>
+	<string>InternetGatewayDevice.IPPingDiagnostics.Interface</string>
+	<string>InternetGatewayDevice.IPPingDiagnostics.Host</string>
+	<string>InternetGatewayDevice.IPPingDiagnostics.NumberOfRepetitions</string>
+	<string>InternetGatewayDevice.IPPingDiagnostics.Timeout</string>
+	<string>InternetGatewayDevice.IPPingDiagnostics.DataBlockSize</string>
+	<string>InternetGatewayDevice.IPPingDiagnostics.DSCP</string>
+	<string>InternetGatewayDevice.IPPingDiagnostics.SuccessCount</string>
+	<string>InternetGatewayDevice.IPPingDiagnostics.FailureCount</string>
+	<string>InternetGatewayDevice.IPPingDiagnostics.AverageResponseTime</string>
+	<string>InternetGatewayDevice.IPPingDiagnostics.MinimumResponseTime</string>
+	<string>InternetGatewayDevice.IPPingDiagnostics.MaximumResponseTime</string>
+
+
+//*******************   InternetGatewayDevice.X_PPPoE2L2TP.   **************************************/
+
+  	 <string>InternetGatewayDevice.X_PPPoE2L2TP.Enable</string>
+	<string>InternetGatewayDevice.X_PPPoE2L2TP.MTUOfUser</string>
+	<string>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServerNumberOfEntries</string>
+
+	
+	 <string>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.Device </string>
+	 <string>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.TunnelMode</string>
+	 <string>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.LNSServerIPAddress</string>
+	 <string>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.LNSServerHostName</string>
+	 <string>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.LNSServerPortName</string>
+	 <string>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.TunnelAuthenticateEnable</string>
+	 <string>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.PasswordOfTunnel</string>
+
+//*******************   InternetGatewayDevice.X_LteDevice.Status.   **************************************/
+
+		InternetGatewayDevice.X_LteDevice.Status.IMEI
+		InternetGatewayDevice.X_LteDevice.Status.
+	<string>InternetGatewayDevice.X_LteDevice.Status.RadioSignalStrength</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.Txpower</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.IMEI</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.IMSI</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.RSRP</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.RSRQ</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.SINR</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.Band</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.BandWidth</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.SIMSTATUS</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.RadioMode</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.CellLocking</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.FrequencyLocking</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.RadioFrenquency</string>
+
+
+	<string>InternetGatewayDevice.X_LteDevice.Status.RSSI</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.RegistrationStatus</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.NetRegStatus</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.GprsRegStatus</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.EpsRegStatus</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.RadioInterference</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.NetworkName</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.EnodeBId</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.GlobeCellId</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.PhysicsCellId</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.Iccid</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.CellID</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.APNStatus</string>
+	<string>InternetGatewayDevice.X_LteDevice.Status.InNetWorkState</string>
+
+
+
+New InstanceDope  InternetGatewayDevice.X_LteDevice.Status.RadioSignalStrength
+New InstanceDope  InternetGatewayDevice.X_LteDevice.Status.Txpower
+New InstanceDope  InternetGatewayDevice.X_LteDevice.Status.IMEI
+New InstanceDope  InternetGatewayDevice.X_LteDevice.Status.IMSI
+New InstanceDope  InternetGatewayDevice.X_LteDevice.Status.RSRP
+New InstanceDope  InternetGatewayDevice.X_LteDevice.Status.RSRQ
+New InstanceDope(176) InternetGatewayDevice.X_LteDevice.Status.SINR
+New InstanceDope(177) InternetGatewayDevice.X_LteDevice.Status.Band
+New InstanceDope(178) InternetGatewayDevice.X_LteDevice.Status.BandWidth
+New InstanceDope(179) InternetGatewayDevice.X_LteDevice.Status.SIMSTATUS
+New InstanceDope(180) InternetGatewayDevice.X_LteDevice.Status.RadioMode
+New InstanceDope(181) InternetGatewayDevice.X_LteDevice.Status.CellLocking
+New InstanceDope(182) InternetGatewayDevice.X_LteDevice.Status.FrequencyLocking
+New InstanceDope(183) InternetGatewayDevice.X_LteDevice.Status.RadioFrenquency
+New InstanceDope(184) InternetGatewayDevice.X_LteDevice.Status.RSSI
+New InstanceDope(185) InternetGatewayDevice.X_LteDevice.Status.RegistrationStatus
+New InstanceDope(186) InternetGatewayDevice.X_LteDevice.Status.NetRegStatus
+New InstanceDope(187) InternetGatewayDevice.X_LteDevice.Status.GprsRegStatus
+New InstanceDope(188) InternetGatewayDevice.X_LteDevice.Status.EpsRegStatus
+New InstanceDope(189) InternetGatewayDevice.X_LteDevice.Status.RadioInterference
+New InstanceDope(190) InternetGatewayDevice.X_LteDevice.Status.NetworkName
+New InstanceDope(191) InternetGatewayDevice.X_LteDevice.Status.EnodeBId
+New InstanceDope(192) InternetGatewayDevice.X_LteDevice.Status.GlobeCellId
+New InstanceDope(193) InternetGatewayDevice.X_LteDevice.Status.PhysicsCellId
+New InstanceDope(194) InternetGatewayDevice.X_LteDevice.Status.Iccid
+New InstanceDope(195) InternetGatewayDevice.X_LteDevice.Status.CellID
+New InstanceDope(196) InternetGatewayDevice.X_LteDevice.Status.APNStatus
+New InstanceDope(197) InternetGatewayDevice.X_LteDevice.Status.InNetWorkState
+
+ </ParameterNames>
+    </cwmp:GetParameterValues>
+  </soap:Body>
+</soap:Envelope>
+
+
+
+<string>InternetGatewayDevice.X_CMCC_WANDeviceNumberOfEntries</string>
+<string>InternetGatewayDevice.X_CMCC_NetRegStatus</string>
+<string>InternetGatewayDevice.X_CMCC_GprsRegStatus</string>
+<string>InternetGatewayDevice.X_CMCC_EpsRegStatus</string>
+<string>InternetGatewayDevice.X_CMCC_CurrentNetwork</string>
+<string>InternetGatewayDevice.X_CMCC_CurrentNetmode</string>
+<string>InternetGatewayDevice.X_CMCC_NetworkPriority</string>
+<string>InternetGatewayDevice.X_CMCC_SingalLevel</string>
+<string>InternetGatewayDevice.X_CMCC_Txpower</string>
+<string>InternetGatewayDevice.X_CMCC_FrequencyPoint</string>
+<string>InternetGatewayDevice.X_CMCC_Band</string>
+<string>InternetGatewayDevice.X_CMCC_BandWidth</string>
+<string>InternetGatewayDevice.X_CMCC_EnodeBId</string>
+<string>InternetGatewayDevice.X_CMCC_CellId</string>
+<string>InternetGatewayDevice.X_CMCC_GlobeCellId</string>
+<string>InternetGatewayDevice.X_CMCC_PhysicsCellId</string>
+<string>InternetGatewayDevice.X_CMCC_ICCID</string>
+<string>InternetGatewayDevice.X_CMCC_APN</string>
+<string>InternetGatewayDevice.X_CMCC_FrequencyLocking</string>
+<string>InternetGatewayDevice.X_CMCC_IsCellLock</string>
+<string>InternetGatewayDevice.X_CMCC_CellLockType</string>
+<string>InternetGatewayDevice.X_CMCC_CellLocking</string>
+<string>InternetGatewayDevice.X_CMCC_CellLockInfo</string>
+<string>InternetGatewayDevice.X_CMCC_LockPin</string>
+<string>InternetGatewayDevice.X_CMCC_LockPinType</string>
+<string>InternetGatewayDevice.X_CMCC_FirstPin</string>
+<string>InternetGatewayDevice.X_CMCC_FixedPin</string>
+<string>InternetGatewayDevice.X_CMCC_EncryptCard</string>
+<string>InternetGatewayDevice.X_CMCC_EncryptCardKey</string>
+<string>InternetGatewayDevice.X_CMCC_RSRP</string>
+<string>InternetGatewayDevice.X_CMCC_RSRQ</string>
+<string>InternetGatewayDevice.X_CMCC_SINR</string>
+<string>InternetGatewayDevice.X_CMCC_UpstreamTotalByte</string>
+<string>InternetGatewayDevice.X_CMCC_DownstreamTotalByte</string>
+<string>InternetGatewayDevice.X_CMCC_StartTime</string>
+<string>InternetGatewayDevice.X_CMCC_LoadAverage</string>
+<string>InternetGatewayDevice.X_CMCC_DeviceMemory</string>
+<string>InternetGatewayDevice.X_CMCC_MTU</string>
+
+
+
+
+<string>InternetGatewayDevice.DeviceInfo.X_CMCC_IMEI</string>
+<string>InternetGatewayDevice.DeviceInfo.X_CMCC_ConfigVersion</string>
+<string>InternetGatewayDevice.DeviceInfo.X_CMCC_ModuleVersion</string>
+<string>InternetGatewayDevice.DeviceInfo.X_CMCC_ModuleType</string>
+
+
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Enable</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Name</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Uptime</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.LastConnectionError</string>.
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password </string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.DNSEnabled</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.DNSServers</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.MACAddress</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.X_CMCC_TunnelDial</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.X_CMCC_LNS</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.X_CMCC_LnsIp</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.X_CMCC_LnsName</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.X_CMCC_LnsPassword</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.X_CMCC_L2TPMode</string>
+
+
+<string>InternetGatewayDevice.DeviceInfo.X_CMCC_TeleComAccount.Enable</string>
+<string>InternetGatewayDevice.DeviceInfo.X_CMCC_TeleComAccount.Username</string>
+<string>InternetGatewayDevice.DeviceInfo.X_CMCC_TeleComAccount.Password</string>
+
+
+<string>InternetGatewayDevice.DeviceInfo.X_CMCC_Monitor.Enable</string>
+<string>InternetGatewayDevice.DeviceInfo.X_CMCC_Monitor.MonitorNumberOfEntries</string>
+<string>InternetGatewayDevice.DeviceInfo.X_CMCC_Monitor.MonitorConfig.1.ParaList</string>
+<string>InternetGatewayDevice.DeviceInfo.X_CMCC_Monitor.MonitorConfig.1.TimeList</string>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+

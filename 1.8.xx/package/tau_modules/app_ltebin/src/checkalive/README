@@ -1,0 +1,13 @@
+1. remodify the value of "NVRAM_PATH" & "NVRAM_INCLUDE" in Makefile before you compile it.
+
+2. configure it by "nvram"
+	as follow:
+		lte_check_req_reboot	:if reboot system when device miss many times <0 no(default)       1 yes>
+		lte_check_type		:connect type <0 ICMP(default)  1 UDP(not support) >
+		lte_check_ip1		      :check ip1
+		lte_check_ip2		      :check ip2
+		lte_check_interval	      :interval time when connect OK <default 5min>
+		lte_check_statisitc	      : A,B,C,D,E,F <not support>  (A:sysboot times, B:module reset times,
+								C:device miss times, D:ip addr miss times, 
+								E:network disconnect times, F:redail times)
+		

@@ -1,0 +1,261 @@
+<%+header%>
+
+<%
+	local uci = require "luci.model.uci".cursor()
+	local vrrp_sw_sw                    = uci.get('vrrp','sw','sw')
+	local vrrp_global_routerid          = uci.get('vrrp','global','router_id')   
+	local vrrp_instance_mode            = uci.get('vrrp','instance','mode')
+	local vrrp_instance_master          = uci.get('vrrp','instance','master')
+	local vrrp_instance_priority        = uci.get('vrrp','instance','priority')
+	local vrrp_instance_interface       = uci.get('vrrp','instance','interface')
+	local vrrp_instance_auth_type       = uci.get('vrrp','instance','auth_type')
+	local vrrp_instance_virtual_ip      = uci.get('vrrp','instance','virtual_ip')
+	local vrrp_instance_auth_passwd     = uci.get('vrrp','instance','auth_passwd')
+	local vrrp_instance_virtual_routeid = uci.get('vrrp','instance','virtual_routeid')
+	local vrrp_instance_wan_vip         = uci.get('vrrp','instance','wan_ip')
+	local vrrp_track_interface          = uci.get('vrrp','instance','track_interface')
+	local vrrp_delay_time               = uci.get('vrrp','instance','delay_time')
+	local vrrp_lan                      = uci.get('vrrp','instance','lan')
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	document.getElementById('id_sw').options['<%=vrrp_sw_sw%>'].selected                     = true;
+	document.getElementById('id_preemtp').options['<%=vrrp_instance_mode%>'].selected        = true;
+	document.getElementById('id_master').options['<%=vrrp_instance_master%>'].selected       = true;
+	document.getElementById('id_auth').options['<%=vrrp_instance_auth_type%>'].selected      = true;
+	document.getElementById('id_interface').options['<%=vrrp_instance_interface%>'].selected = true;
+
+    document.getElementById('id_passwd').value              = '<%=vrrp_instance_auth_passwd%>'
+    document.getElementById('id_priority').value            = '<%=vrrp_instance_priority%>'
+    document.getElementById('id_routerid').value            = '<%=vrrp_global_routerid%>'
+    document.getElementById('id_virtual_routerid').value    = '<%=vrrp_instance_virtual_routeid%>'
+    document.getElementById('id_virtual_addr_add').value    = '<%=vrrp_instance_virtual_ip%>'
+//    document.getElementById('id_wan_virtual_addr_add').value = '<%=vrrp_instance_wan_vip%>'
+    document.getElementById('id_track_interface').value      = '<%=vrrp_track_interface%>'
+    document.getElementById('id_lan').value                 = '<%=vrrp_lan%>'
+    document.getElementById('id_delay_time').value           = '<%=vrrp_delay_time%>'
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("id_button_vrrpconf").disabled=true;
+	}
+}	
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12,data13,data14,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{param1:data1,param2:data2,param3:data3,param4:data4,param5:data5,param6:data6,param7:data7,param8:data8,param9:data9,param10:data10,param11:data11,param12:data12,param13:data13,param14:data14},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+
+function vrrp_conf (auth_sw,preempt_sw,select_sw,master_sw,interface_sw) {
+	var routerid         = document.getElementById("id_routerid").value;
+	var auth_passwd      = document.getElementById("id_passwd").value;
+	var virtual_routerid = document.getElementById("id_virtual_routerid").value;
+	var virtual_addr     = document.getElementById("id_virtual_addr_add").value;
+	var priority         = document.getElementById("id_priority").value;
+//	var wan_virtual_addr = document.getElementById("id_wan_virtual_addr_add").value;
+	var track_interface  = document.getElementById("id_track_interface").value;
+	var delay_time       = document.getElementById("id_delay_time").value;
+	var lan              = document.getElementById("id_lan").value;
+	
+	if(virtual_routerid >= 255 || virtual_routerid < 0)
+	{
+		alert('<%:Virtual RouterID Range 1-255%>');
+		return false;
+	}
+	
+	if(auth_passwd > 65536 || auth_passwd < 0)
+	{
+		alert('<%:Password 0-65535%>');
+		return false;
+	}
+	if(priority > 255 || priority < 0)
+	{
+		alert('<%:Priority Range 0-255%>');
+		return false;
+	}
+	
+	if(delay_time <= 0 || delay_time >= 11)
+	{
+		alert('<%:Delay Time 1-10 %>');
+		return false;
+	}
+	
+	if( !check_int(track_interface) )
+	{
+		alert('<%:invalid argument%>');
+		return false;
+	}
+	if( !check_int(lan) )
+	{
+		alert('<%:invalid argument%>');
+		return false;
+	}
+	if(lan < 1 || lan > 4)
+	{
+		alert('<%:invalid argument%>');
+		return false;
+	}		
+	ajax_set(routerid,virtual_routerid,priority,auth_passwd,virtual_addr,auth_sw,preempt_sw,select_sw,master_sw,interface_sw,0,track_interface,delay_time,lan,'<%=pcdata(luci.dispatcher.build_url("admin/config/vrrp_conf_set"))%>', '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+		
+}
+
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:VRRP%></a></h2>
+
+		<fieldset class="cbi-section"><legend><%:Global Configure%></legend></fieldset>
+
+		<fieldset class="cbi-section">	
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:on/off%>:</td>
+						<td class="td_class">
+							<select  name="name_sw" id="id_sw" style="width:180px;">
+								<option value="0"><%:off%></option>
+                				<option value="1"><%:on%></option>
+							</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Router ID%>:</td>
+						<td class="td_class">
+						<input id="id_routerid" type="text" value="TAU_VRRP"></td></tr>
+				</table>
+			</div>			
+			</fieldset>
+
+			<fieldset class="cbi-section"><legend><%:VRRP Configure%></legend></fieldset>
+
+			<fieldset class="cbi-section">	
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Master&Backup%>:</td>
+						<td class="td_class">
+						<select  name="name_master" id="id_master" style="width:180px;">
+							<option value="0"><%:Master%></option>
+                			<option value="1"><%:Backup%></option>
+						</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Interface%>:</td>
+						<td class="td_class">
+							<select  name="name_interface" id="id_interface" style="width:180px;">
+								<option value="0"><%:LAN%></option>
+                			<!--	<option value="1"><%:WAN%></option>      -->
+							</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Nopreempt&Preempt%>:</td>
+						<td class="td_class">
+						<select  name="name_preemtp" id="id_preemtp" style="width:180px;">
+								<option value="0"><%:Nopreempt%></option>
+                				<option value="1"><%:Preempt%></option>
+						</select></td></tr>
+			<!--	<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:daley time%>:</td>
+						<td class="td_class">
+						<input id="id_delay_time" type="text" >
+						</td></tr>         -->
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Virtual Router Id%>:</td>
+						<td class="td_class">
+						<input id="id_virtual_routerid" type="text" value="0" sytle="width:180px"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Priority%>:</td>
+						<td class="td_class">
+						<input  id="id_priority" type="text" value="0" sytle="width:180px" ></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Authentication%>:</td>
+						<td class="td_class">
+						<select  name="name_auth" id="id_auth" style="width:180px;">
+							<option value="0"><%:PASS%></option>
+                			<option value="1"><%:AH%></option>
+						</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"></td>
+						<td class="td_class">
+						<input  id="id_passwd" type="text" value="0" sytle="width:180px" ></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Track interface %>:</td>
+						<td class="td_class">
+						<input id="id_track_interface" type="text" value="0" style="width:75px" ><%:CUT%>
+						<input id="id_lan" type="text" value="1" style="width:75px" >
+						<font color=" gray"><%:VID/LAN%></font>
+                		</td></tr>
+                	<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Delay Time %>:</td>
+						<td class="td_class">
+						<input id="id_delay_time" type="text" value="2" sytle="width:180px" >
+                		</td></tr>
+        <!--        	<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:WAN Virtual IP Address%>:</td>
+						<td class="td_class">
+						<input id="id_wan_virtual_addr_add" type="text" value="0.0.0.0" sytle="width:180px" >
+                		</td></tr>
+        -->        		
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Virtual IP Address%>:</td>
+						<td class="td_class">
+						<input id="id_virtual_addr_add" type="text" value="0.0.0.0" sytle="width:180px" >&nbsp;&nbsp;
+                		<input type="button" id="id_button_vrrpconf" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="vrrp_conf(this.form.name_auth.selectedIndex,this.form.name_preemtp.selectedIndex,this.form.name_sw.selectedIndex,this.form.name_master.selectedIndex,this.form.name_interface.selectedIndex)"/></td></tr>	
+				</table>
+			</div>			
+			</fieldset>
+
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

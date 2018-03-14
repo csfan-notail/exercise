@@ -1,0 +1,86 @@
+#!/bin/sh
+
+
+. /lib/functions.sh 
+. /lib/functions/boot.sh
+
+restore_show_help()
+{
+cat <<EOF
+Reset data or configurations to factory default
+
+Usage: restore [option] ...
+Options:
+  -a            restore all user data and configurations,then REBOOT
+  -h            display this help and exit
+EOF
+}
+
+subcmd=$1
+subcmd2=$2
+subcmd3=$3
+
+rootfs_data_mounted()
+{
+	mount |grep -q "$(find_mtd_part rootfs_data)"
+}
+
+rootfs_data_umount()
+{
+	if rootfs_data_mounted; then
+		pivot /rom /mnt && \
+		#umount -l /mnt &&  \
+		umount -l "$(find_mtd_part rootfs_data)" || \
+		return 1;
+	fi
+
+	return 0;
+}
+
+restore_factory_env()
+{
+	factory_env set restore_timestamp=$subcmd3 && \
+	factory_env commit  || \
+	return 1;
+}
+
+restore_rootfs_data()
+{
+case $subcmd2 in
+	'-t')
+		if [ ! -n "$subcmd3" ]; then
+			subcmd3=$(date +"%Y-%m-%d_%H:%M:%S")
+		fi
+		restore_factory_env 
+		;;
+	*)
+		subcmd3=$(date +"%Y-%m-%d_%H:%M:%S")
+		restore_factory_env 
+		;;
+esac
+	
+	subcmd3=$subcmd3"-success" 
+	
+	rootfs_data_umount && \
+	restore_factory_env && \
+	mtd -r erase rootfs_data
+
+}
+
+
+
+
+#
+# main
+#
+
+case $subcmd in
+	'-a')
+		restore_rootfs_data
+		;;
+	*)
+		restore_show_help
+		;;
+esac
+
+

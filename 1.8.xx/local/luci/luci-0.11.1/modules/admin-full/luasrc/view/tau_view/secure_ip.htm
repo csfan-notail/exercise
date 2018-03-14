@@ -1,0 +1,505 @@
+<%+header%>
+
+<%
+local uci = require "luci.model.uci".cursor()
+local ip_all  = ""
+
+local port_all  = ""
+local sercure_ip_num = ""
+
+local white_ip_all  = ""
+
+local white_port_all  = ""
+local white_sercure_ip_num = ""
+function secure_get ()
+	sercure_ip_num = uci.get("secure","ip","ip_num")
+	local ip_addr = ""
+	
+	local port_addr = ""
+	for num=1 , tonumber(sercure_ip_num) do
+		local ip_str = "ip_"..num
+		
+		local port_str = "port_"..num
+		ip_addr = uci.get("secure","ip",ip_str)
+		
+		port_addr = uci.get("secure","ip",port_str)
+		if ip_addr == nil then 
+			sercure_ip_num = num-1
+			return
+		end
+		ip_all = ip_all..ip_addr..";"
+		
+		port_all = port_all..port_addr..";"
+	end	
+end
+
+function white_secure_get ()
+	white_sercure_ip_num = uci.get("secure","white_ip","ip_num")
+	local ip_addr = ""
+	
+	local port_addr = ""
+	for num=1 , tonumber(white_sercure_ip_num) do
+		local ip_str = "ip_"..num
+		
+		local port_str = "port_"..num
+		
+		ip_addr = uci.get("secure","white_ip",ip_str)
+		
+		port_addr = uci.get("secure","white_ip",port_str)
+		if ip_addr == nil then 
+			white_sercure_ip_num = num-1
+			return
+		end
+		white_ip_all = white_ip_all..ip_addr..";"
+		white_port_all = white_port_all..port_addr..";"
+	end	
+end
+
+secure_get();
+white_secure_get();
+%>
+
+<script type="text/javascript">
+
+function all_init ()
+{	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("black_mac_ip_add_submit_id").disabled=true;
+		document.getElementById("white_mac_ip_add_submit_id").disabled=true;
+	}
+}
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{port_val:data1,port_val2:data2,port_val3:data3},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+
+function add_black_ip_web()
+{
+	var i,k,file,file1,file2,file3,file4,file5,file6,file7,file8,index1,index2; 
+	var filenames = '<%=white_ip_all%>'
+	var filenames2 = '<%=white_port_all%>'
+	
+	var filenames3 = '<%=ip_all%>'
+	var filenames4 = '<%=port_all%>'
+	var addip = document.getElementById("id_addip").value;
+	var addport = document.getElementById("id_addport").value;
+	document.getElementById('action_id').value="0";
+	if(!check_ipv4_addr(addip))
+	{
+		alert('<%:input ip address not legal%>');
+		return false;
+	}
+	if(addport == '')
+	{
+	 
+	 alert('<%:input port not legal%>');
+	 return false;
+	}
+	
+	file5 = addport.split(':')[0];
+	file6 = addport.substring(file5.length+1)
+	file6 = parseInt(file6);
+	index2 = addport.indexOf(":");
+	
+	for(i=1;i<='<%=white_sercure_ip_num%>';i++)
+	{
+		file = filenames.split(';')[0];
+		filenames = filenames.substring(file.length+1)
+		
+		file2 = filenames2.split(';')[0];
+		filenames2 = filenames2.substring(file2.length+1)
+		
+		file3 = file2.split(':')[0];
+		file4 = file2.substring(file3.length+1);
+		file4 = parseInt(file4);
+		index1 = file2.indexOf(":");
+		
+		
+		if( index1 != '-1' && addip == file && index2 != '-1')
+		{
+			/*alert(file3)
+			alert(file4)
+			alert(file5)
+			alert(file6)*/
+					if( file5 >= file3 && file5 <= file4 )
+					{
+						alert('<%:Enter the range of ports and port ranges whitelist overlap%>');
+						//alert("let1");
+						return false;
+					}
+					
+					if( file6 >= file3 && file6 <= file4 )
+					{
+						alert('<%:Enter the range of ports and port ranges whitelist overlap%>');
+						//alert("let2");
+						return false;
+					}
+					
+					if( file5 <= file3 && file6 >=file4)
+					{
+						alert('<%:Enter the range of ports and port ranges whitelist overlap%>');
+						//alert("let3");
+						return false;
+						
+					}
+
+		}
+		else if ( index1 != '-1' && addip == file && index2 == '-1')
+		{
+					/*alert("my");
+					alert(file3)
+					alert(file4)
+					alert(addport)*/
+					if( addport >= file3 && addport <= file4)
+					{
+						
+							alert('<%:Enter the range of ports and port ranges whitelist overlap%>');
+							return false;
+							
+					}
+		}
+		else if( index1 == '-1' && addip == file && index2 != '-1')
+		{
+					//alert("name");
+					if( file3 >=file5 && file3 <= file6 )
+					{
+						
+							alert('<%:Enter the range of ports and port ranges whitelist overlap%>');
+							return false;
+					}
+		}
+		else if( index1 == '-1' && addip == file && index2 == '-1')
+		{
+					//alert("is");
+					if( addip == file && addport == file2)
+					{
+					
+						alert('<%:This ip and port is in the whitelist%>');
+						return false;
+					}
+		}
+		else
+		{
+					//alert("");
+		}
+		
+	}
+	
+	for(i=1;i<='<%=sercure_ip_num%>';i++)
+	{
+		file7 = filenames3.split(';')[0];
+		filenames3 = filenames3.substring(file7.length+1)
+		
+		file8 = filenames4.split(';')[0];
+		filenames4 = filenames4.substring(file8.length+1)
+		
+		if( addip == file7 && addport == file8 )
+		{
+			alert('<%:This ip and port is in the blacklist%>');
+			return false;
+		}
+	}
+	ajax_set(addip,0,addport,'<%=pcdata(luci.dispatcher.build_url("admin/secure/ip_filter"))%>', '<%=luci.dispatcher.build_url("admin", "secure")%>/set_infos/');
+}
+
+function add_white_ip_web()
+{
+	var i,k,file,file1,file2,file3,file4,file5,file6,file7,file8,index1,index2; 
+	var filenames = '<%=ip_all%>'
+	var filenames1 = '<%=port_all%>'
+	
+	var filenames3 = '<%=white_ip_all%>'
+	var filenames4 = '<%=white_port_all%>'
+
+	var addip = document.getElementById("id_addip").value;
+	var addport = document.getElementById("id_addport").value;
+	document.getElementById('action_id').value="0";
+
+	if(!check_ipv4_addr(addip))
+	{
+		alert('<%:input ip address not legal%>');
+		return false;
+	}
+	if(addport == '')
+	{
+	 alert('<%:input port not legal%>');
+	 return false;
+	}
+	
+	file5 = addport.split(':')[0];
+	file6 = addport.substring(file5.length+1)
+	file6 = parseInt(file6);
+	index2 = addport.indexOf(":");
+	
+	for(i=1;i<='<%=sercure_ip_num%>';i++)
+	{
+		file = filenames.split(';')[0];
+		filenames = filenames.substring(file.length+1)
+		
+		file1 = filenames1.split(';')[0];
+		filenames1 = filenames1.substring(file1.length+1)
+		
+		file3 = file1.split(':')[0];
+		file4 = file1.substring(file3.length+1)
+		file4 = parseInt(file4);
+		index1 = file1.indexOf(":");
+		
+		
+		if( index1 != '-1' && addip == file && index2 != '-1')
+		{
+			
+					if( file5 >= file3 && file5 <= file4 )
+					{
+						alert('<%:Enter the range of ports and port ranges blacklist overlap%>');
+						//alert("let1");
+						return false;
+					}
+					
+					if( file6 >= file3 && file6 <= file4 )
+					{
+						alert('<%:Enter the range of ports and port ranges blacklist overlap%>');
+						//alert("let2");
+						return false;
+					}
+					
+					if( file5 <= file3 && file6 >=file4)
+					{
+						alert('<%:Enter the range of ports and port ranges blacklist overlap%>');
+						//alert("let3");
+						return false;
+						
+					}
+
+		}
+		else if ( index1 != '-1' && addip == file && index2 == '-1')
+		{
+					
+					if( addport >= file3 && addport <= file4)
+					{
+						
+							alert('<%:Enter the range of ports and port ranges blacklist overlap%>');
+							return false;
+							
+					}
+		}
+		else if( index1 == '-1' && addip == file && index2 != '-1')
+		{
+					
+					if( file3 >=file5 && file3 <= file6 )
+					{
+						
+							alert('<%:Enter the range of ports and port ranges blacklist overlap%>');
+							return false;
+					}
+		}
+		else if( index1 == '-1' && addip == file && index2 == '-1')
+		{
+					
+					if( addip == file && addport == file1)
+					{
+					
+						alert('<%:This ip and port is in the blacklist%>');
+						return false;
+					}
+		}
+		else
+		{
+					
+		}
+		
+	}
+	
+	for(i=1;i<='<%=white_sercure_ip_num%>';i++)
+	{
+		file7 = filenames3.split(';')[0];
+		filenames3 = filenames3.substring(file7.length+1)
+		
+		file8 = filenames4.split(';')[0];
+		filenames4 = filenames4.substring(file8.length+1)
+		
+		if( addip == file7 && addport == file8 )
+		{
+			alert('<%:This ip and port is in the whitelist%>');
+			return false;
+		}
+	}
+	ajax_set(addip,1,addport,'<%=pcdata(luci.dispatcher.build_url("admin/secure/ip_filter"))%>', '<%=luci.dispatcher.build_url("admin", "secure")%>/set_infos/');
+}
+function del_black_ip_web(del_ip,del_port)
+{
+
+	ajax_set(del_ip,3,del_port,'<%=pcdata(luci.dispatcher.build_url("admin/secure/ip_filter"))%>', '<%=luci.dispatcher.build_url("admin", "secure")%>/set_infos/');
+}
+function del_white_ip_web(del_ip,del_port)
+{
+	
+	ajax_set(del_ip,2,del_port,'<%=pcdata(luci.dispatcher.build_url("admin/secure/ip_filter"))%>', '<%=luci.dispatcher.build_url("admin", "secure")%>/set_infos/');
+}
+function showFileList1()
+{
+	var i,k,file,file1,file2,pro; 
+	var filenames = '<%=ip_all%>'
+	
+	var filenames2 = '<%=port_all%>'
+
+	k="<table  class='cbi-section-table' style='margin-left:100px;width:800px'><tr><td style='width:35px;'><%:Number%></td><td style='width:50px;'><%:IpAddr%></td><td style='width:30px;'><%:port%></td><td style='width:33px;'><%:Delete%></td></tr></table>";
+	k+="<table id='tablelsw' class='cbi-section-table' style='margin-left:100px;width:800px'>";
+	for(i=1;i<='<%=sercure_ip_num%>';i++)
+	{
+		file = filenames.split(';')[0];
+		filenames = filenames.substring(file.length+1)
+		
+		
+		file2 = filenames2.split(';')[0];
+		filenames2 = filenames2.substring(file2.length+1)
+		
+		
+		if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:30px;'></td><td style='width:180px;'>"+file+"</td><td style='width:25px;'></td><td style='width:130px;'>&nbsp;&nbsp;&nbsp;"+file2+"</td><td><style='background-color:#f09090' onclick='del_black_ip_web(\""+file+"\",\""+file2+"\")'></td></tr>");
+		else
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:30px;'></td><td style='width:180px;'>"+file+"</td><td style='width:25px;'></td><td style='width:130px;'>&nbsp;&nbsp;&nbsp;"+file2+"</td><td style='width:15px;'></td><td><input type='submit' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='del_black_ip_web(\""+file+"\",\""+file2+"\")'></td></tr>");
+	
+	}
+	k+="<td></td><td></td><td></td><td></td>";
+	k+="</table>";
+	document.write(k);
+}
+function showFileList2()
+{
+	var i,k,file,file2; 
+	var filenames = '<%=white_ip_all%>'
+	
+	var filenames2 = '<%=white_port_all%>'
+
+	k="<table  class='cbi-section-table' style='margin-left:100px;width:800px'><tr><td style='width:35px;'><%:Number%></td><td style='width:50px;'><%:IpAddr%></td><td style='width:30px;'><%:port%></td><td style='width:33px;'><%:Delete%></td></tr></table>";
+	k+="<table id='tablelsw' class='cbi-section-table' style='margin-left:100px;width:800px'>";
+	for(i=1;i<='<%=white_sercure_ip_num%>';i++)
+	{
+		file = filenames.split(';')[0];
+		filenames = filenames.substring(file.length+1)
+	
+		
+		file2 = filenames2.split(';')[0];
+		filenames2 = filenames2.substring(file2.length+1)
+		
+		if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:30px;'></td><td style='width:180px;'>"+file+"</td><td style='width:25px;'></td><td style='width:130px;'>&nbsp;&nbsp;&nbsp;"+file2+"</td><td><style='background-color:#f09090' onclick='del_white_ip_web(\""+file+"\",\""+file2+"\")'></td></tr>");
+		else
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:30px;'></td><td style='width:180px;'>"+file+"</td><td style='width:25px;'></td><td style='width:130px;'>&nbsp;&nbsp;&nbsp;"+file2+"</td><td style='width:15px;'></td><td><input type='submit' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='del_white_ip_web(\""+file+"\",\""+file2+"\")'></td></tr>");
+	
+	}
+	k+="<td></td><td></td><td></td><td></td>";
+	k+="</table>";
+	document.write(k);
+}
+function timer(event)  {   
+	if(event.keyCode==13){
+		event.preventDefault();
+		return false;
+	}
+} 
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+		<div class="cbi-map">
+			<h2>	
+		 	  <a id="content" name="content"><%:IP Filter%>
+		 	  </a>
+			</h2>
+		<br/>
+	
+		<fieldset class="cbi-section">
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="text-indent:90px;"><%:Input IP Address%>:
+						<input type="text" id="action_id" style="width:20px;display:none;" />&nbsp;&nbsp;&nbsp;&nbsp;
+						<input type="text" id="id_addip" style="width:180px;" onkeypress="timer(event)" />&nbsp;&nbsp;
+						
+						<td class="td_class" style="text-indent:10px;"><%:port%>:
+						<input type="text" id="id_addport" style="width:80px;" onkeypress="timer(event)" />&nbsp;&nbsp;
+						<input type="button"  id="black_mac_ip_add_submit_id" class="cbi-button cbi-button-apply" value="<%:Black Add%>" style="width:100px;" onclick="add_black_ip_web()"/>
+						<input type="button"  id="white_mac_ip_add_submit_id" class="cbi-button cbi-button-apply" value="<%:White Add%>" style="width:100px;" onclick="add_white_ip_web()"/>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</fieldset>
+		
+		<fieldset class="cbi-section">
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">	
+				<td class="td_class"><%:Black list%>:</td>
+					<script>showFileList1();</script>
+			</div>
+		</div>
+		</fieldset>
+		<fieldset class="cbi-section">
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">	
+				<td class="td_class"><%:White list%>:</td>
+					<script>showFileList2();</script>
+			</div>
+		</div>
+		</fieldset>
+		
+
+		
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+
+		<script>
+			all_init();
+		</script>
+</form>
+
+<%+footer%>

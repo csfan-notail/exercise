@@ -1,0 +1,698 @@
+#!/bin/sh
+
+#default values
+DEF_FILENAME=app.bin
+DEF_LOCAL_FILE=/tmp/${DEF_FILENAME}
+DEF_TFTP_SERVER=192.168.1.136
+
+[ -d /dev/mtdblock ] && MTD_PREFIX=/dev/mtdblock/ || MTD_PREFIX=/dev/mtdblock
+VERNAME_VAR_PREFIX=mtdblock
+ROOTFS1_MTD_NUM=3
+ROOTFS2_MTD_NUM=4
+ROOTFS_MTD_SIZE=$((0x5f0000))
+ROOTFS_LABEL=rootfs
+ROOTFS_BAK_LABEL=rootfs.bak
+
+VERSION_TAIL_HEADID=0001
+VERSION_TAIL_HEAD=${VERSION_TAIL_HEADID}-`echo "headid=${VERSION_TAIL_HEADID}" | md5sum | awk '{print $1}'`
+VERSION_CTRL_DIR=version_ctrl
+
+ART_MODE=1
+NORMAL_MODE=0
+
+#global variables
+board_name=$(. /lib/ar71xx.sh;ar71xx_board_name)
+ver_image=''
+ver_name=''
+ver_fssize=''
+ver_fsmd5=''
+ver_ctrl_size=''
+
+cur_running_mtd=''
+cur_backup_mtd=''
+tmp_target_mtd=''
+tmp_backup_mtd=''
+
+support_hwp=''
+
+
+##########################################################
+
+vflag_help()
+{
+#Usage:
+#(1) vflag update [tftpServer Ip addr]
+#        ---version update using tftp(Default IP addr: 192.168.1.136)
+#(2) vflag change
+#        ---version change
+#(3) vflag list [-f]
+#        ---show version info
+#(4) vflag localupdate [absolute path of version image]
+#        ---update from local file(Default path:/tmp/app.tar.gz
+#(5) vflag artmode
+#        ---change to ART mode
+#(6) vflag normalmode
+#        ---change to normal mode
+#(7) vflag showmode
+#        ---display ap run mode
+	cat << EOF
+Usage:
+(1) vflag update [tftpServer Ip addr [remote file name]]
+        ---version update using tftp(Default IP addr: ${DEF_TFTP_SERVER})(Default file: ${DEF_FILENAME})
+(2) vflag change
+        ---version change
+(3) vflag list
+        ---show version info
+(4) vflag localupdate [absolute path of version image]
+        ---update from local file(Default path: ${DEF_LOCAL_FILE})
+(5) vflag artmode
+        ---change to ART mode
+(6) vflag normalmode
+        ---change to normal mode
+(7) vflag showmode
+        ---display ap run mode
+EOF
+}
+
+echo_err()
+{
+	echo $* >&2;
+	return 1
+}
+
+#get_magic_word() {
+#	hexdump -v -n 2 -e '1/1 "%02x"' $*
+#}
+
+get_magic_long() {
+	hexdump -v -n 4 -e '1/1 "%02x"' $*
+}
+
+##########################################################
+#include /lib/functions.sh
+
+find_mtd_part() {
+	local PART="$(grep "\"$1\"" /proc/mtd | awk -F: '{print $1}')"
+	local PREFIX=/dev/mtdblock
+
+	PART="${PART##mtd}"
+	[ -d /dev/mtdblock ] && PREFIX=/dev/mtdblock/
+	echo "${PART:+$PREFIX$PART}"
+}
+
+##########################################################
+
+
+read_tail()
+{
+	local file=${1}
+#	local prefix=${2}
+	
+	ver_name=''
+	ver_fssize=''
+	ver_fsmd5=''
+	ver_ctrl_size=''
+	
+	[ -n "${file}" ] && eval $(awk /^${VERSION_TAIL_HEAD}/'{printf "ver_name=%s;ver_fssize=%s;ver_fsmd5=%s;ver_ctrl_size=%s;\n",$2,$3,$4,$5}' ${file})
+	
+	#check all,though we can just check the last one	
+	if [ -z "${ver_name}" -o -z "${ver_fssize}" -o -z "${ver_fsmd5}" -o -z "${ver_ctrl_size}" ];then
+		echo_err "error, file ${file}: version=${ver_name} fssize=${ver_fssize} fsmd5=${ver_fsmd5} ctrl_size=${ver_ctrl_size}"
+		return 1;
+#	elif [ -n "${prefix}" ];then
+#		eval("${prefix}_name=${ver_name};")
+#		eval("${prefix}_fssize=${ver_fssize};")
+#		eval("${prefix}_fsmd5=${ver_fsmd5};")
+#		eval("${prefix}_ctrl_size=${ver_ctrl_size};")		
+	fi
+}
+
+extract_version_ctrl()
+{
+	local file=${1}
+	local size=${2}
+	local dir=${3}
+	local tmptar=${dir}/vc.tar.bz2
+	
+	[ -n "${file}"  -a -n "${size}" -a -n "${dir}" ] && \
+	tail -c ${size} ${file} > ${tmptar} && \
+	bzcat ${tmptar} | tar xf - -C ${dir} && return 0;
+	#tar -jxf ${tmptar} -C ${dir} && return 0;  
+	
+	echo_err "error, extract version ctrl failed."
+	return 1;
+}
+
+load_version_conf()
+{
+	local dir=$1
+	
+	. ${dir}/version_ctrl/version.conf
+}
+
+# check if label exist or duplicated
+mtd_label_check()
+{
+	[ `grep "\"$1\"" /proc/mtd | wc -l` -eq 1 ] && return 0 || return 1;
+}
+
+get_factory_env()
+{
+	local var=$1
+	
+	(factory_env get ${var} || echo_err "error, get env ${var} failed.")| sed s/${var}=//
+}
+
+#get_mtd_label()
+#{
+#	awk /mtd${1##${MTD_PREFIX}}:/'{gsub("\"","",$4);print $4}' /proc/mtd
+#}
+
+get_mtd_vername()
+{
+	local mtd=$1
+	local force=$2
+	local mtd_dev=${MTD_PREFIX}${mtd}
+	local version=`get_factory_env ${VERNAME_VAR_PREFIX}${mtd}`
+
+	if [ -z "${version}" -o "${force}" = "-f" ] && [ -e "${mtd_dev}" ];then
+		version=`awk /^${VERSION_TAIL_HEAD}/'{print $2;exit;}' ${mtd_dev} 2>/dev/null`
+		[ -n "${version}" ] && factory_env set ${VERNAME_VAR_PREFIX}${mtd}=${version} && factory_env commit
+	fi
+	[ -z "${version}" ] && echo "Unknown" || echo "${version}"
+}
+
+get_mtdlayout()
+{
+	local bootarg=${1}	
+	[ -z "${bootarg}" ] && return 1;	
+	local root=`echo ${bootarg} | sed -n 's/.*root=31:\([0-9]*\) .*/\1/p'`
+	
+	tmp_target_mtd=''
+	tmp_backup_mtd=''
+
+	if [ -n "${root}" ];then
+		if [ "${root}" -eq "${ROOTFS1_MTD_NUM}" ];then
+			tmp_target_mtd=${ROOTFS1_MTD_NUM}
+			tmp_backup_mtd=${ROOTFS2_MTD_NUM}
+		elif [ "${root}" -eq "${ROOTFS2_MTD_NUM}" ];then
+			tmp_target_mtd=${ROOTFS2_MTD_NUM}
+			tmp_backup_mtd=${ROOTFS1_MTD_NUM}
+		else
+			[ "${root}" -ne 0 ] && tmp_target_mtd=$((root)) || tmp_target_mtd=''
+			tmp_backup_mtd=''
+			echo_err "error, unexpected mtd layout, root=31:${root}"
+			return 1;
+		fi						
+	else
+		if  mtd_label_check ${ROOTFS_LABEL} && mtd_label_check ${ROOTFS_BAK_LABEL};then
+			tmp_target_mtd=$(find_mtd_part ${ROOTFS_LABEL});
+			tmp_target_mtd=${tmp_target_mtd##${MTD_PREFIX}}
+			tmp_backup_mtd=$(find_mtd_part ${ROOTFS_BAK_LABEL})	
+			tmp_backup_mtd=${tmp_backup_mtd##${MTD_PREFIX}}
+		else
+			echo_err "error, ${ROOTFS_LABEL} or ${ROOTFS_BAK_LABEL} duplicated or not exist;"
+			return 1;
+		fi
+	fi
+	
+	return 0;
+}
+
+get_cur_mtdlayout()
+{
+	if [ -z "${cur_running_mtd}" -a -z "${cur_backup_mtd}" ];then
+		if get_mtdlayout "`cat /proc/cmdline`";then
+			cur_running_mtd=${tmp_target_mtd}
+			cur_backup_mtd=${tmp_backup_mtd}
+		else			
+			return 1;
+		fi
+	fi
+	return 0;
+}
+
+check_utils()
+{
+	#factory_env
+	#head/tail/bzcat
+	return 0;
+}
+
+check_fsmd5()
+{
+	local file=${1}
+	local size=${2}
+	local md5=${3}
+	
+	[ -n "${file}" -a -n "${size}" -a -n "${md5}" ] && \
+	[ "`head -c ${size} ${file} | md5sum | awk '{print $1}'`" = "${md5}" ] && return 0;
+	
+	echo_err "error, bad MD5 checksum."
+	return 1;		
+}
+
+check_sw() 
+{
+	#echo "TODO: check_sw...e.g. kernel..."
+	return 0
+}
+
+check_hwp()
+{
+	[ -z "${support_hwp}" ] && return 0;
+	local my_hwp=`get_factory_env BOOT_HWP`
+	
+	for hwp in ${support_hwp};
+	do
+		[ "${my_hwp}" = "${hwp}" ] && return 0;
+	done
+
+	echo_err "error, unsupported hardware ${my_hwp}"
+	return 1;
+}
+
+check_hw()
+{
+	check_hwp && return 0
+	return 1;
+}
+
+check_rootfs()
+{
+	local device=$1
+	local tmp_mnt=/tmp/vflag_check_rootfs-$$
+	local ret=0;
+	
+	#for now, just try to mount
+	mkdir -p ${tmp_mnt}
+	if mount -r -t squashfs ${device} ${tmp_mnt} 1>/dev/null 2>/dev/null;then
+		umount ${tmp_mnt};
+	else
+		echo_err "error, unable to mount targetver ${device}"
+		ret=1;
+	fi
+	
+	rmdir ${tmp_mnt}
+	return ${ret}
+}
+
+check_rootfs_data()
+{
+	#echo "TODO: check_rootfs_data..."	
+	return 0
+}
+
+
+hook_before_update()
+{
+	#echo "hook_before_update not defined"
+	return 0
+}
+
+hook_after_update()
+{
+	#echo "hook_after_update not defined"
+	return 0
+}
+
+write_fsbak()
+{		
+	get_cur_mtdlayout || return 1;
+	
+	local image=$1
+	local vername=$2
+	local device=/dev/mtd${cur_backup_mtd}
+	
+	if [ ! -e "${image}" -o ! -e "${device}" ];then
+		echo_err "error, image ${image} or device ${device} not exist."
+		return 1;
+	fi
+	
+	if [ `wc -c ${image} | awk '{print $1}'` -gt "${ROOTFS_MTD_SIZE}" ];then
+		echo_err "error, ${image} too big, current `wc -c ${image}`,max ${ROOTFS_MTD_SIZE}"
+	fi
+	
+	sync
+	if mtd write -n ${image} ${device} -e ${device};then
+		factory_env set ${VERNAME_VAR_PREFIX}${cur_backup_mtd}=${vername} && \
+		factory_env commit;
+	else
+		echo_err "error, mtd write failed.\n"
+		return 1;
+	fi
+	return 0;
+}
+
+vflag_list()
+{
+	get_cur_mtdlayout || return 1;
+	local target_mtd=`get_factory_env targetver`
+	
+	if [ -n "${target_mtd}" -a "${target_mtd}" -eq "${cur_running_mtd}" ];then	
+		running_is_target=' (target version)'
+	elif [ -n "${target_mtd}" -a "${target_mtd}" -eq "${cur_backup_mtd}" ];then
+		backup_is_target=' (target version)'
+	else
+		echo_err "warning: target version(${targetver}) unknown!"
+	fi
+
+	echo "running version(${MTD_PREFIX}${cur_running_mtd}): $(get_mtd_vername ${cur_running_mtd} $1)${running_is_target}"
+	echo "backup  version(${MTD_PREFIX}${cur_backup_mtd}): $(get_mtd_vername ${cur_backup_mtd} $1)${backup_is_target}"	
+	return 0;
+}
+
+vflag_change()
+{
+	get_cur_mtdlayout || return 1;	
+
+	local next_target=$1
+	local cur_target=`get_factory_env targetver`	
+
+	if [ -n "${next_target}" ] &&	\
+	   [ "${next_target}" -eq "${cur_running_mtd}" -o "${next_target}" -eq "${cur_backup_mtd}" ];then
+		:;
+	elif [ -z "${next_target}" -a -n "${cur_target}" -a "${cur_target}" -eq "${cur_running_mtd}" ];then
+		next_target=${cur_backup_mtd}
+	elif [ -z "${next_target}" -a -n "${cur_target}" -a "${cur_target}" -eq "${cur_backup_mtd}" ];then
+		next_target=${cur_running_mtd}
+	else
+			echo_err "error, invalid targetver, current ${cur_target} next ${next_target}"
+			return 1;
+	fi
+
+	check_rootfs ${MTD_PREFIX}${next_target} || return 1
+
+	if [ "${next_target}" -eq "${cur_target}" ];then
+		echo "target rootfs: mtd${cur_target}($(get_mtd_vername ${cur_target}))"
+	elif factory_env set "targetver=${next_target}" &&	\
+	   factory_env set "boot_success=0"	&&	\
+	   factory_env set "bootnum=0"	&&	\
+	   factory_env commit; then
+		next_target=`get_factory_env targetver`
+		echo "target rootfs changed: mtd${cur_target}($(get_mtd_vername ${cur_target})) -> mtd${next_target}($(get_mtd_vername ${next_target}))"
+	else
+		echo_err "error, vflag change failed."
+		return 1;
+	fi	
+
+	return 0;
+}
+
+
+vflag_down()
+{
+	local tftp_server=${1:-${DEF_TFTP_SERVER}}
+	local remote_file=${2:-${DEF_FILENAME}}
+	local_file=${DEF_LOCAL_FILE}
+
+	[ -e "${local_file}" ] && echo_err "warning: exsiting local file ${local_file} will be replaced!"
+	
+	echo "downloading ${remote_file} from ${tftp_server} ... "
+	if tftp -g -l ${local_file} -r ${remote_file} ${tftp_server};then
+		return 0;
+	else
+		echo_err "error, download ${remote_file} failed"
+		return 1;
+	fi
+	
+	return 1;
+}
+
+vflag_check_format()
+{
+	local file=${1:-${DEF_LOCAL_FILE}}
+	local magic='';
+	local fmt='';
+	
+	[ -r "${file}" ] || echo_err "error, unable to read ${file}" || return 1;
+	magic=$(get_magic_long "${file}")
+	
+	case "${magic}" in
+		"1f8b"*)				#gzip
+			fmt="lsdk_bin";
+			;;
+		"425a"*)
+			fmt="lsdk_apptar";	#bz2
+			;;
+		"68737173"|"73717368")	#squashfs
+			#check futher for version info
+			if grep -q "${VERSION_TAIL_HEAD}" "${file}"; then
+				fmt="qsdk_bin"
+			else
+				echo_err "error, version info not found."
+				return 1;
+			fi
+			;;
+		*)
+			echo_err "error, unsupported file format."
+			return 1;
+			;;
+	esac	
+	
+	echo "${fmt}"
+	return 0;
+}
+
+#app.tar.gz of LSDK
+vflag_compat_lsdk_apptar()
+{
+	local file=$1
+	local tmpdir=$2
+	
+	echo "assume as lsdk app.tar.gz, extracting ... "	
+	if [ -r "${file}" ] && \
+	   [ -d "${tmpdir}" ] && \
+	   bzcat ${file} | tar xf - -C ${tmpdir};
+	then
+		: #echo "success"
+	else		
+		echo_err "error, extract app.tar.gz failed"
+		return 1
+	fi
+	
+	#app
+	#├── post-update.sh
+	#├── pre-update.sh
+	#├── priv_info
+	#├── ta62-squashfs
+	#└── version.conf			
+	lsdk_app_dir=${tmpdir}/app
+	ver_image=${lsdk_app_dir}/${board_name}-squashfs
+	[ -r "${ver_image}" ] || echo_err "error, unable to read ${ver_image}" || return 1;
+	
+	# -- LSDK override start --	
+	#check bin tail:
+	#  CRC  	  4
+	#  BOARD_TYPE 64
+	#  FILE_TYPE  16
+	TAIL_SIZE=84	
+	
+	read_tail() 
+	{
+		return 0;
+	}
+	
+	check_fsmd5() 
+	{
+		local image_size=$(wc -c ${ver_image} | awk '{print $1}')
+		local file_type=$(tail -c 16 ${ver_image} | strings -n 1 | head -n 1)						
+		local tail_crc=$(tail -c 84 ${ver_image} | hexdump -v -n 4 -e '1/1 "%02x"')
+		local calc_crc=$(head -c $((image_size - 84)) ${ver_image} | crc32 | awk '{print $1}')
+		
+		if [ "${file_type}" != "fs" ] || 
+		   [ -z "${calc_crc}" -o "${tail_crc}" != "${calc_crc}" ];
+		then
+			echo_err "error, invalid file type:${file_type} or CRC:${tail_crc} calc ${calc_crc}"
+			return 1;	
+		fi
+		
+		return 0; 
+	}
+	
+	extract_version_ctrl()
+	{
+		return 0;
+	}
+	
+	load_version_conf() 
+	{ 
+		ver_name=$(cat ${lsdk_app_dir}/version.conf) 
+		return 0; 
+	}
+	
+	check_hw() 
+	{
+		local board_type_priv_info=$(. ${lsdk_app_dir}/priv_info; echo ${BOARD_TYPE};)	
+		local board_type_file_tail=$(tail -c 80 ${ver_image} | head -c 64 | strings -n 1 | head -n 1)	
+		
+		if [ "${board_type_priv_info}" != "${board_name}" ] || 
+		   [ "${board_type_file_tail}" != "${board_name}" ];
+		then
+			echo_err "error, board type not match: board_name ${board_name} priv info ${board_type_priv_info} tail ${board_type_file_tail}"
+			return 1;
+		fi
+		return 0;
+	}
+	
+	hook_before_update()
+	{
+		. ${lsdk_app_dir}/pre-update.sh
+	}
+	
+	hook_after_update()
+	{
+		. ${lsdk_app_dir}/post-update.sh
+	}
+	# -- LSDK override end --
+	
+	
+}
+
+#ap-xx-x.x.x.x-xxxx.bin of LSDK
+vflag_compat_lsdk_bin()
+{
+	local file=$1
+	local tmpdir=$2
+	
+	echo "assume as lsdk .bin, extracting ... "
+	if ls ${tmpdir}/*/app.tar.gz >/dev/null 2>&1; then
+		echo_err "error, app.tar.gz already existed."
+		return 1;
+	fi
+	
+	if [ -r "${file}" ] && \
+	   [ -d "${tmpdir}" ] && \
+	   tar zxf ${file} -C ${tmpdir};
+	then
+		rm ${file}
+		file=$(ls ${tmpdir}/*/app.tar.gz)
+		[ -r "${file}" ] && vflag_compat_lsdk_apptar ${file} ${tmpdir} || return 1;
+		return 0;
+	else
+		echo_err "error, extract ${file} failed"
+		return 1;
+	fi
+	
+	return 1;	
+}
+
+vflag_compat()
+{
+	local file=$1
+	local tmpdir=$2
+	
+	case "$(vflag_check_format ${file})" in
+		"lsdk_bin")
+			vflag_compat_lsdk_bin ${file} ${tmpdir} || return 1;
+			;;
+		"lsdk_apptar")
+			vflag_compat_lsdk_apptar ${file} ${tmpdir} || return 1;
+			;;
+		"qsdk_bin")
+			return 0;
+			;;
+		*)
+			#echo_err "error, unsupported file format."
+			return 1;
+			;;
+	esac
+	
+	return 0;
+}
+
+vflag_update()
+{
+	local version_bin=${1:-${DEF_LOCAL_FILE}}
+	local tmpdir=/tmp/vflag_update-$$
+	local ret=0;
+	
+	ver_image=${version_bin}	
+
+	mkdir -p ${tmpdir} && \
+	vflag_compat ${version_bin} ${tmpdir} && \
+	read_tail ${version_bin} &&	\
+	check_fsmd5 ${version_bin} ${ver_fssize} ${ver_fsmd5} && \
+	extract_version_ctrl ${version_bin} ${ver_ctrl_size} ${tmpdir} && \
+	load_version_conf ${tmpdir}	&&	\
+	check_sw && \
+	check_hw && \
+	hook_before_update && \
+	write_fsbak ${ver_image} ${ver_name} && \
+	hook_after_update && \
+	check_rootfs_data && \
+	vflag_change ${cur_backup_mtd} || ret=1;	
+	
+	#free_resource;
+	rm -fr ${tmpdir}
+	
+	return ${ret}
+}
+
+show_run_mode()
+{
+	local run_mode=`get_factory_env run_mode`
+
+	case "${run_mode}" in
+		${ART_MODE})
+			echo "ART mode"
+			;;
+		${NORMAL_MODE})
+			echo "Normal mode"
+			;;
+		*)
+			echo "unknown run mode,assumed as normal mode"
+			;;
+	esac
+	return 0
+}
+
+which_run_mode()
+{
+	show_run_mode;
+}
+
+##########################################################
+# main start...
+
+#CMD=`basename $0`
+SUBCMD=$1
+
+
+check_utils;
+
+case "${SUBCMD}" in
+	check)
+		vflag_check_format $2
+		;;
+	update)
+		vflag_down $2 $3 && vflag_update ${local_file}
+		rm -f ${local_file};
+		;;
+	change)
+		vflag_change;
+		;;
+	list)
+		vflag_list $2;
+		;;
+	localupdate)
+		vflag_update $2
+		;;
+	artmode)
+		factory_env set run_mode=${ART_MODE} && factory_env commit
+		;;
+	normalmode)
+		factory_env set run_mode=${NORMAL_MODE} && factory_env commit
+		;;
+	showmode)
+		show_run_mode;
+		;;
+	whichmode)
+		which_run_mode;
+		;;
+	*)
+		vflag_help;
+		;;
+esac
+
+

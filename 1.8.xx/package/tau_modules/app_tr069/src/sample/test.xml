@@ -1,0 +1,32 @@
+<soap:Envelope 
+			soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" 
+			xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
+			xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" 
+			xmlns:cwmp="urn:dslforum-org:cwmp-1-0" 
+			xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <soap:Header>
+    <cwmp:ID soap:mustUnderstand="1">3D8D198B69F94D7BB2A9266408481BE9</cwmp:ID>
+  </soap:Header>
+  <soap:Body>
+    <cwmp:GetParameterValues>
+      <ParameterNames soapenc:arrayType="xsd:string[1]">
+<string>InternetGatewayDevice.X_CMCC_LockPin</string>
+<string>InternetGatewayDevice.X_CMCC_IsCellLock</string>
+<string>InternetGatewayDevice.X_CMCC_CellLockType</string>
+<string>InternetGatewayDevice.X_CMCC_EncryptCard</string>
+<string>InternetGatewayDevice.X_CMCC_EncryptCardKey</string>
+<string>InternetGatewayDevice.X_CMCC_MTU</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.X_CMCC_LNS</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.X_CMCC_LnsIp</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.X_CMCC_LnsName</string>
+<string>InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.X_CMCC_LnsPassword</string>
+<string>InternetGatewayDevice.DeviceInfo.X_CMCC_TeleComAccount.Username</string>
+<string>InternetGatewayDevice.DeviceInfo.X_CMCC_TeleComAccount.Password</string>
+	      </ParameterNames>
+    </cwmp:GetParameterValues>
+  </soap:Body>
+</soap:Envelope>
+
+
+

@@ -1,0 +1,76 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2011 OpenWrt.org
+
+SERVICE_MATCH_NAME=1
+SERVICE_DAEMONIZE=1
+START=41
+
+start() {
+	
+	#lte single_double_switch
+	lteflag=`uci get lte.set.single_double_switch`
+
+	if [ "0"x = "$lteflag"x ];then
+		exit 0
+	fi
+	
+	
+	# Add: by xiaowei, 2016/03/24 01:18 PN: lte get info 
+	/sbin/ltegetinfo2 > /dev/null 2>&1 &
+	
+	#lte2 reset normal
+	echo 52 > /sys/class/gpio/export
+	echo out >/sys/class/gpio/gpio52/direction
+	echo 1 >/sys/class/gpio/gpio52/value
+
+	echo 51 > /sys/class/gpio/export
+	echo out >/sys/class/gpio/gpio51/direction
+	echo 0 >/sys/class/gpio/gpio51/value
+	
+	/sbin/ledstatus2 > /dev/null 2>&1 &
+	
+	#Dail Mode switch
+	ltedial=`uci get config.ltewan2.dialway`
+	if [ "1"x = "$ltedial"x ];then
+		sleep 10
+		echo "----------------lte use manual dial"
+		ipaddr=`uci get config.ltewan2.ipaddr`
+		netmask=`uci get config.ltewan2.netmask`
+		gateway=`uci get config.ltewan2.gateway`
+		dnsser1=`uci get config.ltewan2.dnsser1`
+		dnsser2=`uci get config.ltewan2.dnsser2`
+		ifconfig usb1 up
+		ifconfig usb1 $ipaddr netmask $netmask
+		route add default gw $gateway
+		echo 'nameserver '$dnsser1 >  /tmp/resolv.conf.auto2 
+		echo 'nameserver '$dnsser2 >> /tmp/resolv.conf.auto2 
+	else
+		echo "----------------lte use auto  dial"
+		echo 1 > /proc/sys/net/ipv4/conf/usb1/forwarding
+		/sbin/ltedail2 >/dev/null 2>&1
+		echo 1 > /proc/sys/net/ipv4/conf/usb1/forwarding
+		
+		ltecomsev2 -m 15 -l 5 &
+		sleep 1
+
+	fi
+	
+	lock_num=`uci get lte.module_info.unlock_num2`
+	if [ -n ${lock_num} ]; then 
+		ltectl2 nvdatalock $lock_num
+	fi
+
+	
+	#Change by zhanghao 2016/7/6
+	sleepvalue=`uci get lte.set.basic_connecttime2`
+	if [ $sleepvalue -eq 0 ];then
+		/sbin/lteauto2  > /dev/null 2>&1 &
+	else
+		/sbin/lteauto2  $sleepvalue > /dev/null 2>&1 &
+	fi	
+	
+}
+
+stop() {
+	echo ""
+}

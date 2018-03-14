@@ -1,0 +1,5 @@
+
+config config 'nat'
+	
+	option nat_num '0'
+	

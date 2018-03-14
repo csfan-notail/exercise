@@ -1,0 +1,185 @@
+<%+header%>
+
+<% -- Add: by xiaowei, 2016/04/15 16:56 PN: add web user contral %>
+<%
+	local uci = require "luci.model.uci".cursor()
+	local usernum = luci.util.exec("uci get webuser.@user[0].number").gsub(luci.util.exec("uci get webuser.@user[0].number"),"\n","")
+	local configname = "user"
+	local username = ""
+	local userauth = ""
+	for i=1,usernum  do
+		configname = "@"..configname..i.."[0]"
+		if luci.util.exec("uci get webuser."..configname..".username") ~= "" then
+			username = username..luci.util.exec("uci get webuser."..configname..".username").gsub(luci.util.exec("uci get webuser."..configname..".username"),"\n","")..";"
+			userauth = userauth..luci.util.exec("uci get webuser."..configname..".authority").gsub(luci.util.exec("uci get webuser."..configname..".authority"),"\n","")..";"
+			--userauth = userauth..uci.get('webuser',configname,'authority')..";"
+		else
+			usernum=usernum-1
+		end	
+		configname = "user"
+	end
+	
+%>
+
+<script type="text/javascript">
+function all_init()
+{
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("user_add_submit_id").disabled=true;
+	}
+	document.getElementById("admin_del_id").disabled=true;
+	document.getElementById("admin_del_id").style.display="none";
+	if('1' == getauthority("currauth"))
+	{
+		document.getElementById("user_auth_id").options.remove(0); 
+		//document.getElementById("user_auth_id").options[0].style.display="none";
+	}else if('2' == getauthority("currauth"))
+	{
+		document.getElementById("user_auth_id").options.remove(0); 
+		document.getElementById("user_auth_id").options.remove(1); 
+		//document.getElementById("user_auth_id").options[0].style.display="none";
+		//document.getElementById("user_auth_id").options[1].style.display="none";
+
+	}
+}	
+function ajax_set(data1,data2,data3,a_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{user:data1,pass:data2,auth:data3},
+		success:function(r){
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+function add_user(auth)
+{
+	var user = document.getElementById('user_name_id').value;
+	var pass = document.getElementById('user_pass_id').value;
+	if( 10 == '<%=usernum%>' )
+	{
+		alert('<%:only add user number ten !%>');
+		return false;
+	}
+	if( "admin" == user )
+	{
+		alert('<%:not add admin !%>');
+		return false;
+	}
+	if( "" == user || "" == pass)
+	{
+		alert('<%:not add null !%>');
+		return false;
+	}
+	var i,username; 
+	var name = '<%=username%>';
+	for(i=1;i<='<%=usernum%>';i++)
+	{
+		username = name.split(';')[0];
+		name = name.substring(username.length+1)
+		if( username == user )
+		{
+			alert('<%:not add user already exists !%>');
+			return false;
+		}
+	}	
+	if('1' == getauthority("currauth"))
+	{
+		auth=auth+1;
+	}
+	ajax_set(user,pass,auth,'<%=pcdata(luci.dispatcher.build_url("admin/config/web_user"))%>');
+}
+function del_user(user)
+{
+	if( "admin" == user )
+	{
+		alert('<%:not delete admin !%>');
+		return false;
+	}
+	ajax_set(user,"","",'<%=pcdata(luci.dispatcher.build_url("admin/config/web_user"))%>');
+}
+function showFileList()
+{
+	var i,k,user,level,curr; 
+	var name = '<%=username%>';
+	var auth = '<%=userauth%>';
+	k="<table  class='cbi-section-table' style='margin-left:100px;width:800px'><tr><td style='width:23px;'><%:Number%></td><td style='width:56px;'><%:UserName%></td><td style='width:43px;'><%:Authority%></td><td style='width:33px;'><%:Delete%></td></tr></table>";
+	k+="<table id='tablelsw' class='cbi-section-table' style='margin-left:100px;width:800px'>";
+	for(i=1;i<='<%=usernum%>';i++)
+	{
+		user = name.split(';')[0];
+		name = name.substring(user.length+1)
+		level = auth.split(';')[0];
+		auth = auth.substring(level.length+1)
+		if ( "0" == level  )
+			curr = "<%:Administrator%>"
+		else if ( "1" == level )
+		    curr = "<%:Operators%>"
+		else
+			curr = "<%:Maintainer%>"
+		if( 1 == i)
+			k+="<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:240px;'>"+user+"</td><td style='width:200px;'>"+ curr +"</td><td><input type='button' name='delete_user' value='<%:Delete%>' id='admin_del_id' style='background-color:#f09090' onclick='del_user(\"user"+i+"\")'></td></tr>";
+		else 
+		{
+			if( ('0' != getauthority("currauth") && '1' != getauthority("currauth")) || ('1' == getauthority("currauth") && '0' == level) )
+			{
+				k+="<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:240px;'>"+user+"</td><td style='width:200px;'>"+ curr +"</td><td></td></tr>";
+			}else 
+			{
+				k+="<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:240px;'>"+user+"</td><td style='width:200px;'>"+ curr +"</td><td><input type='button' name='delete_user' value='<%:Delete%>' style='background-color:#f09090' onclick='del_user(\"user"+i+"\")'></td></tr>";
+			}		
+			
+		}
+	}
+	k+="<td></td><td></td><td></td><td></td>";
+	k+="</table>";
+	document.write(k);
+}
+</script>
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Web user%></a></h2><br/>
+		
+		<fieldset class="cbi-section">
+			
+			<div class="cbi-section-descr"><%:Add username%>:</div>
+				<input name="user_name" id="user_name_id" type="text" value="" style="margin-left:100px;width:200px;" size="12">
+			
+			<div class="cbi-section-descr"><%:User password%>:</div>
+				<input name="user_pass" id="user_pass_id" type="text" value="" style="margin-left:100px;width:200px;" size="12">
+			
+			<div class="cbi-section-descr"><%:User authority%>:</div>
+				<select  name="user_auth" id="user_auth_id" style="margin-left:100px;width:210px;">
+				<option value="0"><%:Administrator%></option>
+                <option value="1"><%:Operators%></option>
+				 <option value="2"><%:Maintainer%></option>
+				</select>
+				<input type="button" id="user_add_submit_id" class="cbi-button cbi-button-apply" value="<%:Add%>" style="width:100px;" onclick="add_user(this.form.user_auth.selectedIndex)" />
+				</br></br></br>
+			
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+					<legend style="margin-left:100px;"><font style="font-weight:bold;"  size="3"><%:User List%>:</font></legend><br/>
+					<script>showFileList();</script>
+				</div>
+			</div>
+		</fieldset>
+
+	</div>
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

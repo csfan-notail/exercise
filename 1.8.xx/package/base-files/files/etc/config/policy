@@ -1,0 +1,4 @@
+config list
+	option number	'0'
+
+

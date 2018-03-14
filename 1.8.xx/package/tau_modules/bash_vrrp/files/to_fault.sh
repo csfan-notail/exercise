@@ -1,0 +1,1 @@
+echo  Initialize >> /etc/vrrp.info

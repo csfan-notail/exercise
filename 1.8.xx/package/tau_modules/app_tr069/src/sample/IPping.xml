@@ -1,0 +1,34 @@
+<soap:Envelope 
+			soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" 
+			xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
+			xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" 
+			xmlns:cwmp="urn:dslforum-org:cwmp-1-0" 
+			xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <soap:Header>
+    <cwmp:ID soap:mustUnderstand="1">3D8D198B69F94D7BB2A9266408481BE9</cwmp:ID>
+  </soap:Header>
+  <soap:Body>
+	<cwmp:SetParameterValues>
+      <ParameterList soapenc:arrayType="cwmp:ParameterValueStruct[1]">
+        <ParameterValueStruct>
+    		<Name>InternetGatewayDevice.IPPingDiagnostics.DiagnosticsState</Name>
+          	<Value>Requested</Value>
+          <Name>InternetGatewayDevice.IPPingDiagnostics.Interface</Name>
+          	<Value>br0</Value>
+          <Name>InternetGatewayDevice.IPPingDiagnostics.Host</Name>
+          	<Value>192.168.1.2</Value>
+          <Name>InternetGatewayDevice.IPPingDiagnostics.NumberOfRepetitions</Name>
+          	<Value>7</Value>
+          <Name>InternetGatewayDevice.IPPingDiagnostics.Timeout</Name>
+          	<Value>1</Value>
+          <Name>InternetGatewayDevice.IPPingDiagnostics.DataBlockSize</Name>
+          	<Value>32</Value>
+     		</ParameterValueStruct>
+      </ParameterList>
+      <ParameterKey xsi:type="xsd:string"></ParameterKey>
+    </cwmp:SetParameterValues>
+  </soap:Body>
+</soap:Envelope>
+
+

@@ -1,0 +1,15 @@
+# Usage: root>pppd call evdo
+/dev/ttyUSB0
+115200
+connect '/usr/sbin/chat -v -f /etc/ppp/chat/yuga-evdo-connect-chat'
+debug
+nodetach
+ipcp-accept-local
+ipcp-accept-remote
+usepeerdns
+defaultroute
+noauth
+mru 1400
+ipcp-max-configure 30
+user m2m
+password vnet.mobi

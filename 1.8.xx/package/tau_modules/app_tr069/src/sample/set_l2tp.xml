@@ -1,0 +1,30 @@
+<soap:Envelope 
+	soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" 
+	xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
+	xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" 
+	xmlns:cwmp="urn:dslforum-org:cwmp-1-0" 
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <soap:Header>
+    <cwmp:ID soap:mustUnderstand="1">01BD8563247F4D27B5C4D3392C71C6AE</cwmp:ID>
+  </soap:Header>
+  <soap:Body>
+    <cwmp:SetParameterValues>
+      <ParameterList soapenc:arrayType="cwmp:ParameterValueStruct[1]">
+        <ParameterValueStruct>
+	<Name>InternetGatewayDevice.X_PPPoE2L2TP.Enable</Name><Value>1</Value>
+	<Name>InternetGatewayDevice.X_PPPoE2L2TP.MTUOfUser</Name><Value>1300</Value>
+
+	<Name>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.2.TunnelMode</Name><Value>1</Value>
+	 <Name>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.LNSServerIPAddress</Name><Value>192.168.3.21</Value>
+	 <Name>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.2.LNSServerHostName</Name><Value>dgy01</Value>
+	 <Name>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.LNSServerPortName</Name><Value>1</Value>
+	 <Name>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.TunnelAuthenticateEnable</Name><Value>1</Value>
+	 <Name>InternetGatewayDevice.X_PPPoE2L2TP.L2TPServer.1.PasswordOfTunnel</Name><Value>mm123456</Value>
+          </ParameterValueStruct>
+      </ParameterList>
+      <ParameterKey xsi:type="xsd:string"></ParameterKey>
+    </cwmp:SetParameterValues>
+  </soap:Body>
+</soap:Envelope>

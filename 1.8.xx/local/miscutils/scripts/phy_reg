@@ -1,0 +1,119 @@
+show_usage()
+{
+cat << EOF
+Usage:
+	$0 r [phy_addr] [reg]
+	$0 w [phy_addr] [reg] [data]
+EOF
+exit 1;
+}
+
+#reg addr
+ATH_MII_MGMT_CMD=0x24
+ATH_MII_MGMT_ADDRESS=0x28
+ATH_MII_MGMT_CTRL=0x2c
+ATH_MII_MGMT_STATUS=0x30
+ATH_MII_MGMT_IND=0x34
+
+ATH_MGMT_CMD_READ=0x1
+
+#mac_unit0 address base offset
+mac_base=0xb9000000
+
+#tools define
+[ -e /root/md ] && md_int=/root/md || md_int=md
+[ -e /root/mm ] && mm_int=/root/mm || mm_int=mm
+
+#reg rd/wr
+ath_gmac_reg_rd()
+{
+	local addr=$1
+	devmem $((mac_base+addr)) 32
+	#${md_int} `printf "0x%x" $((mac_base+addr))` | awk '{print $3}'
+}
+
+ath_gmac_reg_wr()
+{
+	local addr=$1
+	local val=$2
+	devmem $((mac_base+addr)) 32 ${val}
+	#${mm_int} `printf "0x%x" $((mac_base+addr))` ${val}
+}
+
+
+get_ready()
+{
+	local msg=$1
+
+  ii=0xffff
+  rddata=`ath_gmac_reg_rd ${ATH_MII_MGMT_IND}`
+  rddata=$((rddata & 0x1))
+  ii=$((ii-1));test=$((rddata&&ii));
+  while [ ${test} -ne 0 ];
+  do
+  	#sleep 1;
+  	rddata=`ath_gmac_reg_rd ${ATH_MII_MGMT_IND}`
+  	rddata=$((rddata & 0x1))
+  	ii=$((ii-1));test=$((rddata&&ii));
+  done
+  
+  [ ${ii} -eq 0 ] && [ -n "${msg}" ] && echo ${msg}
+}
+
+
+phy_reg_rd()
+{
+	local phy_addr=$1
+	local reg=$2
+	#local data=$3
+	local addr=$(((phy_addr<<8) | reg))
+	[ -z "${phy_addr}" -o -z "${reg}" ] && show_usage
+ 
+	get_ready "transaction failed"
+  
+  ath_gmac_reg_wr "${ATH_MII_MGMT_CMD}" "0x0"
+  ath_gmac_reg_wr "${ATH_MII_MGMT_ADDRESS}" "${addr}"
+  ath_gmac_reg_wr "${ATH_MII_MGMT_CMD}" "0x1"
+  
+  get_ready "Leave ath_gmac_miiphy_read without polling correct status!"
+    
+  val=`ath_gmac_reg_rd ${ATH_MII_MGMT_STATUS}`
+  ath_gmac_reg_wr "${ATH_MII_MGMT_CMD}" "0x0"
+  
+  echo ${val}
+}
+
+phy_reg_wr()
+{
+	local phy_addr=$1
+	local reg=$2
+	local data=$3
+	local addr=$(((phy_addr<<8) | reg))
+	[ -z "${phy_addr}" -o -z "${reg}" -o -z "${data}" ] && show_usage
+	
+  get_ready "transaction failed"
+  
+  ath_gmac_reg_wr "${ATH_MII_MGMT_ADDRESS}" "${addr}"
+  ath_gmac_reg_wr "${ATH_MII_MGMT_CTRL}" "${data}"
+  
+  get_ready "Leave ath_gmac_miiphy_read without polling correct status!"
+}
+
+
+#main
+cmd=$1
+phy_addr=$2
+reg=$3
+data=$4
+
+case ${cmd} in
+	r)
+		phy_reg_rd ${phy_addr} ${reg} 
+		;;
+	w)
+		phy_reg_wr ${phy_addr} ${reg} ${data}
+		;;
+	*)
+		show_usage;
+		;;
+esac

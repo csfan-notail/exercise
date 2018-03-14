@@ -1,0 +1,255 @@
+<%+header%>
+
+<%
+local uci = require "luci.model.uci".cursor()
+
+local protocol_all  = ""
+local interface_all  = ""
+local sercure_sev_num = ""
+
+function secure_get ()
+	sercure_sev_num = uci.get("secure","sev","sev_num")
+	
+	local protocol_addr = ""
+	local interface_addr = ""
+	for num=1 , tonumber(sercure_sev_num) do
+		
+		local protocol_str = "protocol_"..num
+		local interface_str = "interface_"..num
+		
+		
+		protocol_addr = uci.get("secure","sev",protocol_str)
+		interface_addr = uci.get("secure","sev",interface_str)
+		if protocol_addr == nil then 
+			sercure_sev_num = num-1
+			return
+		end
+		
+		protocol_all = protocol_all..protocol_addr..";"
+		interface_all = interface_all..interface_addr..";"
+	end	
+end
+
+
+secure_get();
+
+%>
+
+<script type="text/javascript">
+
+function all_init ()
+{	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("black_sev_add_submit_id").disabled=true;
+		document.getElementById("white_sev_add_submit_id").disabled=true;
+	}
+}
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{port_val:data1,port_val2:data2,port_val3:data3},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+
+function add_black_sev_web()
+{
+	var i,k,file,file1,file2,pro,intf; 
+	
+	var filenames1= '<%=protocol_all%>'
+	var filenames2 = '<%=interface_all%>'
+	
+	
+	var addport = document.getElementById("last_sw_id").value;
+	var addintface = document.getElementById("last_intface_id").value;
+	document.getElementById('action_id').value="0";
+		
+	if( addintface == '' )
+	{
+		
+		alert('<%:input port not legal%>');
+		return false;
+	}
+	for(i=1;i<='<%=sercure_sev_num%>';i++)
+	{
+		
+		
+		file1 = filenames1.split(';')[0];
+		filenames1 = filenames1.substring(file1.length+1)
+		
+		file2 = filenames2.split(';')[0];
+		filenames2 = filenames2.substring(file2.length+1)
+		
+		if( addport == file1 && addintface == file2 )
+		{
+			
+			alert('<%:This interface and protocol is in the list%>');
+			return false;
+		}
+		
+	}
+	ajax_set(0,addport,addintface,'<%=pcdata(luci.dispatcher.build_url("admin/secure/sev_filter"))%>', '<%=luci.dispatcher.build_url("admin", "secure")%>/set_infos/');	
+}
+
+function del_black_sev_web(del_pro,del_intface)
+{		
+	ajax_set(3,del_pro,del_intface,'<%=pcdata(luci.dispatcher.build_url("admin/secure/sev_filter"))%>', '<%=luci.dispatcher.build_url("admin", "secure")%>/set_infos/');
+}
+
+function showFileList()
+{
+	var i,k,file,file1,file2,pro; 
+	
+	var filenames1 = '<%=protocol_all%>'
+	var filenames2 = '<%=interface_all%>'
+
+	k="<table  class='cbi-section-table' style='margin-left:100px;width:800px'><tr><td style='width:35px;'><%:Number%></td><td style='width:50px;'><%:protocol%></td><td style='width:30px;'><%:intface%></td><td style='width:33px;'><%:Delete%></td></tr></table>";
+	k+="<table id='tablelsw' class='cbi-section-table' style='margin-left:100px;width:800px'>";
+	for(i=1;i<='<%=sercure_sev_num%>';i++)
+	{
+		
+		
+		file1 = filenames1.split(';')[0];
+		filenames1 = filenames1.substring(file1.length+1)
+		if( file1 == '0')
+		{
+			pro = "tcp";
+		}
+		
+		if( file1 == '1')
+		{
+			pro = "udp";
+		}
+		
+		if( file1 == '2')
+		{
+			pro = "icmp";
+		}
+		if( file1 == '5')
+		{
+			pro = "http";
+		}
+		
+		if( file1 == '3' || file1 == '4' )
+		{
+			pro = "all";
+		}
+		file2 = filenames2.split(';')[0];
+		filenames2 = filenames2.substring(file2.length+1)
+		
+
+		
+		if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:30px;'></td><td style='width:150px;'>&nbsp;&nbsp;&nbsp;"+pro+"</td><td style='width:50px;'><td style='width:130px;'>&nbsp;&nbsp;&nbsp;"+file2+"</td><td style='width:10px;'></td><td><style='background-color:#f09090' onclick='del_black_sev_web(\""+file1+"\",\""+file2+"\")'></td></tr>");
+		else
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:30px;'></td><td style='width:150px;'>&nbsp;&nbsp;&nbsp;"+pro+"</td><td style='width:50px;'><td style='width:130px;'>&nbsp;&nbsp;&nbsp;"+file2+"</td><td style='width:10px;'></td><td><input type='submit' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='del_black_sev_web(\""+file1+"\",\""+file2+"\")'></td></tr>");
+	
+	}
+	k+="<td></td><td></td><td></td><td></td>";
+	k+="</table>";
+	document.write(k);
+}
+function timer(event)  {   
+	if(event.keyCode==13){
+		event.preventDefault();
+		return false;
+	}
+} 
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+		<div class="cbi-map">
+			<h2>	
+		 	  <a id="content" name="content"><%:SERVE Filter%>
+		 	  </a>
+			</h2>
+		<br/>
+
+		<fieldset class="cbi-section">
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="text-indent:90px;">
+						<input type="text" id="action_id" style="width:20px;display:none;" 
+						
+						<td class="td_class" style="text-indent:10px;"><%:Intf%>:
+						<input type="text" id="last_intface_id" style="width:80px;" onkeypress="timer(event)" />&nbsp;&nbsp;
+						<select  name="last_sw" id="last_sw_id" style="width:80px;">
+								<option value="0"><%:TCP%></option>
+                    			<option value="1"><%:UDP%></option>
+								<option value="2"><%:ICMP%></option>
+                    			<option value="3"><%:ALL%></option>	
+								<option value="5"><%:HTTP-80%></option>									
+								<option value="4"><%:%></option>	
+								
+						</select>
+						<input type="button"  id="black_sev_add_submit_id" class="cbi-button cbi-button-apply" value="<%:Add%>" style="width:100px;" onclick="add_black_sev_web()"/>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</fieldset>
+
+		<fieldset class="cbi-section">
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">	
+				<td class="td_class"><%:Black list%>:</td>
+					<script>showFileList();</script>
+			</div>
+		</div>
+		</fieldset>
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+
+		<script>
+			all_init();
+		</script>
+</form>
+
+<%+footer%>

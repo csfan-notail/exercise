@@ -1,0 +1,121 @@
+<%+header%>
+
+<%
+	local get_lock_num = uci.get('lte','module_info','unlock_num2')
+	local lte_single_double_switch    = uci.get('lte','set','single_double_switch')
+	local lteinfo_module_info_imei          = luci.sys.exec("cat /tmp/uci/acIMEI2")	
+
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	document.getElementById('unlock_num_id').value='<%=get_lock_num%>'
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("unlock_set_id").disabled=true;
+	}
+	
+	if('0' == '<%=lte_single_double_switch%>')
+	{
+		document.getElementById("unlock_set_id").disabled=true;
+		document.getElementById("unlock_set_id").style.background = "Gray";
+	}
+	
+}	
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{value1:data1},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+
+function unlock_config()
+{
+	var unlock_num = document.getElementById('unlock_num_id').value;
+	
+	if(""==unlock_num )
+	{
+		alert("<%:please input unlocked number !%>");
+		return false;
+	}
+	
+	ajax_set(unlock_num,'<%=pcdata(luci.dispatcher.build_url("admin/lte/lte_unlock2"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "lte")%>/set_infos/');
+}
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Lte2 unlogk config%></a></h2><br/>
+		<fieldset class="cbi-section">
+			
+			<div class="div_class">
+				<table class="table_class" >
+				
+					<tr class="tr_class">
+						<tr><td style="width:300px;text-indent:200px"><%:Module Info%></td><td id="id_module_info" ><%=lteinfo_module_info_imei%></td></tr>
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:unlocked number%>:</td>
+						<td class="td_class">
+						<input name="unlock_num" id="unlock_num_id" type="text" style="width:200px;margin-left:0px;">
+						<input type="button" id="unlock_set_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="unlock_config()" /></td>
+					</tr>
+				</table>
+			</div>
+		</fieldset>
+	</div>
+	
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

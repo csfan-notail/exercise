@@ -1,0 +1,80 @@
+#!/bin/sh
+
+
+##########################################################
+#include /lib/functions.sh
+
+find_mtd_part() {
+	local PART="$(grep "\"$1\"" /proc/mtd | awk -F: '{print $1}')"
+	local PREFIX=/dev/mtdblock
+
+	PART="${PART##mtd}"
+	[ -d /dev/mtdblock ] && PREFIX=/dev/mtdblock/
+	echo "${PART:+$PREFIX$PART}"
+}
+
+
+##########################################################
+
+get_file_size() {
+	wc -c "$1" | awk '{print $1}'	
+}
+
+FACTORY_DATA_MTDNAME=factory.data
+FACTORY_DATA_MTD=`find_mtd_part ${FACTORY_DATA_MTDNAME}`
+FACTORY_DATA_MTD_SIZE=`get_file_size ${FACTORY_DATA_MTD}`
+FACTORY_DATA_CACHE=/var/jffs2
+
+
+factory_data_load()
+{
+	mkdir -p ${FACTORY_DATA_CACHE} && \
+	cd ${FACTORY_DATA_CACHE}/.. && \
+	cat ${FACTORY_DATA_MTD} | tar -zx
+}
+
+
+factory_data_save()
+{
+	local file=/tmp/factory.data.tmp.$$
+	local ret=0
+	
+	cd ${FACTORY_DATA_CACHE}/.. && \
+	tar -zc `basename ${FACTORY_DATA_CACHE}` -f ${file} && \
+	if [ "$(get_file_size ${file})" -le "${FACTORY_DATA_MTD_SIZE}" ];then 
+		mtd -e "${FACTORY_DATA_MTDNAME}" write "${file}" "${FACTORY_DATA_MTDNAME}";
+	else
+		echo "${FACTORY_DATA_MTDNAME}: not enough storage" >&2;
+		false;
+	fi || \
+	ret=1
+	
+	rm -f ${file}
+	return ${ret};
+}
+
+factory_data_help()
+{
+cat << EOF
+Usage:
+	factory_data load	-- load mtd data to cache
+	factory_data save	-- save cache data to mtd
+EOF
+}
+
+#
+# main
+#
+
+case $1 in 
+	load)
+		factory_data_load
+		;;
+	save)
+		factory_data_save
+		;;
+	*)
+		factory_data_help
+		return 1;
+		;;
+esac

@@ -1,0 +1,25 @@
+
+config secure_opt 'ip'
+	option ip_num '0'
+
+config secure_opt 'mac'
+	option mac_num '0'
+
+config secure_opt 'url'
+	option url_num '0'
+
+config secure_opt 'sev'
+	option sev_num '0'
+
+config secure_opt 'vlan'
+	option vlan_num '0'
+
+config secure_opt 'white_ip'
+	option ip_num '0'
+
+config secure_opt 'white_mac'
+	option mac_num '0'
+
+config secure_opt 'white_url'
+	option url_num '0'
+

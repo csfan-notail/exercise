@@ -1,0 +1,10 @@
+. /lib/ar71xx.sh
+
+
+preinit_load_blackbox() {
+        insmod bb
+        showreboot get
+}
+
+boot_hook_add preinit_main preinit_load_blackbox
+

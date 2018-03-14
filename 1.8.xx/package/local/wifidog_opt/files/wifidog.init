@@ -1,0 +1,80 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+SERVICE_MATCH_NAME=1
+SERVICE_DAEMONIZE=1
+
+START=49
+
+#usage: isexist_dir dir_name
+isexist_dir()
+{
+	dir_name=$1
+	if [ ! -d $dir_name ]; then
+		mkdir $dir_name -p
+	fi
+}
+
+#usage: prepare files for lighttpd
+lighttpd_prepare()
+{
+	isexist_dir /tmp/app/home/cloud/webpages/cmps/static/uploads
+	isexist_dir /tmp/app/home/cloud/webpages/cmps/static/themes
+	isexist_dir /tmp/app/home/cloud/webpages/cmps/static/attach
+	isexist_dir /tmp/app/home/cloud/webpages/portal
+	ln -sf /mnt /tmp/app/home/cloud/webpages/cmps/static/ext
+
+	cp /etc/wifidog/maxuser.html /tmp/app/home/cloud/webpages/portal/maxuser.html
+	cp /etc/wifidog/offline.html /tmp/app/home/cloud/webpages/portal/offline.html
+	cp /etc/wifidog/style.css /tmp/app/home/cloud/webpages/portal/style.css
+	cp /etc/wifidog/first_page.html /tmp/app/home/cloud/webpages/portal/first_page.html
+	cp /etc/wifidog/auth_ok.html /tmp/app/home/cloud/webpages/portal/auth_ok.html
+	isexist_dir /var/log/lighttpd/
+	touch /var/log/lighttpd/access.log
+	touch /var/log/lighttpd/error.log
+	touch /tmp/cloud_src_ver
+	echo -ne "0\n0\n0" > /tmp/cloud_src_ver
+}
+
+start() {
+	lighttpd_prepare
+	mkdir -m 0755 -p /var/log/wifidog
+	
+	#/etc/init.d/uhttpd stop
+	#sleep 3
+	service_start /usr/sbin/wifidog
+	#sleep 3
+	#/etc/init.d/uhttpd start
+	
+	/usr/sbin/free_auth.sh start
+}
+
+stop() {
+	service_stop /usr/sbin/wifidog
+}
+
+wifidog_switch=0
+
+run_wifidog()
+{
+	config_get wifidog_switch $1 wifidog_switch
+	
+}
+reload()
+{
+	config_load gateway
+	config_foreach run_wifidog gateway
+	if [ $wifidog_switch = "0" ]; then
+		service_stop /usr/sbin/wifidog
+		/etc/init.d/wifidog disable
+		exit
+	fi	
+	/etc/init.d/wifidog enable
+	service_stop /usr/sbin/wifidog
+	#/etc/init.d/uhttpd stop
+	#sleep 2
+	service_start /usr/sbin/wifidog
+	#sleep 1
+	#/etc/init.d/uhttpd start
+	/usr/sbin/free_auth.sh start
+}

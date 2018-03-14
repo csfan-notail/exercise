@@ -1,0 +1,11 @@
+--- a/acfg_test_app/acfg_tool_fn.c
++++ b/acfg_test_app/acfg_tool_fn.c
+@@ -1734,7 +1734,7 @@ int wrap_assoc_sta_info(char *params[])
+ 
+         msg("%s %4u %4d %3dM %4d %4d %6d %6d %4x %5x %3x %8x %6x", \
+                 (((pMac = addr_ntoa(psi->macaddr)) == NULL)? "00:00:00:00:00:00": pMac),psi->associd, psi->channel, \
+-                psi->txrate, psi->rssi, psi->inact, psi->txseq, psi->rxseq, \
++                psi->txrate, psi->rssi, psi->inact, (int)psi->txseq, (int)psi->rxseq, \
+                 psi->cap, psi->athcap, psi->erp, psi->state, psi->htcap );
+ 
+         cp += sizeof(acfg_sta_info_t) ;

@@ -1,0 +1,4 @@
+uci batch <<-EOF
+        set luci.themes.Custom=/luci-static/custom
+        commit luci
+EOF

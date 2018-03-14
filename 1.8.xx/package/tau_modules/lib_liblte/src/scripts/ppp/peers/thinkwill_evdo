@@ -1,0 +1,12 @@
+# Usage: root>pppd call evdo
+/dev/ttyUSB1
+115200
+connect '/usr/sbin/chat -v -f /etc/ppp/chat/thinkwill-evdo-connect-chat'
+debug
+nodetach
+ipcp-accept-local
+ipcp-accept-remote
+usepeerdns
+defaultroute
+user card
+

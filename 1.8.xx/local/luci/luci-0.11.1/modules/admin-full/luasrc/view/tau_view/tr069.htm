@@ -1,0 +1,137 @@
+<%+header%>
+
+<%
+	local tr069_switch = uci.get('tr069','config','switch')
+	local tr069_ser_url = uci.get('tr069','ManagementServer','URL')
+	local tr069_dev_url = uci.get('tr069','ManagementServer','ConnectionReqURL')
+	local tr069_lan_ip = uci.get('tr069','lan','ipaddr_n')
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	if( '0' == '<%=tr069_switch%>' )
+	{
+		document.getElementById('tr069_switch_id').options[0].selected=true;
+	}	
+	else {
+		document.getElementById('tr069_switch_id').options[1].selected=true;
+	}
+	
+	document.getElementById('ser_url_id').value = '<%=tr069_ser_url%>';
+	document.getElementById('dev_url_id').value = '<%=tr069_dev_url%>';
+	document.getElementById('lan_ip_id').value = '<%=tr069_lan_ip%>';
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("tr069_switch_id").disabled=true;
+	}
+}	
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{value1:data1,value2:data2,value3:data3,value4:data4},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+
+function tr069_config(tr069_switch)
+{
+	var ser_url = document.getElementById('ser_url_id').value;
+	var dev_url = document.getElementById('dev_url_id').value;
+	var lan_ip = document.getElementById('lan_ip_id').value;
+	
+	if( 1 == tr069_switch && ( ""==ser_url || ""==dev_url || ""==lan_ip ))
+	{
+		alert("<%:please input all data !%>");
+		return false;
+	}
+	
+	ajax_set(tr069_switch,ser_url,dev_url,lan_ip,'<%=pcdata(luci.dispatcher.build_url("admin/config/tr069_config"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:tr069 config%></a></h2><br/>
+		<fieldset class="cbi-section">
+			
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:tr069 switch%>:</td>
+						<td class="td_class"><select  name="tr069_switch" id="tr069_switch_id" style="width:210px;">
+							<option value="0"><%:off%></option>
+                    		<option value="1"><%:on%></option>
+						</select>
+						<input type="button" id="tr069_set_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="tr069_config(this.form.tr069_switch.selectedIndex)" /></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:server url%>:</td>
+						<td class="td_class">
+						<input name="ser_url" id="ser_url_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:device url%>:</td>
+						<td class="td_class">
+						<input name="dev_url" id="dev_url_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:device lan ip%>:</td>
+						<td class="td_class">
+						<input name="lan_ip" id="lan_ip_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+				</table>
+			</div>
+		</fieldset>
+	</div>
+	
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

@@ -1,0 +1,175 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2011 OpenWrt.org
+
+SERVICE_MATCH_NAME=1
+SERVICE_DAEMONIZE=1
+START=40
+
+start() {
+	
+	#insmod /lib/modules/3.3.8/gpioex.ko
+	mkdir -p /tmp/uci
+	# Add: by zhanghao 2016/06/27 
+	echo 32 > /sys/class/gpio/export
+	echo 33 > /sys/class/gpio/export
+	
+	echo in > /sys/class/gpio/gpio33/direction
+	
+	sim_select=`cat /sys/class/gpio/gpio33/value`
+	if [ "1"x = "$sim_select"x ];then    #SimCard T
+		echo out > /sys/class/gpio/gpio32/direction
+		echo 1 > /sys/class/gpio/gpio32/value
+		echo 37 > /sys/class/gpio/export
+		echo out > /sys/class/gpio/gpio37/direction
+		echo 0 > /sys/class/gpio/gpio37/value
+	
+		echo 0 > /tmp/uci/enSimStateSet
+	else								 #SimCard O
+		echo out > /sys/class/gpio/gpio32/direction
+		echo 0 > /sys/class/gpio/gpio32/value
+		echo 35 > /sys/class/gpio/export
+		echo out > /sys/class/gpio/gpio35/direction
+		echo 0 > /sys/class/gpio/gpio35/value
+		echo 1 > /tmp/uci/enSimStateSet
+		
+	fi
+	
+	#lte power
+	gpio 13 out 1
+	echo 49 >/sys/class/gpio/export
+	echo out >/sys/class/gpio/gpio49/direction
+	echo 1 >/sys/class/gpio/gpio49/value
+	
+	# Add: by xiaowei, 2016/03/24 01:18 PN: lte get info 
+	/sbin/ltegetinfo > /dev/null 2>&1 &
+	# Add: by xiaowei, 2016/03/28 15:34 PN: led status
+	/sbin/ledstatus > /dev/null 2>&1 &
+	
+	#boot 2.0 gpio15 out 1
+	#gpio 15 out 1
+	#sleep 5
+	
+	#TAU 3.0 LTE gpio expander contrl
+	#lte1 reset normal
+	echo 48 > /sys/class/gpio/export
+	echo out >/sys/class/gpio/gpio48/direction
+	echo 1 >/sys/class/gpio/gpio48/value
+	#lte2 reset normal
+	echo 52 > /sys/class/gpio/export
+	echo out >/sys/class/gpio/gpio52/direction
+	echo 1 >/sys/class/gpio/gpio52/value
+	#lte1 3.3v
+	#echo 50 > /sys/class/gpio/export
+	#echo out >/sys/class/gpio/gpio50/direction
+	#echo 0 >/sys/class/gpio/gpio50/value
+	#lte2 3.3v
+	#echo 51 > /sys/class/gpio/export
+	#echo out >/sys/class/gpio/gpio51/direction
+	#echo 0 >/sys/class/gpio/gpio51/value
+	
+	
+	#Add: by zhanghao 2016/8/5 attenuator
+	#attenuator_bit0=`uci get config.attenuator.bit_0`
+	attenuator_bit1=`uci get config.attenuator.bit_1`
+	attenuator_bit2=`uci get config.attenuator.bit_2`
+	attenuator_bit3=`uci get config.attenuator.bit_3`
+	attenuator_bit4=`uci get config.attenuator.bit_4`
+	#attenuator_bit5=`uci get config.attenuator.bit_5`
+
+	insmod /lib/modules/3.3.8/usbserial.ko vendor=0x1677 product=0x0330
+	insmod /lib/modules/3.3.8/usb_wwan.ko 
+	insmod /lib/modules/3.3.8/option.ko
+	insmod /lib/modules/3.3.8/usbnet.ko
+	insmod /lib/modules/3.3.8/cdc_ncm.ko
+	insmod /lib/modules/3.3.8/cdc-wdm.ko
+	insmod /lib/modules/3.3.8/huawei_cdc_ncm.ko
+
+	#usb_modeswitch -J -v 0x12d1 -p 0x14fe
+	#usb_modeswitch -J -v 0x12d1 -p 0x14fe
+
+	
+	echo 47 >/sys/class/gpio/export
+	echo out >/sys/class/gpio/gpio47/direction
+	echo 1 >/sys/class/gpio/gpio47/value
+
+	echo 39 > /sys/class/gpio/export
+	echo 40 > /sys/class/gpio/export
+	echo 41 > /sys/class/gpio/export
+	echo 42 > /sys/class/gpio/export
+	echo 43 > /sys/class/gpio/export
+	echo 44 > /sys/class/gpio/export
+
+	echo out >/sys/class/gpio/gpio39/direction
+	echo 1 >/sys/class/gpio/gpio39/value
+	echo out >/sys/class/gpio/gpio40/direction
+	echo 1 >/sys/class/gpio/gpio40/value
+	echo out >/sys/class/gpio/gpio41/direction
+	echo 1 >/sys/class/gpio/gpio41/value
+	echo out >/sys/class/gpio/gpio42/direction
+	echo 1 >/sys/class/gpio/gpio42/value
+	echo out >/sys/class/gpio/gpio43/direction
+	echo 1 >/sys/class/gpio/gpio43/value
+	echo out >/sys/class/gpio/gpio44/direction
+	echo 1 >/sys/class/gpio/gpio44/value	
+	                
+	echo $attenuator_bit1 >/sys/class/gpio/gpio40/value
+	echo $attenuator_bit2 >/sys/class/gpio/gpio41/value
+	echo $attenuator_bit3 >/sys/class/gpio/gpio42/value
+	echo $attenuator_bit4 >/sys/class/gpio/gpio43/value
+
+	#Dail Mode switch
+	ltedial=`uci get config.ltewan.dialway`
+	if [ "1"x = "$ltedial"x ];then
+		echo "----------------lte use manual dial"
+		ipaddr=`uci get config.ltewan.ipaddr`
+		netmask=`uci get config.ltewan.netmask`
+		gateway=`uci get config.ltewan.gateway`
+		dnsser1=`uci get config.ltewan.dnsser1`
+		dnsser2=`uci get config.ltewan.dnsser2`
+		ifconfig usb0 up
+		ifconfig usb0 $ipaddr netmask $netmask
+		route add default gw $gateway
+		echo 'nameserver '$dnsser1 >  /tmp/resolv.conf.auto 
+		echo 'nameserver '$dnsser2 >> /tmp/resolv.conf.auto 
+		
+	else
+		echo "----------------lte use auto  dial"
+		
+		#add by xiaowei 2016-12-12
+		echo 1 > /proc/sys/net/ipv4/ip_forward
+ 		echo 1 > /proc/sys/net/ipv4/conf/usb0/forwarding
+		echo 1 > /proc/sys/net/ipv4/conf/br-lan/forwarding
+ 	
+		/sbin/ltedail >/dev/null 2>&1
+	
+		echo 1 > /proc/sys/net/ipv4/conf/usb0/forwarding
+		echo 1 > /proc/sys/net/ipv4/conf/br-lan/forwarding
+	
+		ltecomsev -m 15 -l 5 &
+		sleep 1
+
+	fi
+	
+	lock_num=`uci get lte.module_info.unlock_num`
+	if [ -n ${lock_num} ]; then 
+		ltectl nvdatalock $lock_num
+	fi
+	
+	# Add by zhanghao 2016/6/27
+	#/sbin/simledstatus > /dev/null 2>&1 &
+	
+	#Change by zhanghao 2016/7/6
+	sleepvalue=`uci get lte.set.basic_connecttime`
+	if [ $sleepvalue -eq 0 ];then
+		/sbin/lteauto  > /dev/null 2>&1 &
+	else
+		/sbin/lteauto  $sleepvalue > /dev/null 2>&1 &
+	fi	
+
+	/sbin/checksda > /dev/null 2>&1 &
+	
+}
+
+stop() {
+	echo ""
+}

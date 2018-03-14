@@ -1,0 +1,148 @@
+<%+header%>
+
+<%
+	local snmpd_switch = uci.get('config','mini_snmpd','switch')
+	local snmpd_trap_ip = uci.get('config','mini_snmpd','trap_ip')
+	local snmpd_status = uci.get('config','mini_snmpd','status')
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	
+	if( '0' == '<%=snmpd_switch%>' )
+		document.getElementById('snmpd_sw_id').options[0].selected=true;
+	else
+		document.getElementById('snmpd_sw_id').options['<%=snmpd_switch%>'].selected=true;
+	
+	document.getElementById('snmpd_sta_id').options['<%=snmpd_status%>'].selected=true;	
+	document.getElementById('snmpd_trap_ip_id').value = '<%=snmpd_trap_ip%>';
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("snmpd_submit_id").disabled=true;
+	}
+	if( '0' == '<%=snmpd_switch%>' )
+	{
+		document.getElementById("snmpd_trap_ip_id").disabled=true;
+		//document.getElementById("snmpd_submit_id").style.background = "Gray";
+	}
+	
+}	
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{value1:data1,value2:data2,value3:data3},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+function snmpd_switch(snmpd_sw)
+{
+	var snmpd_trap_ip = document.getElementById('snmpd_trap_ip_id').value;
+	var snmp_connect_sta = document.getElementById('snmpd_sta_id').value;
+	ajax_set(snmpd_sw,snmpd_trap_ip,snmp_connect_sta,'<%=pcdata(luci.dispatcher.build_url("admin/config/snmpd_switch"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Remote Manage%></a></h2><br/>
+		
+		<fieldset class="cbi-section">
+			<legend><%:Configure%></legend><br/>
+
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+					<div class="cbi-value-field">
+						<div style="margin-left:0px;"><%:Remote Manage Switch%>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						<select  name="snmpd_sw" id="snmpd_sw_id" style="width:180px;">
+							<option value="0"><%:off%></option>
+                    		<option value="1"><%:on%></option>
+						</select>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="cbi-section-descr"></div>
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+					<div class="cbi-value-field">
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						<select  name="snmpd_sta" id="snmpd_sta_id" style="width:180px;">
+							<option value="0"><%:SNMPc%></option>
+                    		<option value="1"><%:CMS%></option>
+                    		<option value="2"><%:SNMPc/CMS%></option>
+						</select>
+					</div>
+				</div>
+			</div>
+
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+					<div class="cbi-value-field">
+						<div style="margin-left:0px;"><%:Remote Manage Server%>:&nbsp;&nbsp;&nbsp;&nbsp;
+						<input name="snmpd_trap_ip" id="snmpd_trap_ip_id" type="text">&nbsp;&nbsp;&nbsp;
+						<input type="button" id="snmpd_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="snmpd_switch(this.form.snmpd_sw.selectedIndex)" />
+						</div>
+					</div>
+				</div>
+			</div>
+			
+		</fieldset>
+		
+
+	</div>
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

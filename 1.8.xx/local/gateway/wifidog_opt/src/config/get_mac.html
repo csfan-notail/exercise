@@ -1,0 +1,69 @@
+﻿<?php
+header("Content-type: text/html; charset=utf-8");
+if (!function_exists('get_client_ip')) {
+	function get_client_ip() {
+		if (isset($_SERVER)) {  
+		/*在局域网通过透明代理访问外部的web服务器时,
+		*在web服务器端,
+		*通过header   HTTP_X_FORWARDED_FOR 可以知道代理服务器的服务器名以及端口,
+		*/  
+		if (isset($_SERVER[HTTP_X_FORWARDED_FOR])) {    
+		    $realip = $_SERVER[HTTP_X_FORWARDED_FOR];    
+		   } elseif (isset($_SERVER[HTTP_CLIENT_IP])) {    
+		    $realip = $_SERVER[HTTP_CLIENT_IP];    
+		   } else {    
+		    $realip = $_SERVER[REMOTE_ADDR];    
+		   }    
+		} else {  
+		
+		/*string getenv ( string varname )
+		*Returns the value of the environment variable varname, or FALSE on *an error.
+		*/
+		if (getenv("HTTP_X_FORWARDED_FOR")) {    
+		    $realip = getenv( "HTTP_X_FORWARDED_FOR");    
+		   } elseif (getenv("HTTP_CLIENT_IP")) {    
+		    $realip = getenv("HTTP_CLIENT_IP");    
+		   } else {    
+		    $realip = getenv("REMOTE_ADDR");    
+		   }    
+		}    
+		return $realip;
+	}
+
+}
+
+if (!function_exists('get_client_mac')) {
+        function get_client_mac($client_ip) {
+
+        $realmac="00:00:00:00:00:00";
+    	$proc = fopen("/proc/net/arp", "r");
+
+		fgets($proc);
+		
+    	while (!feof($proc) && ($info = fscanf($proc, "%s\t%s\t%s\t%s\t%s\t%s\n"))) {
+        	list ($name1, $name2, $name3, $name4, $name5, $name6) = $info; 
+
+        	//$pos = strpos($client_ip, $name1);
+        	//if ($pos !== false)
+        	if ($client_ip==$name1)
+        	{
+        		$realmac = $name4;
+                break;
+            }
+	    }
+
+	    fclose($proc);
+	    
+	    return $realmac;
+    
+	}
+}
+
+
+$ip = get_client_ip();
+$mac = get_client_mac($ip);
+
+//echo $ip;
+//echo "{\"mac\":\"".$mac."\"}";
+echo "{\"resultCode\":0,\"data\":\"{\\\"sta_mac\\\":\\\"".$mac."\\\", \\\"ap_mac\\\":\\\"\\\"}\"}";
+?>

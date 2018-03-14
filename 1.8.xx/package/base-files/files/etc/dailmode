@@ -1,0 +1,31 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2011 OpenWrt.org
+
+SERVICE_MATCH_NAME=1
+SERVICE_DAEMONIZE=1
+START=40
+
+start()
+{
+	ltedial=`uci get config.ltewan.dialway`
+
+	if [ "1"x = "$ltedial"x ];then
+		echo "----------------lte use manual dial"
+		ipaddr=`uci get config.ltewan.ipaddr`
+		netmask=`uci get config.ltewan.netmask`
+		gateway=`uci get config.ltewan.gateway`
+		dnsser1=`uci get config.ltewan.dnsser1`
+		dnsser2=`uci get config.ltewan.dnsser2`
+		ifconfig usb0 up
+		ifconfig usb0 $ipaddr netmask $netmask
+		route add default gw $gateway
+		echo 'nameserver '$dnsser1 >  /tmp/resolv.conf.auto 
+		echo 'nameserver '$dnsser2 >> /tmp/resolv.conf.auto 
+	else
+		echo "----------------lte use auto  dial"
+		ltecomsev -m 15 -l 5 &
+	fi
+}
+stop() {
+	echo ""
+}

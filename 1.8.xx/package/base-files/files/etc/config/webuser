@@ -1,0 +1,12 @@
+
+config user
+	option authority '0'
+	option number '1'
+	
+config user1
+	option username 'admin'
+	option password 'admin'
+	option authority '0'
+
+	
+	

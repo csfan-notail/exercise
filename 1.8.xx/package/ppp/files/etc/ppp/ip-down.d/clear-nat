@@ -1,0 +1,3 @@
+#!/bin/sh                                                          
+#pppoe-wan1 eth0.4032 0 80.16.0.100 80.16.0.1 wan1
+iptables -t nat -D POSTROUTING -o $1 -j MASQUERADE 1>/dev/null 2>&1 

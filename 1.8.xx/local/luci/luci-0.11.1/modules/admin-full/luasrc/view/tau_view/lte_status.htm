@@ -1,0 +1,219 @@
+<%#
+LuCI - Lua Configuration Interface
+Copyright 2008 Steven Barth <steven@midlink.org>
+Copyright 2008-2011 Jo-Philipp Wich <xm@subsignal.org>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+-%>
+
+<%
+	require "luci.fs"
+	require "luci.tools.status"
+
+	require "luci.fs"
+	require "luci.tools.status"
+	local uci = require "luci.model.uci".cursor()
+	
+	
+	local lte_uboot_ver				 = luci.sys.exec("factory_env show | grep \"BOOT_VERSION=\" | awk -F= '{print $2}'")
+	if '1' == lte_wan_access  
+	then 
+		lte_wan_access = translate("Manual connection")
+		lte_wan_address =uci.get('config','ltewan','ipaddr')
+		lte_wan_netmask =uci.get('config','ltewan','netmask')
+	else 
+		lte_wan_access = translate("Auto connection")
+		lte_wan_address = luci.sys.exec("ifconfig usb0 | grep \"Mask:\" | awk '{ print $2}' | awk -F: '{print $2}'")
+		lte_wan_netmask = luci.sys.exec("ifconfig usb0 | grep \"Mask:\" | awk '{ print $4}' | awk -F: '{print $2}'")
+	end
+	
+	local lte_module_ver				 = uci.get('lteinfo','info','lte_ver')
+	local lteinfo_sim_status             = tonumber(luci.sys.exec("cat /tmp/uci/enSimState"))
+	local lteinfo_sim_select             = tonumber(luci.sys.exec("cat /tmp/uci/enSimStateSet"))
+	if 1 == lteinfo_sim_status then
+		if 1 == lteinfo_sim_select then 
+
+			lteinfo_sim_status = translate("SIM card Operation")
+		else	
+			lteinfo_sim_status = translate("SIM card Test")
+		end
+	else
+		lteinfo_sim_status = translate("Not SIM card")
+	end
+	local lteinfo_sim_info_imsi          = luci.sys.exec("cat /tmp/uci/acIMSI")	
+	local lteinfo_sim_info_iccid         = luci.sys.exec("cat /tmp/uci/acICCID")
+	local lteinfo_pin_status             = tonumber(luci.sys.exec("cat /tmp/uci/enState"))	
+	
+	if -1 == lteinfo_pin_status then
+		lteinfo_pin_status = 'SIM not inserted'
+	end	
+	if 0 == lteinfo_pin_status then
+		lteinfo_pin_status = 'ready'
+	end
+    if 1 == lteinfo_pin_status then
+		lteinfo_pin_status = 'Pin'
+	end
+	if 2 == lteinfo_pin_status then
+		lteinfo_pin_status = 'Puk'
+	end
+	local lteinfo_dial_status = tonumber(luci.sys.exec("cat /tmp/uci/enLinkstate"))	
+	if 2 == lteinfo_dial_status then 
+		lteinfo_dial_status = translate("Dial OK")
+	else	
+		lteinfo_dial_status = translate("Not dial")
+	end
+	local lteinfo_tx_powertmp
+	local lteinfo_current_access_network = luci.sys.exec("cat /tmp/uci/enAccessNet")
+	local lteinfo_operator = luci.sys.exec("cat /tmp/uci/acOperName")
+	local lteinfo_community_cell_id           = tonumber(luci.sys.exec("cat /tmp/uci/acCellid"))
+	local lteinfo_phy_id = tonumber(luci.sys.exec("cat /tmp/uci/acPhyCellid"))
+	local lteinfo_frequency_id = tonumber(luci.sys.exec("cat /tmp/uci/acfrequency"))
+	local lteinfo_band_id = tonumber(luci.sys.exec("cat /tmp/uci/acBand"))
+	local lteinfo_tx_power				 = luci.sys.exec("cat /tmp/uci/txpowercounter")
+	if lteinfo_tx_power == "" then
+		lteinfo_tx_power = lteinfo_tx_powertmp
+	else
+		lteinfo_tx_powertmp =lteinfo_tx_power
+	end
+	local lteinfo_MaxHandoverTime		 = luci.sys.exec("cat /tmp/uci/MaxHandoverTime")
+	local lteinfo_MinHandoverTime        = luci.sys.exec("cat /tmp/uci/MinHandoverTime")
+	local lteinfo_HandoverAll            = luci.sys.exec("cat /tmp/uci/HandoverAll")
+	local lteinfo_HandoverSuccess        = luci.sys.exec("cat /tmp/uci/HandSuccess")
+	
+	local lteinfo_qos_cid				 = tonumber(luci.sys.exec("cat /tmp/uci/iQosCid"))
+	local lteinfo_qos_qci				 = tonumber(luci.sys.exec("cat /tmp/uci/iQosQci"))
+	local lteinfo_qos_dlgbr				 = tonumber(luci.sys.exec("cat /tmp/uci/iQosDlGbr"))
+	local lteinfo_qos_ulgbr				 = tonumber(luci.sys.exec("cat /tmp/uci/iQosUlGbr"))
+	local lteinfo_qos_dlmbr				 = tonumber(luci.sys.exec("cat /tmp/uci/iQosDlMbr"))
+	local lteinfo_qos_ulmbr				 = tonumber(luci.sys.exec("cat /tmp/uci/iQosUlMbr"))
+	
+	local lteinfo_info_rssi              = luci.sys.exec("cat /tmp/uci/iRssi")
+	local lteinfo_info_rsrp              = luci.sys.exec("cat /tmp/uci/iRsrp") 
+	local lteinfo_info_rsrq              = luci.sys.exec("cat /tmp/uci/iRsrq")
+	local lteinfo_info_sinr              = luci.sys.exec("cat /tmp/uci/iSinr")
+
+	local lte_version                    = uci.get('lteinfo','info','lte_ver')
+	local lan_ipaddr                     = uci.get('network','lan','ipaddr')
+
+	resolve_conf = luci.sys.exec("cat /tmp/resolv.conf.auto |head -1|cut -d ' ' -f 2")
+	etc_conf_dhcp_master = luci.sys.exec("uci get dhcp.lan.dhcp_option |cut -d ',' -f 2")
+	etc_conf_dhcp_backup = luci.sys.exec("uci get dhcp.lan.dhcp_option |cut -d ',' -f 3")
+	local dns_ip_a
+	if etc_conf_dhcp_master  == "" then 
+		if resolve_conf == "" then
+			dns_ip_a = lan_ipaddr
+		else
+			dns_ip_a = resolve_conf
+		end
+	else 
+		dns_ip_a = etc_conf_dhcp_master
+	end  
+	
+
+	if luci.http.formvalue("status") == "1" then
+		local rv = {
+				lteinfo_current_access_network = lteinfo_current_access_network,
+				lteinfo_frequency_id           = lteinfo_frequency_id,
+				lteinfo_band_id				   = lteinfo_band_id,
+				lteinfo_tx_power   			   = lteinfo_tx_power,
+				lteinfo_MaxHandoverTime        = lteinfo_MaxHandoverTime,
+				lteinfo_MinHandoverTime        = lteinfo_MinHandoverTime,
+				lteinfo_HandoverAll            = lteinfo_HandoverAll,
+				lteinfo_HandoverSuccess        = lteinfo_HandoverSuccess,
+				lteinfo_community_id							   = lteinfo_community_cell_id,
+				lteinfo_physical_id  			         = lteinfo_phy_id,  
+				lteinfo_qos_cid                = lteinfo_qos_cid,
+				lteinfo_qos_qci                = lteinfo_qos_qci,
+				lteinfo_qos_dlgbr              = lteinfo_qos_dlgbr,
+				lteinfo_qos_ulgbr              = lteinfo_qos_ulgbr,
+				lteinfo_qos_dlmbr              = lteinfo_qos_dlmbr,
+				lteinfo_qos_ulmbr              = lteinfo_qos_ulmbr,
+				lteinfo_info_rssi1             = tonumber(lteinfo_info_rssi),
+				lteinfo_info_rsrp1             = lteinfo_info_rsrp,
+				lteinfo_info_rsrq1             = lteinfo_info_rsrq,
+				lteinfo_info_sinr1              = lteinfo_info_sinr
+				}
+		luci.http.prepare_content("application/json")
+		luci.http.write_json(rv)
+		return
+	end
+-%>
+
+<%+header%>
+
+<script type="text/javascript" src="<%=resource%>/cbi.js"></script>
+<script type="text/javascript">//<![CDATA[
+
+XHR.poll(5, '<%=REQUEST_URI%>',{ status: 1 },
+	function(x, info)
+	{	
+		var e;
+		if (e = document.getElementById('id_rssi'))	
+			e.innerHTML = String.format('%d',info.lteinfo_info_rssi1);
+		if (e = document.getElementById('id_rsrp'))
+			e.innerHTML = String.format('%d',info.lteinfo_info_rsrp1);
+		if (e = document.getElementById('auxiliary_id_rsrp'))
+			e.innerHTML = String.format('%d',info.lteinfo_info_rsrp2);
+		if (e = document.getElementById('id_rsrq'))
+			e.innerHTML = String.format('%d',info.lteinfo_info_rsrq1);
+		if (e = document.getElementById('id_sinr'))
+			e.innerHTML = String.format('%d',info.lteinfo_info_sinr1);
+		if (e = document.getElementById('id_community_id'))
+			e.innerHTML = String.format('%d',info.lteinfo_community_id);
+		if (e = document.getElementById('id_cell_id'))
+			e.innerHTML = String.format('%d',info.lteinfo_physical_id);
+		if (e = document.getElementById('id_frequency'))
+			e.innerHTML = String.format('%d',info.lteinfo_frequency_id);
+		if (e = document.getElementById('id_band'))
+			e.innerHTML = String.format('%d',info.lteinfo_band_id);
+		if (e = document.getElementById('id_tx_power'))
+			e.innerHTML = String.format('%d',info.lteinfo_tx_power);
+		if (e = document.getElementById('id_MaxHandoverTime'))
+			e.innerHTML = String.format('%d',info.lteinfo_MaxHandoverTime);
+		if (e = document.getElementById('id_MinHandoverTime'))
+			e.innerHTML = String.format('%d',info.lteinfo_MinHandoverTime);
+		if (e = document.getElementById('id_HandoverAll'))
+			e.innerHTML = String.format('%d',info.lteinfo_HandoverAll);
+		if (e = document.getElementById('id_HandoverSuccess'))
+			e.innerHTML = String.format('%d',info.lteinfo_HandoverSuccess);
+			
+		}
+	);
+//]]></script>
+
+<h2><a id="content" name="content"><%:LTE Status Information%></a></h2>
+
+
+<fieldset class="cbi-section">
+	<table width="100%" cellspacing="10">
+		<tr><td width="33%"><%:SIM Status%></td><td id="id_sim_status" ><%=lteinfo_sim_status%></td></tr>		
+		<tr><td width="33%"><%:SIM Info%></td><td id="id_sim_info" ><%=lteinfo_sim_info_imsi%>/<%=lteinfo_sim_info_iccid%></td></tr>
+		<tr><td width="33%"><%:DNS%></td><td id="id_dns_a" ><%=dns_ip_a%></td></tr>
+<!--		<tr><td width="33%"><%:DNS%></td><td id="id_dns_b" ><%=dns_ip_b%></td></tr>   -->
+		<tr><td width="33%"><%:PIN Status%></td><td id="id_pin_status" ><%=lteinfo_pin_status%></td></tr>
+		<tr><td width="33%"><%:Dial Status%></td><td id="id_dail_status" ><%=lteinfo_dial_status%></td></tr>
+		<tr><td width="33%"><%:Current Access Network%></td><td id="id_access_network" ><%=lteinfo_current_access_network%></td></tr>
+		<tr><td width="33%"><%:Operator%></td><td id="id_operator" ><%=lteinfo_operator%></td></tr>
+		<tr><td width="33%"><%:Community ID%></td><td id="id_community_id" >-</td></tr>
+		<tr><td width="33%"><%:Physical Community ID%></td><td id="id_cell_id" >-</td></tr>		
+		<!--<tr><td width="33%"><%:qos cid%></td><td id="id_qos_cid"><%=lteinfo_qos_cid%></td></tr>  		
+		<tr><td width="33%"><%:qos qci%></td><td id="id_qos_qci"><%=lteinfo_qos_qci%></td></tr>  		
+		<tr><td width="33%"><%:qos dlgbr%></td><td id="id_qos_dlgbr"><%=lteinfo_qos_dlgbr%></td></tr>  		
+		<tr><td width="33%"><%:qos ulgbr%></td><td id="id_qos_ulgbr"><%=lteinfo_qos_ulgbr%></td></tr>  		
+		<tr><td width="33%"><%:qos dlmbr%></td><td id="id_qos_dlmbr"><%=lteinfo_qos_dlmbr%></td></tr>  		
+		<tr><td width="33%"><%:qos ulmbr%></td><td id="id_qos_ulmbr"><%=lteinfo_qos_ulmbr%></td></tr>-->  
+		<tr><td width="33%"><%:Info RSSI%></td><td id="id_rssi">-</td></tr>              
+		<tr><td width="33%"><%:Info RSRP%></td><td id="id_rsrp">-</td></tr>
+		<tr><td width="33%"><%:Info RSRQ%></td><td id="id_rsrq">-</td></tr>
+		<tr><td width="33%"><%:Info SINR%></td><td id="id_sinr">-</td></tr>
+
+	</table>
+
+</fieldset>
+
+<%+footer%>

@@ -1,0 +1,250 @@
+<%+header%>
+
+<%
+local uci = require "luci.model.uci".cursor()
+
+local vlanida_all  = ""
+local vlanidb_all  = ""
+local sercure_vlan_num = ""
+
+function secure_get ()
+	sercure_vlan_num = uci.get("secure","vlan","vlan_num")
+	
+	local vlanida_val = ""
+	local vlanidb_val = ""
+	for num=1 , tonumber(sercure_vlan_num) do
+		local vlanida_str = "vlanida_"..num
+		local vlanidb_str = "vlanidb_"..num
+		
+		vlanida_val = uci.get("secure","vlan",vlanida_str)
+		vlanidb_val = uci.get("secure","vlan",vlanidb_str)
+		if vlanida_val == nil then 
+			sercure_vlan_num = num-1
+			return
+		end
+		
+		vlanida_all = vlanida_all..vlanida_val..";"
+		vlanidb_all = vlanidb_all..vlanidb_val..";"
+	end	
+end
+
+local get_vlan = luci.util.exec(tostring("swconfig dev eth1 show|grep VLAN|awk '{print $2}'"))
+get_vlan=string.gsub(get_vlan, "\n","")
+secure_get();
+
+%>
+
+<script type="text/javascript">
+
+function all_init ()
+{	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("black_vlan_add_submit_id").disabled=true;
+	}
+	
+	var al_vlan="<%=get_vlan%>";
+	var number = (al_vlan.split(':')).length-1;
+	
+	var i,vid;
+	for(i=0;i<number;i++)                                                                                                                                 
+	{  
+		vid = al_vlan.split(':')[0];                                                                                               
+        al_vlan = al_vlan.substring(vid.length+1)
+		if("1" != vid)
+		{
+			document.getElementById("vlan_a_id").add(new Option(vid,vid));
+			document.getElementById("vlan_b_id").add(new Option(vid,vid));
+		}
+	}
+}
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{port_val:data1,port_val2:data2,port_val3:data3},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				if(r.val == '1')
+				{
+					alert("<%:Configuration failed ...%>");
+				}
+				else if(r.val == '2')
+				{
+					alert("<%:Vlan Filter Err2%>");
+				}
+				else if(r.val == '3')
+				{
+					alert("<%:Vlan Filter Err3%>");
+				}
+				else
+				{
+					alert("<%:Configuration failed ...%>");
+				}
+			}
+		}
+	});
+}	
+
+function submit_add_config()
+{
+	var vlanIdA = document.getElementById("vlan_a_id").value;
+	var vlanIdB = document.getElementById("vlan_b_id").value;
+
+	if( vlanIdA == vlanIdB )
+	{
+		alert("<%:The two VLAN IDs can not be the same%>");
+		return false;
+	}
+
+	var i,file,file1,file2; 
+
+	var filenames1 = '<%=vlanida_all%>'
+	var filenames2 = '<%=vlanidb_all%>'
+
+	for(i=1;i<='<%=sercure_vlan_num%>';i++)
+	{
+		file1 = filenames1.split(';')[0];
+		filenames1 = filenames1.substring(file1.length+1)
+	
+		file2 = filenames2.split(';')[0];
+		filenames2 = filenames2.substring(file2.length+1)
+		
+		if((file1 == vlanIdA && file2 == vlanIdB)||(file1 == vlanIdB && file2 == vlanIdA))
+		{
+			alert("<%:Existing configuration, please check the isolation list%>");
+			return false;
+		}
+		
+	}
+	
+	ajax_set(0,vlanIdA,vlanIdB,'<%=pcdata(luci.dispatcher.build_url("admin/secure/vlan_filter"))%>', '<%=luci.dispatcher.build_url("admin", "secure")%>/set_infos/');	
+}
+
+function submit_del_config(del_pro,del_intface)
+{		
+	ajax_set(2,del_pro,del_intface,'<%=pcdata(luci.dispatcher.build_url("admin/secure/vlan_filter"))%>', '<%=luci.dispatcher.build_url("admin", "secure")%>/set_infos/');
+}
+
+function showFileList()
+{
+	var i,k,file,file1,file2,pro; 
+	
+	var filenames1 = '<%=vlanida_all%>'
+	var filenames2 = '<%=vlanidb_all%>'
+
+	k="<table  class='cbi-section-table' style='margin-left:100px;width:800px'><tr><td style='width:35px;'><%:Number%></td><td style='width:50px;'><%:VLAN ID A%></td><td style='width:30px;'><%:VLAN ID B%></td><td style='width:33px;'><%:Delete%></td></tr></table>";
+	k+="<table id='tablelsw' class='cbi-section-table' style='margin-left:100px;width:800px'>";
+	for(i=1;i<='<%=sercure_vlan_num%>';i++)
+	{
+		file1 = filenames1.split(';')[0];
+		filenames1 = filenames1.substring(file1.length+1)
+	
+		file2 = filenames2.split(';')[0];
+		filenames2 = filenames2.substring(file2.length+1)
+		
+		if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:30px;'></td><td style='width:150px;'>&nbsp;&nbsp;&nbsp;"+file1+"</td><td style='width:50px;'><td style='width:130px;'>&nbsp;&nbsp;&nbsp;"+file2+"</td><td style='width:10px;'></td><td><style='background-color:#f09090' onclick='submit_del_config(\""+file1+"\",\""+file2+"\")'></td></tr>");
+		else
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:30px;'></td><td style='width:150px;'>&nbsp;&nbsp;&nbsp;"+file1+"</td><td style='width:50px;'><td style='width:130px;'>&nbsp;&nbsp;&nbsp;"+file2+"</td><td style='width:10px;'></td><td><input type='submit' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='submit_del_config(\""+file1+"\",\""+file2+"\")'></td></tr>");
+	
+	}
+	k+="<td></td><td></td><td></td><td></td>";
+	k+="</table>";
+	document.write(k);
+}
+function timer(event)  {   
+	if(event.keyCode==13){
+		event.preventDefault();
+		return false;
+	}
+} 
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+		<div class="cbi-map">
+			<h2>	
+		 	  <a id="content" name="content"><%:Vlan Filter%>
+		 	  </a>
+			</h2>
+		<br/>
+
+		<fieldset class="cbi-section">
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="text-indent:90px;">
+						<input type="text" id="action_id" style="width:20px;display:none;" 
+						
+						<td class="td_class" style="text-indent:10px;"><%:Please select two VLAN ID%>:
+						&nbsp;&nbsp;
+						<select  name="vlan_a" id="vlan_a_id" style="width:80px;">
+						</select>
+						&nbsp;&nbsp;&nbsp;&nbsp;
+						<select  name="vlan_b" id="vlan_b_id" style="width:80px;">
+						</select>
+						&nbsp;&nbsp;&nbsp;&nbsp;
+						<input type="button"  id="black_vlan_add_submit_id" class="cbi-button cbi-button-apply" value="<%:Add%>" style="width:100px;" onclick="submit_add_config()"/>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</fieldset>
+
+		<fieldset class="cbi-section">
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">	
+				<td class="td_class"><%:Filter List%>:</td>
+					<script>showFileList();</script>
+			</div>
+		</div>
+		</fieldset>
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+
+		<script>
+			all_init();
+		</script>
+</form>
+
+<%+footer%>

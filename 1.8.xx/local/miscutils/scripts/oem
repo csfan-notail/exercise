@@ -1,0 +1,397 @@
+#!/bin/sh
+
+FACTORY_DATA_CACHE=/var/jffs2
+OEM_CACHE=${FACTORY_DATA_CACHE}/oem
+OEM_TAG=${OEM_CACHE}/oem_tag
+OEM_OTHER="other"
+
+TMP_OEMCOMPANY="/tmp/oemcompany"
+RESULT_MSG_OK="result(0):ok\n"
+
+
+echo_err()
+{
+	echo $* >&2;
+	return 1
+}
+
+get_factory_env()
+{
+	local var=$1
+	
+	(factory_env get ${var} || echo_err "error, get env ${var} failed.")| sed s/${var}=//
+}
+
+restore_default()
+{
+	factory_env set BOOT_DEFAULT=1 && factory_env commit
+}
+
+oem_show_help()
+{
+cat <<EOF
+    help            -- [subcmd]
+                       Show help information. {} means "Required"; [] means "Optional"; | means "One of"
+    update          -- 
+                       oem update {x.x.x.x} oem.tar.gz
+    company         -- 
+                       oem company [company]
+    getvalue        -- 
+                       example: oem getvalue {9001002} {TA2020SP} {softver}
+    show            -- 
+                       example: oem show {9001002} {TA2020SP}
+    reset           -- 
+                       oem reset
+    getfile         -- 
+                       oem getfile
+    getparam        -- get param value for current device type
+                       oem getparam [section] {param}
+    check           -- 
+                       oem check
+EOF
+}
+
+oem_download_oemcompany()
+{
+	local server_ip=$1
+	local oem_bin=$2
+	local ret=0
+
+	if [ -z "${server_ip}" -o -z "${oem_bin}" ]; then
+		echo_err "error, oem_download_oemcompany: server_ip ${server_ip} or oem_bin ${oem_bin} invalid"
+		return 1;
+	fi
+
+	#tar -xzf /tmp/oemcompany/${oem_bin} -C /tmp/oemcompany); 
+	if ! (tftp -gr ${oem_bin} ${server_ip} && \
+	      tar -xzf ${oem_bin});	      
+	then	      
+	  echo_err "error, download ${oem_bin} from ${server_ip} failed."
+	  ret = 1
+	fi
+	
+	#rm -rf /tmp/oemcompany/${oem_bin}
+	rm -fr ${oem_bin}
+
+	return ${ret}
+}
+
+oem_check_oemcompany()
+{
+	local oem_company=$1
+	
+	if ! ([ -d "${oem_company}" ] && \
+	      [ -f "${oem_company}/oem.txt" ] && \
+	      [ -f "${oem_company}/logo.jpg" ]);
+	then
+		echo_err "error, ${oem_company} check failed."
+		return 1;
+	fi
+	
+	return 0;
+}
+
+oem_get_company()
+{
+	[ -r "${OEM_TAG}" ] && cat ${OEM_TAG} || echo_err "error, unable to read ${OEM_TAG}."
+}
+
+oem_set_company()
+{
+	local company=$1
+	
+	[ -n "${company}" ] && \
+	oem_check_oemcompany ${OEM_CACHE}/${OEM_OTHER} && \
+	oem_check_oemcompany ${OEM_CACHE}/${company} && \
+	echo ${company} > ${OEM_TAG} && \
+	restore_default && \
+	oem_save
+}
+
+oem_load()
+{
+	factory_data load;
+}
+
+oem_save()
+{
+	factory_data save;
+}
+
+oem_update()
+{
+	local server_ip=$1
+	local oem_bin=$2
+	local ret=0
+
+	if [ -z "${server_ip}" -o -z "${oem_bin}" ]; then
+		echo_err "error, oem_update: server_ip ${server_ip} or oem_bin ${oem_bin} invalid"
+		return 1;
+	fi
+	
+	mkdir -p ${TMP_OEMCOMPANY} && \
+	cd ${TMP_OEMCOMPANY} && \
+	oem_download_oemcompany ${server_ip} ${oem_bin}	&& \
+	oem_check_oemcompany ${TMP_OEMCOMPANY}/${OEM_OTHER} && \
+	mkdir -p ${OEM_CACHE} && \
+	cp -rf ${TMP_OEMCOMPANY}/* ${OEM_CACHE}/ && \
+	touch ${OEM_TAG} && \
+	oem_save || \
+	{ cp -f ${OEM_TAG} ${TMP_OEMCOMPANY}/ && \
+	  rm -rf ${OEM_CACHE} && mkdir -p ${OEM_CACHE} && \
+	  cp -rf ${TMP_OEMCOMPANY}/* ${OEM_CACHE}/ && \
+	  oem_save; } || \
+	ret=1	
+	
+	rm -fr ${TMP_OEMCOMPANY}
+	return ${ret};
+}
+
+oem_company()
+{
+	local company=$1;
+	
+	if [ -z "${company}" ];then
+		#get company
+		company=`oem_get_company`
+		[ -n "${company}" ] && echo "oem company=${company}" || return 1;
+	else
+		#set company
+		oem_set_company ${company} || return 1;
+	fi
+	
+	return 0;
+}
+
+oem_check()
+{
+	oem_load
+	return 0;
+}
+
+
+oem_reset()
+{
+	oem_set_company "other"
+}
+
+oem_getfile()
+{
+	local filename=$1
+	local company=`oem_get_company`
+	local path="${OEM_CACHE}/${company:-other}/${filename}"
+	
+	if [ -n "${filename}" ] && [ -r "${path}" ];then
+		echo ${path}
+	else
+		echo_err "error, file ${path} not found."
+		return 1;
+	fi
+	
+	return 0;	
+}
+
+oem_getvalue()
+{	
+	local section=$1
+	local model=$2
+	local param=$3
+	
+	if [ -z "${section}" -o -z "${param}" ];then
+		echo_err "error, oem_getvalue: section ${section} or model ${model} or param ${param} invalid."
+		return 1;
+	fi
+	
+	local company=`oem_get_company`
+	local oem_txt="${OEM_CACHE}/${company:-other}/oem.txt"
+	
+	[ -r "${oem_txt}" ] || \
+	echo_err "error, ${oem_txt} not found." || return 1;
+	
+	awk -v "m_section=${section}" \
+	    -v "m_model=${model}" \
+	    -v "m_param=${param}" \
+	    '
+		BEGIN {
+			value=""
+		}
+		
+		#skip comments
+		/^([[:blank:]]*)#/ {
+			next;
+		}
+		
+		#get section and model
+		/^([[:blank:]]*)\[(.+)\]/ {			
+			section=$0	    	
+			gsub(/^([[:blank:]]*)\[([[:blank:]]*)|([[:blank:]]*)\](.*)/, "", section);	   
+		
+			if ($0 ~ /^([[:blank:]]*)\[(.+)\](.*)#/) {
+				model=$0
+				gsub(/^([[:blank:]]*)\[(.+)\](.*)#([[:blank:]]*)|([[:blank:]\r]*)$/, "", model);
+			}
+			else {
+				model=""
+			}
+			#printf "s %s m %s p %s v %s #section#%s\n", section, model, param, value, $0
+			#get section and model
+			next;
+		}
+		
+		{
+			#printf "s %s m %s p %s v %s #s/m#%s\n", section, model, param, value, $0
+			#section not match
+			if (section != m_section) {
+				next;
+			}
+			
+			if (m_model && model) {
+				if (model != m_model) {
+					#model not match
+					next;
+				}	        
+			}
+			else if (value){
+				#if model or m_model is null,get first value;
+				next;
+			}		
+		}
+
+		#read param and value
+		/^([[:blank:]]*)([^[:blank:]=:]+)([[:blank:]]*)[=:]/ {
+			#printf "s %s m %s p %s v %s #param-->#%s\n", section, model, param, value, $0
+						
+			param=$0
+			gsub(/^([[:blank:]]*)|[=:](.*)/,"",param);
+			if (param != m_param) {
+				next;
+			}
+			else {
+				tmp_value=$0
+				gsub(/^([[:blank:]]*)([^[:blank:]=:]+)([[:blank:]]*)[=:]([[:blank:]]*)|([[:blank:]\r]*)$/, "", tmp_value);
+				if (tmp_value) {
+					value=tmp_value
+					#printf "s %s m %s p %s v %s #match#%s\n", section, model, param, value, $0
+					if (model && m_model) {
+						#found the exact param,exit
+						exit;
+					}
+				}	    		
+			}	    
+		}
+		
+		END {
+			if (param && value) {
+				print value
+			}			
+		}	        	         	   	    
+		' ${oem_txt}
+	
+	return 0;
+}
+
+oem_show()
+{
+	local model_id=$1
+	local model_name=$2
+	
+	[ -n "${model_id}" ] || \
+	echo_err "error, invalid model_id ${model_id} model_name ${model_name}" || return 1;
+	
+	cat <<-EOF
+	[global]
+	style=`oem_getvalue "global" "" "style"`
+	company_cn=`oem_getvalue "global" "" "company_cn"`
+	company_en=`oem_getvalue "global" "" "company_en"`
+	title=`oem_getvalue "global" "" "title"`
+	copyright_cn=`oem_getvalue "global" "" "copyright_cn"`
+	copyright_en=`oem_getvalue "global" "" "copyright_en"`
+	website=`oem_getvalue "global" "" "website"`
+	tel=`oem_getvalue "global" "" "tel"`
+	
+	[extension]
+	snmp_root_oid=`oem_getvalue "extension" "" "snmp_root_oid"`
+	ssid_2.4G_default=`oem_getvalue "extension" "" "ssid_2.4G_default"`
+	ssid_5.8G_default=`oem_getvalue "extension" "" "ssid_5.8G_default"`
+	ssid_prefixion=`oem_getvalue "extension" "" "ssid_prefixion"`
+	
+	device_hotspot_name=`oem_getvalue "extension" "" "device_hotspot_name"`
+	device_hotspot_url=`oem_getvalue "extension" "" "device_hotspot_url"`
+	device_hotspot_path=`oem_getvalue "extension" "" "device_hotspot_path"`
+	
+	[${model_id}] ${model_name:+"#${model_name}"}
+	model=`oem_getvalue "${model_id}" "${model_name}" "model"`
+	hardver=`oem_getvalue "${model_id}" "${model_name}" "hardver"`
+	softver=`oem_getvalue "${model_id}" "${model_name}" "softver"`
+	wifi0_txpower=`oem_getvalue "${model_id}" "${model_name}" "wifi0_txpower"`
+	wifi1_txpower=`oem_getvalue "${model_id}" "${model_name}" "wifi1_txpower"`
+	wifi0_txpower_max=`oem_getvalue "${model_id}" "${model_name}" "wifi0_txpower_max"`
+	wifi1_txpower_max=`oem_getvalue "${model_id}" "${model_name}" "wifi1_txpower_max"`
+	EOF
+	
+	return 0;
+}
+
+
+
+#
+# main
+#
+
+cmd=$0
+subcmd=$1
+
+case ${subcmd} in 
+	reset)
+		oem_reset
+		;;
+	check)
+		oem_check
+		;;
+	update)
+		oem_update "$2" "$3" && echo -n -e "${RESULT_MSG_OK}"
+		;;
+	company)
+		oem_company "$2" && echo -n -e "${RESULT_MSG_OK}"
+		;;
+	getfile)
+		oem_getfile "$2"
+		;;
+	getvalue)
+		if [ "$#" -eq 4 ];then
+			#section=$2
+			#model=$3
+			#param=$4
+			echo $4=`oem_getvalue "$2" "$3" "$4"`
+		elif [ "$#" -eq 3 ];then			
+			#section=$2
+			#param=$3
+			echo $3=`oem_getvalue "$2" "" "$3";`
+		else
+			echo_err "error, $0 $1: invalid arguements."
+		fi
+		;;
+	getparam)
+		if [ "$#" -eq 2 ];then
+			#param=$2
+			oem_getvalue "$(get_factory_env sysDeviceType)" "$(get_factory_env Innermodel)" $2
+		else
+			#section=$2
+			#param=$3
+			oem_getvalue "$2" "" "$3"
+		fi
+		;;
+	show)
+		if [ -n "$2" ];then		
+			oem_show "$2" "$3"
+		else
+			oem_show "$(get_factory_env sysDeviceType)" "$(get_factory_env Innermodel)"
+		fi
+		;;
+	*)
+		oem_show_help
+		;;
+esac
+
+
+

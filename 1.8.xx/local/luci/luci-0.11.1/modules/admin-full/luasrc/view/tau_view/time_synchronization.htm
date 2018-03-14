@@ -1,0 +1,178 @@
+<%+header%>
+
+<%
+	local uci = require "luci.model.uci".cursor()
+	local select_sw = uci.get('config','time_synchronization','time_synchronization_sw')
+	local primary_server = uci.get('config','time_synchronization','primary_server')
+	local standby_server = uci.get('config','time_synchronization','standby_server')
+	local syntime = uci.get('config','time_synchronization','syntime')
+	local server_port = uci.get('config','time_synchronization','server_port')
+%>
+
+<script type="text/javascript">
+
+function all_init () {
+
+	document.getElementById('id_sw_attenuator').options['<%=select_sw%>'].selected = true;
+	document.getElementById('id_attenuation_strength').value = '<%=primary_server%>';
+	document.getElementById('id_attenuation_standby').value = '<%=standby_server%>';
+	document.getElementById('id_attenuation_synchronization').value = '<%=syntime%>';
+	document.getElementById('id_server_port').value = '<%=server_port%>';
+	
+	if(1 == <%=select_sw%>){
+		document.getElementById("id_attenuation_strength").disabled=true;
+		document.getElementById("id_attenuation_standby").disabled=true;
+		document.getElementById("id_attenuation_synchronization").disabled=true;
+		document.getElementById("id_server_port").disabled=true;
+	}
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("id_button_attenuator").disabled=true;
+		
+	}
+}
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{param1:data1,param2:data2,param3:data3,param4:data4,param5:data5},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	 
+function select_auto(select_sw){
+	if(1 == select_sw){
+		document.getElementById("id_attenuation_strength").disabled=true;
+		document.getElementById("id_attenuation_standby").disabled=true;
+		document.getElementById("id_attenuation_synchronization").disabled=true;
+		document.getElementById("id_server_port").disabled=true;
+	}else{
+		document.getElementById("id_attenuation_strength").disabled=false;
+		document.getElementById("id_attenuation_standby").disabled=false;
+		document.getElementById("id_attenuation_synchronization").disabled=false;
+		document.getElementById("id_server_port").disabled=false;		
+	}
+}
+function attenuator_config (select_sw) {
+	
+	var primary = document.getElementById('id_attenuation_strength').value;
+	var standby = document.getElementById('id_attenuation_standby').value;
+	var syntime = document.getElementById('id_attenuation_synchronization').value;
+	var server_port = document.getElementById('id_server_port').value;
+	if ( !check_int(server_port) || server_port == '' )
+	{
+		alert('<%:invalid argument %>');
+		return false;
+	}
+	if ( !check_int(syntime) || syntime == '' )
+	{
+		alert('<%:invalid argument %>');
+		return false;
+	}
+	if( !check_ipv4_addr(primary) || !check_ipv4_addr(standby) || primary == '' || standby == '' )
+	{
+		alert('<%:input ip address not legal%>');
+		return false;
+	}
+	ajax_set(select_sw,primary,standby,syntime,server_port,'<%=pcdata(luci.dispatcher.build_url("admin/config/time_synchronization"))%>', '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Time Synchronization%></a></h2><br/>
+		<fieldset class="cbi-section">
+			<legend><%:Time Synchronization config%></legend>
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:on/off%>:</td>
+						<td class="td_class"><select  name="attenuator_sw" id="id_sw_attenuator" style="width:180px;" onclick="select_auto(this.form.attenuator_sw.selectedIndex)">
+							<option value="0"><%:auto time syn%></option>
+                			<option value="1"><%:manual time syn%></option>
+						</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:the syntime%>:</td>
+						<td class="td_class"><input id="id_attenuation_synchronization" type="text" >
+						<font color=" gray"><%:范围%> 1-3600s</font>
+						</tr>	
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:the primary%>:</td>
+						<td class="td_class"><input id="id_attenuation_strength" type="text" >
+						</tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:the standby%>:</td>
+						<td class="td_class"><input id="id_attenuation_standby" type="text" >
+						
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:server port%>:</td>
+						<td class="td_class"><input id="id_server_port" type="text" >
+						<input type="button" id="id_button_attenuator" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;"  onclick="attenuator_config(this.form.attenuator_sw.selectedIndex)" />	</td>
+						</tr>
+				</table>
+			</div>			
+		</fieldset>
+		
+<!--		<fieldset class="cbi-section">
+			<div class="cbi-section-descr"></div>
+				<div class="cbi-value-field">	
+					<legend>
+						<font color="red">
+			 				<%:Note%><br>
+			 				<%:range 1-10%><br>
+			 				<%:it maybe has 1db deviation%>
+			 		</legend>
+				</div>
+		</fieldset>
+-->
+
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>	
+</form>
+
+<%+footer%>

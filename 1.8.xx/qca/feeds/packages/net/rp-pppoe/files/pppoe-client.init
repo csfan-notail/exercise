@@ -1,0 +1,27 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+START=50
+
+wan_proto=pppoe
+
+wan_proto()
+{
+	config_load network
+	config_get wan_proto wan proto
+	echo $wan_proto
+}
+
+start() {
+	wan_proto	
+	if [ $wan_proto = "pppoe" ]; then
+		pppoe-start
+	fi
+}
+
+stop() {
+	wan_proto
+	if [ $wan_proto = "pppoe" ]; then
+		pppoe-stop
+	fi
+}
+

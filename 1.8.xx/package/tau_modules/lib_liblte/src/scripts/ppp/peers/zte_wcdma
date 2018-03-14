@@ -1,0 +1,23 @@
+# Usage: root>pppd call zte_wcdma
+/dev/ttyUSB2
+115200
+crtscts
+modem
+#noauth
+debug
+nodetach
+#hide-password
+usepeerdns
+noipdefault
+defaultroute
+user "3gnet"
+0.0.0.0:0.0.0.0
+ipcp-accept-local
+ipcp-accept-remote
+#lcp-echo-failure  12
+#lcp-echo-interval 3
+#noccp
+#novj
+#novjccomp
+#persist
+connect '/usr/sbin/chat -s -v -f /etc/ppp/chat/zte-connect-chat'

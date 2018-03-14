@@ -1,0 +1,199 @@
+<%+header%>
+
+<%
+	local lte_wan_dialway = uci.get('config','ltewan2','dialway')
+	local lte_wan_ipaddr = uci.get('config','ltewan2','ipaddr')
+	local lte_wan_netmask = uci.get('config','ltewan2','netmask')
+	local lte_wan_gateway = uci.get('config','ltewan2','gateway')
+	local lte_wan_dnsser1 = uci.get('config','ltewan2','dnsser1')
+	local lte_wan_dnsser2 = uci.get('config','ltewan2','dnsser2')
+	local lte_single_double_switch    = uci.get('lte','set','single_double_switch')
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	
+	if( '0' == '<%=lte_wan_dialway%>' )
+		document.getElementById('dial_way_id').options[0].selected=true;
+	else
+		document.getElementById('dial_way_id').options[1].selected=true;
+	
+	document.getElementById('ip_address_id').value = '<%=lte_wan_ipaddr%>';
+	document.getElementById('net_mask_id').value = '<%=lte_wan_netmask%>';
+	document.getElementById('gateway_id').value = '<%=lte_wan_gateway%>';
+	document.getElementById('dns_ser1_id').value = '<%=lte_wan_dnsser1%>';
+	document.getElementById('dns_ser2_id').value = '<%=lte_wan_dnsser2%>';
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("ltewan_add_submit_id").disabled=true;
+	}
+	
+	if('0' == '<%=lte_single_double_switch%>')
+	{
+		document.getElementById("ltewan_add_submit_id").disabled=true;
+		document.getElementById("ltewan_add_submit_id").style.background = "Gray";
+	}
+	
+	if( '0' == '<%=lte_wan_dialway%>' )
+	{
+		document.getElementById("ip_address_id").disabled=true;
+		document.getElementById("net_mask_id").disabled=true;
+		document.getElementById("gateway_id").disabled=true;
+		document.getElementById("dns_ser1_id").disabled=true;
+		document.getElementById("dns_ser2_id").disabled=true;
+	}
+}	
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,data6,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{dialway:data1,ipaddr:data2,netmask:data3,gateway:data4,dnsser1:data5,dnsser2:data6},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+function dail_way_change()
+{
+	var dialway = document.getElementById('dial_way_id').value;
+	if( 0 == dialway )
+	{
+		document.getElementById("ip_address_id").disabled=true;
+		document.getElementById("net_mask_id").disabled=true;
+		document.getElementById("gateway_id").disabled=true;
+		document.getElementById("dns_ser1_id").disabled=true;
+		document.getElementById("dns_ser2_id").disabled=true;
+	}
+	else
+	{
+		document.getElementById("ip_address_id").disabled=false;
+		document.getElementById("net_mask_id").disabled=false;
+		document.getElementById("gateway_id").disabled=false;
+		document.getElementById("dns_ser1_id").disabled=false;
+		document.getElementById("dns_ser2_id").disabled=false;
+	}
+	return true;
+}
+function dial_config(dial_way)
+{
+	var ipaddr = document.getElementById('ip_address_id').value;
+	var netmask = document.getElementById('net_mask_id').value;
+	var gateway = document.getElementById('gateway_id').value;
+	var dnsser1 = document.getElementById('dns_ser1_id').value;
+	var dnsser2 = document.getElementById('dns_ser2_id').value;
+	ajax_set(dial_way,ipaddr,netmask,gateway,dnsser1,dnsser2,'<%=pcdata(luci.dispatcher.build_url("admin/lte/ltewan_config2"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "lte")%>/set_infos/');
+}
+
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:LTE2 WAN%></a></h2><br/>
+		
+		<fieldset class="cbi-section">
+			<legend><%:Configure%></legend><br/>
+			<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+				<div class="cbi-value-field">
+					<div style="margin-left:0px;"><%:WAN dial way%>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						<select  name="dial_way" id="dial_way_id" style="width:120px;" onChange="dail_way_change();">
+							<option value="0"><%:auto%></option>
+                    		<option value="1"><%:manual%></option>
+						</select>
+						&nbsp;&nbsp;&nbsp;
+						<input type="button" id="ltewan_add_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="dial_config(this.form.dial_way.selectedIndex)" />
+					</div>
+				</div>
+			</div>
+			
+		
+			<div class="cbi-value-field">
+				<div style="margin-left:0px;"><%:IP adress%>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                	<input name="ip_address" id="ip_address_id" type="text" value="0.0.0.0" sytle="width:180px" size="12">
+				</div>
+		   	</div>
+		   	<br></br>
+
+			<div class="cbi-value-field">
+				<div style="margin-left:0px;"><%:Net mask%>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                	<input name="net_mask" id="net_mask_id" type="text" value="0.0.0.0" sytle="width:180px" size="12">
+				</div>
+		   	</div>
+		   	<br></br>
+
+		
+			<div class="cbi-value-field">
+                <div style="margin-left:0px;"><%:Gateway1%>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	
+                	<input name="gateway" id="gateway_id" type="text" value="0.0.0.0" sytle="width:180px" size="12">
+				</div>
+		   	</div>
+		   	<br></br>
+
+			<div class="cbi-value-field">
+				 <div style="margin-left:0px;"><%:DNS server1%>:&nbsp;&nbsp;&nbsp;
+                	<input name="dns_ser1" id="dns_ser1_id" type="text" value="0.0.0.0" sytle="width:180px" size="12">
+				</div>
+		   	</div>
+		   	<br></br>
+
+			<div class="cbi-value-field">
+				 <div style="margin-left:0px;"><%:DNS server2%>:&nbsp;&nbsp;&nbsp;
+                	<input name="dns_ser2" id="dns_ser2_id" type="text" value="0.0.0.0" sytle="width:180px" size="12">
+				</div>
+		   	</div>
+		   	<br></br>
+			
+		</fieldset>
+
+	</div>
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

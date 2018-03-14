@@ -1,0 +1,9 @@
+
+config lte_epsqos 'qos'
+	option lte_qos_cid '1'
+	option lte_qos_qci '0'
+	option lte_qos_dlgbr '0'
+	option lte_qos_ulgbr '0'
+	option lte_qos_dlmbr '0'
+	option lte_qos_ulmbr '0'
+

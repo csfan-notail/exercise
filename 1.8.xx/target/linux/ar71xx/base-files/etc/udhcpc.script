@@ -1,0 +1,111 @@
+#!/bin/sh
+
+# udhcpc script edited by Tim Riker <Tim@Rikers.org>
+
+# netmask format tranform: 192.168.1.1 netmask 255.255.255.0  -->  192.168.1.1/24
+function()
+{
+	num=$1 
+	if [ -"$num" = -"255" ]
+	then 
+		echo 8 
+	fi
+	if [ -"$num" = -"254" ]
+	then 
+		echo 7 
+	fi
+	if [ -"$num" = -"252" ]
+	then 
+		echo 6
+	fi
+	if [ -"$num" = -"248" ]
+	then 
+		echo 5
+	fi
+	if [ -"$num" = -"240" ]
+	then 
+		echo 4
+	fi
+	if [ -"$num" = -"224" ]
+	then 
+		echo 3
+	fi
+	if [ -"$num" = -"192" ]
+	then 
+		echo 2
+	fi
+	if [ -"$num" = -"128" ]
+	then 
+		echo 1 
+	fi
+	if [ -"$num" = -"0" ]
+	then 
+		echo 0 
+	fi
+}
+
+[ -z "$1" ] && echo "Error: should be called from udhcpc" && exit 1
+
+RESOLV_CONF="/etc/resolv.conf"
+[ -n "$broadcast" ] && BROADCAST="broadcast $broadcast"
+[ -n "$subnet" ] && NETMASK="netmask $subnet"
+
+sum=24
+if [ -n "$subnet" ];then
+	
+	nu1=`echo $subnet | cut -f 1 -d "."`
+	nu2=`echo $subnet | cut -f 2 -d "."`
+	nu3=`echo $subnet | cut -f 3 -d "."`
+	nu4=`echo $subnet | cut -f 4 -d "."`
+
+	num1=`function $nu1`
+	num2=`function $nu2`
+	num3=`function $nu3`
+	num4=`function $nu4`
+
+	sum=$((num1+num2+num3+num4))
+fi
+
+case "$1" in
+	deconfig)
+		/sbin/ifconfig $interface 0.0.0.0
+		;;
+
+	renew|bound)
+		#主线分支暂时不会使用到单sta管理模式。在dhcp方式获取id地址时不会存在两个ip地址
+		/sbin/ifconfig $interface $ip $BROADCAST $NETMASK
+		#/bin/ipaddr add $ip/$sum $BROADCAST dev $interface
+		
+		if [ -n "$ip" ];then
+			nvram set CpeManageDhcpIp=$ip CpeManageDhcpNetmask=$subnet CpeManageDhcpGw=$router
+			nvram commit
+		fi
+
+		if [ -n "$router" ] ; then
+			echo "deleting routers"
+			while route del default gw 0.0.0.0 dev $interface ; do
+				:
+			done
+
+			metric=0
+			for i in $router ; do
+				route add default gw $i dev $interface metric $((metric++))
+			done
+			
+			echo $router > /tmp/gateway
+		fi
+		
+		if [ -$cms != - ]; then
+			echo CMS_IP=$cms > /tmp/snmpagentd.conf
+		fi
+
+		echo -n > $RESOLV_CONF
+		[ -n "$domain" ] && echo search $domain >> $RESOLV_CONF
+		for i in $dns ; do
+			echo adding dns $i
+			echo nameserver $i >> $RESOLV_CONF
+		done
+		;;
+esac
+
+exit 0

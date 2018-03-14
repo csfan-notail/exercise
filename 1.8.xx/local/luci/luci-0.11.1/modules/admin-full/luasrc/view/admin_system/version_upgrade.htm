@@ -1,0 +1,142 @@
+
+<% if version_step == 1 then %>
+	<%+header%>
+	<h2><a id="content" name="content"><%:Upgrade version%> - <%:Verify%></a></h2>
+	<p>
+		<%_ The version image was uploaded.<br />
+			Click "Proceed" below to start the flash procedure. %>
+	</p>
+	
+	<div class="cbi-page-actions right">
+		<form style="display:inline" action="<%=REQUEST_URI%>" method="post">
+			<input class="cbi-button cbi-button-reset" type="submit" value="<%:Cancel%>" />
+		</form>
+		<form style="display:inline" action="<%=REQUEST_URI%>" method="post">
+			<input type="hidden" name="version_step" value="2" />		
+			<input class="cbi-button cbi-button-apply" type="submit" value="<%:Proceed%>" />
+		</form>
+	</div>
+	<%+footer%>
+
+<% elseif version_step == 2 then %>
+	<%+header%>
+	<html>
+		<head>
+			<title><%=luci.sys.hostname()%> - <%:Flashing...%></title>
+			<link rel="stylesheet" type="text/css" media="screen" href="<%=media%>/cascade.css" />
+			<script type="text/javascript" src="<%=resource%>/xhr.js"></script>
+			<script type="text/javascript">//<![CDATA[
+				var apply_xhr = new XHR();		
+				
+				function replace_escape(str) {
+					var str_old;
+					do {
+						str_old = str
+						str = str.replace(/[^\x08]\x08/g, "");
+					} while(str != str_old);
+					
+					str = str.replace(/\n/g, "<br />");
+					return str;
+				}
+				var get_vflag_progress = function() {
+					apply_xhr.get('<%=luci.dispatcher.build_url("admin", "system", "flashops", "vflagstatus")%>', null,
+						function(x) {
+							var response_msg = replace_escape(x.responseText);
+							var e = document.getElementById('vflag-status');
+							
+							if ( response_msg.match(/^#luci#version#update#finish#fail/) )
+							{
+								if( e )
+								{
+									e.innerHTML = '<%:Upgrade failed%>';
+									window.setTimeout(function() {
+										response_msg = response_msg.replace(/^#luci#version#update#finish#fail/, "");
+											
+										e = document.getElementById('content_flashing');	
+										if ( e )
+											e.style.display = 'none'															
+										
+										e = document.getElementById('errormsg');
+										if ( e )
+											e.innerHTML = response_msg;
+										
+										e = document.getElementById('content_fail');
+										if ( e )
+											e.style.display = ''
+									}, 1000);
+								}
+
+							}							
+							else if ( response_msg.match(/^#luci#version#update#finish#success/) )
+							{								
+								if( e )
+								{
+									e.innerHTML = '<%:Upgrade success%>';
+									window.setTimeout(function() {
+										e.parentNode.style.display = 'none';
+										var do_reboot = confirm('<%:Upgrade success, reboot now?%>');
+										if (!do_reboot)
+										{
+											location.href='<%=luci.dispatcher.build_url("admin", "system", "flashops")%>';
+										}
+										else {
+											location.href="<%=controller%>/admin/system/reboot?reboot=1"
+										}
+									}, 1000);
+								}
+
+							}
+							else
+							{																
+								if( e && response_msg ) 
+									e.innerHTML = response_msg;
+									
+								window.setTimeout(get_vflag_progress, 1000);
+							}
+						}
+					);
+				}
+
+				window.setTimeout(get_vflag_progress, 1000);
+			//]]></script>
+		</head>
+		<body>
+			<div id="maincontainer">
+				<div id="maincontent">
+					<div id="content_flashing">
+						<h2><a id="content" name="content"><%:System%> - <%:Flashing...%></a></h2>
+						<fieldset class="cbi-section">
+							<p>
+								<%_ The system is flashing now.<br /> DO NOT POWER OFF THE DEVICE!<br /> Wait a few minutes please...%>
+							</p>
+							<p>
+								<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" />
+								<span id="vflag-status"><%:Waiting for changes to be applied...%></span>
+							</p>
+						</fieldset>					
+					</div>
+					<div id="content_fail" style="display:none">
+						<h2><a id="content" name="content"><%:System%> - <%:Upgrade failed%></a></h2>
+						<fieldset class="cbi-section">
+							<legend>
+								<%: Error messages %>
+							</legend>
+							<div class="cbi-section-error">
+								<p id="errormsg" >
+								</p>
+							</div>							
+							<div class="cbi-page-actions right">
+								<form style="display:inline" action="<%=REQUEST_URI%>" method="post">
+									<input class="cbi-button cbi-button-reset" type="submit" value="<%:Back%>" />
+								</form>
+							</div>
+						</fieldset>
+					</div>					
+				</div>
+			</div>
+		</body>
+	</html>
+	
+<% end %>
+
+

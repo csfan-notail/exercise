@@ -1,0 +1,131 @@
+#!/bin/sh
+echo "**************************************************************************"	
+###############################################################################################
+
+###############################  sys info   ###################################################
+
+###############################################################################################
+	uptime_cmd=$(cat /proc/uptime |awk  -F '.' '{print $1}')
+	uci set tr069.DeviceInfo.UpTime=$uptime_cmd
+	
+	softver_cmd=$( vlist |grep runn|awk '{print $3}')	
+	uci set tr069.DeviceInfo.SoftVer=$softver_cmd
+	#SN_cmd=$(ifconfig $lan_inter |grep 'inet addr')
+	
+
+###############################################################################################
+
+############################  write lan info   ################################################
+
+###############################################################################################
+	lan_inter="br-lan"
+	wan_stat_cmd=$(ifconfig $lan_inter |grep 'inet addr')
+	lan_ip=$(ifconfig  $lan_inter |grep 'inet addr'|awk '{print $2}'|awk -F ':' '{print $2}')
+	lan_mask=$(ifconfig  $lan_inter |grep 'inet addr'|awk '{print $4}'|awk -F ':' '{print $2}')
+	lan_recvbytes=$(ifconfig  $lan_inter |grep bytes |awk '{print $2}'|awk  -F ':' '{print $2}')
+	lan_sentbytes=$(ifconfig  $lan_inter |grep bytes |awk '{print $6}'|awk  -F ':' '{print $2}')
+	lan_errorsent=$(ifconfig  $lan_inter |grep 'TX packets'|awk '{print $3}'|awk  -F ':' '{print $2}')
+	lan_errorrecv=$(ifconfig  $lan_inter |grep 'RX packets'|awk '{print $3}'|awk  -F ':' '{print $2}')
+	lan_recvpack=$(ifconfig  $lan_inter |grep 'RX packets'|awk '{print $2}'|awk  -F ':' '{print $2}')
+	lan_sentpack=$(ifconfig  $lan_inter |grep 'TX packets'|awk '{print $2}'|awk  -F ':' '{print $2}')
+	lan_discrecv=$(ifconfig  $lan_inter |grep 'RX packets'|awk '{print $4}'|awk  -F ':' '{print $2}')
+	lan_discsent=$(ifconfig  $lan_inter |grep 'TX packets'|awk '{print $4}'|awk  -F ':' '{print $2}')
+	if [ -n "$wan_stat_cmd" ];then
+		wan_stat="up"
+	uci set tr069.LANDevice_LANHostConfigManagement_IPInterface.IPInterfaceIPAddr=$lan_ip
+	uci set tr069.LANDevice_LANHostConfigManagement_IPInterface.IPInterfaceSubnetMask=$lan_mask
+	uci set tr069.LANDevice_LANEthernetInterfaceConfig_Stats.BytesReceived=$lan_recvbytes
+	uci set tr069.LANDevice_LANEthernetInterfaceConfig_Stats.BytesSent=$lan_sentbytes
+	uci set tr069.LANDevice_LANEthernetInterfaceConfig_Stats.PacketsSent=$lan_sentpack
+	uci set tr069.LANDevice_LANEthernetInterfaceConfig_Stats.PacketsReceived=$lan_recvpack
+	uci set tr069.LANDevice_LANEthernetInterfaceConfig_Stats.X_ATP_PacketsSentError=$lan_errorsent
+	uci set tr069.LANDevice_LANEthernetInterfaceConfig_Stats.X_ATP_PacketsReceivedError=$lan_errorrecv
+	uci set tr069.LANDevice_LANEthernetInterfaceConfig_Stats.X_ATP_PacketsReceivedDrops=$lan_discrecv
+	uci set tr069.LANDevice_LANEthernetInterfaceConfig_Stats.X_ATP_PacketsSentDrops=$lan_errorrecv
+	
+	#uci set tr069.LANDevice_LANEthernetInterfaceConfig_Stats.X_ATP_SentRate=0
+	#uci set tr069.LANDevice_LANEthernetInterfaceConfig_Stats.X_ATP_ReceivedRate=0
+	else
+		wan_stat="down"
+	fi
+	uci set tr069.LANDevice_LANEthernetInterfaceConfig.Status=$wan_stat
+	
+	if [ -n "$1" ];then
+	echo "wan_stat_cmd = $wan_stat_cmd"
+	echo "wan_stat = $wan_stat"
+	echo " lan_inter	:$lan_inter"
+	echo " lan_recvbytes	:$lan_recvbytes"
+	echo " lan_sentbytes	:$lan_sentbytes"   
+	echo " lan_errorsent	:$lan_errorsent"   
+	echo " lan_errorrecv	:$lan_errorrecv"   
+	echo " lan_recvpack	$lan_recvpack"   
+	echo " lan_sentpack	$lan_sentpack"   
+	echo " lan_discrecv	$lan_discrecv"   
+	echo " lan_discsent	$lan_discsent"   
+	echo " lanmask	: $lan_mask"
+	echo " lanip	: $lan_ip"
+	fi
+	
+###############################################################################################
+
+############################  write wan info   ################################################
+
+###############################################################################################
+	wan_name="usb0"
+	wan_ip=$(ifconfig  $wan_name |grep 'inet addr'|awk '{print $2}'|awk -F ':' '{print $2}')
+	wan_mask=$(ifconfig  $wan_name |grep 'inet addr'|awk '{print $4}'|awk -F ':' '{print $2}')
+	wan_gw=$(route -n|grep UG |awk '{print $2}')
+	wan_mac=$(ifconfig $wan_name |grep HWaddr|awk '{print $5}')
+	wan_recvbytes=$(ifconfig  $wan_name |grep bytes |awk '{print $2}'|awk  -F ':' '{print $2}')
+	wan_sentbytes=$(ifconfig  $wan_name |grep bytes |awk '{print $6}'|awk  -F ':' '{print $2}')
+	wan_errorsent=$(ifconfig  $wan_name |grep 'TX packets'|awk '{print $3}'|awk  -F ':' '{print $2}')
+	wan_errorrecv=$(ifconfig  $wan_name |grep 'RX packets'|awk '{print $3}'|awk  -F ':' '{print $2}')
+	wan_recvpack=$(ifconfig  $wan_name |grep 'RX packets'|awk '{print $2}'|awk  -F ':' '{print $2}')
+	wan_sentpack=$(ifconfig  $wan_name |grep 'TX packets'|awk '{print $2}'|awk  -F ':' '{print $2}')
+	wan_discrecv=$(ifconfig  $wan_name |grep 'RX packets'|awk '{print $4}'|awk  -F ':' '{print $2}')
+	wan_discsent=$(ifconfig  $wan_name |grep 'TX packets'|awk '{print $4}'|awk  -F ':' '{print $2}')
+	wan_stat_cmd=$(ifconfig  $wan_name |grep 'inet addr')
+	
+	if [ -n "$wan_stat_cmd" ];then
+		wan_stat="connected"	
+		uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection.ExternalIPAddress=$wan_ip
+		uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection.SubnetMask=$wan_mask
+		if [ ! -n "$wan_gw" ];then
+				wan_gw=0.0.0.0
+		fi
+		uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection.DefaultGateway=$wan_gw
+		uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection.MACAddr=$wan_mac
+#		uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection_Stats=tr069
+
+		uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection_Stats.EthernetBytesReceived=$wan_recvbytes
+		uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection_Stats.EthernetBytesSent=$wan_sentbytes
+		uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection_Stats.EthernetPacketsSent=$wan_sentpack
+		uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection_Stats.EthernetPacketsReceived=$wan_recvpack
+		uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection_Stats.EthernetErrorsSent=$wan_errorsent
+		uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection_Stats.EthernetErrorsReceived=$wan_errorrecv
+		uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection_Stats.EthernetDiscardPacketsSent=$wan_discsent
+		uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection_Stats.EthernetDiscardPacketsReceived=$wan_discrecv
+	#	uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection_Stats.X_ATP_EthernetUplinkRate=0
+	#	uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection_Stats.X_ATP_EthernetDownlinkRate=0
+	else
+		wan_stat="Disconnected"
+	fi
+
+	uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection.Name=$wan_name
+	uci set tr069.WANDevice_WANConnectionDevice_WANIPConnection.ConnectionStatus=$wan_stat
+
+		if [ -n "$1" ];then
+	echo "wan_stat_cmd = $wan_stat_cmd"
+	echo "wan_stat = $wan_stat"
+	echo " wan_inter	:$lan_inter"
+	echo " wan_recvbytes	:$lan_recvbytes"
+	echo " wan_sentbytes	:$lan_sentbytes"   
+	echo " wan_errorsent	:$lan_errorsent"   
+	echo " wan_errorrecv	:$lan_errorrecv"   
+	echo " wan_recvpack	$lan_recvpack"   
+	echo " wan_sentpack	$lan_sentpack"   
+	echo " wan_discrecv	$lan_discrecv"   
+	echo " wan_discsent	$lan_discsent"   
+	echo " wanmask	: $lan_mask"
+	echo " wanip	: $lan_ip"
+	fi

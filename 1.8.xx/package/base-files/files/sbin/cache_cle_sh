@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2011 OpenWrt.org
+
+
+	i=1
+	num=`free -m | grep Mem | awk {'print(($4)/1024)'}`
+	ok=10
+
+	while [ $i ]
+	do 
+	echo "$num  $ok" | awk '{if ($1 < $2)  print $1 ;}' >> dmesg.txt
+	num=`free -m | grep Mem | awk {'print(($4)/1024)'}`
+	sleep 1
+	echo 3 > /proc/sys/vm/drop_caches
+	done
+	
+	
+
+
+

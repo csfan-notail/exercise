@@ -1,0 +1,149 @@
+--- a/arch/mips/ath79/dev-m25p80.c
++++ b/arch/mips/ath79/dev-m25p80.c
+@@ -31,11 +31,17 @@ static struct ath79_spi_controller_data 
+ #endif
+ 
+ #if 1
+-static struct ath79_spi_controller_data ath79_spi_xra1403_cdata =
++static struct ath79_spi_controller_data ath79_spi_xra1403_cdata_0 =
+ {
+ 	.cs_type = ATH79_SPI_CS_TYPE_INTERNAL,
+ 	.cs_line = 1,
+ };
++static struct ath79_spi_controller_data ath79_spi_xra1403_cdata_1 =
++{
++	.cs_type = ATH79_SPI_CS_TYPE_INTERNAL,
++	.cs_line = 2,/*Æ¬Ñ¡ÐÅºÅ*/
++};
++
+ 
+ static struct spi_board_info ath79_spi_info[] = {
+ 	{
+@@ -49,8 +55,15 @@ static struct spi_board_info ath79_spi_i
+ 		.bus_num	= 0,
+ 		.chip_select	= 1,
+ 		.max_speed_hz   = 26000000, /*max 26Mhz*/
+-		.modalias	= "xra1403",
+-		.controller_data = &ath79_spi_xra1403_cdata,
++		.modalias	= "xra1403-0",
++		.controller_data = &ath79_spi_xra1403_cdata_0,
++	},
++		{
++		.bus_num	= 0,
++		.chip_select	= 2,
++		.max_speed_hz   = 26000000, /*max 26Mhz*/
++		.modalias	= "xra1403-1",
++		.controller_data = &ath79_spi_xra1403_cdata_1,
+ 	}
+ };
+ 
+@@ -59,16 +72,17 @@ struct ath79_spi_platform_data ath79_spi
+ void ath79_init_m25p80_pdata(struct flash_platform_data *pdata)
+ {
+ 	ath79_spi_data.bus_num = 0;
+-	ath79_spi_data.num_chipselect = 2;
++	ath79_spi_data.num_chipselect = 3;
+ 	ath79_spi0_cdata.is_flash = true;
+-	ath79_spi_xra1403_cdata.is_flash = false;
++	ath79_spi_xra1403_cdata_0.is_flash = false;
++	ath79_spi_xra1403_cdata_1.is_flash = false;
+ 	ath79_spi_info[0].platform_data = pdata;
+ }
+ 
+ void __init ath79_register_m25p80(struct flash_platform_data *pdata)
+ {
+ 	ath79_init_m25p80_pdata(pdata);
+-	ath79_register_spi(&ath79_spi_data, ath79_spi_info, 2);
++	ath79_register_spi(&ath79_spi_data, ath79_spi_info, 3);
+ }
+ 
+ #else
+--- a/arch/mips/ath79/mach-ta37.c
++++ b/arch/mips/ath79/mach-ta37.c
+@@ -38,12 +38,12 @@
+ #define TA37_GPIO_LED_SYSTEM	15  /*SYS_LED   1-on*/
+ 
+ #define TA37_GPIO_LED_WAN		11  /*WAN_LED   0-on*/
+-#define TA37_GPIO_LED_LAN1		16  /*LAN0_LED  0-on*/
+-#define TA37_GPIO_LED_LAN2		17  /*LAN1_LED  0-on*/
+-#define TA37_GPIO_LED_LAN3		14  /*LAN2_LED  0-on*/
+-#define TA37_GPIO_LED_LAN4		12  /*LAN3_LED  0-on*/
++#define TA37_GPIO_LED_LAN1		14  /*LAN0_LED  0-on*/
++#define TA37_GPIO_LED_LAN2		1  /*LAN1_LED  0-on*/
++#define TA37_GPIO_LED_LAN3		11  /*LAN2_LED  0-on*/
++#define TA37_GPIO_LED_LAN4		16  /*LAN3_LED  0-on*/
+ 
+-#define TA37_GPIO_BTN_RESET     13  /*SW_RST*/ 
++#define TA37_GPIO_BTN_RESET     3  /*SW_RST*/ 
+ 
+ #define TA37_KEYS_POLL_INTERVAL	20	/* msecs */
+ #define TA37_KEYS_DEBOUNCE_INTERVAL	(3 * TA37_KEYS_POLL_INTERVAL)
+@@ -54,6 +54,7 @@
+ 
+ 
+ #define TA37_GPIO_SPI_CS1     2  /*SPI CS1*/ 
++#define TA37_GPIO_SPI_CS2     17  /*SPI CS2*/ 
+ 
+ #define TA37_GPIO_MUX_SPI_CS1     2  /*GPIO OUTPUT MUX :SPI CS1*/ 
+ 
+@@ -145,6 +146,10 @@ static void __init ta37_setup(void)
+ 	ath79_gpio_output_select(TA37_GPIO_SPI_CS1,
+ 			QCA953X_GPIO_OUT_MUX_SPI_CS1);
+ 
++	ath79_gpio_direction_select(TA37_GPIO_SPI_CS2, true);
++	ath79_gpio_output_select(TA37_GPIO_SPI_CS2,
++			QCA953X_GPIO_OUT_MUX_SPI_CS2);
++
+ 	ath79_register_m25p80(NULL);
+ 
+ 	ta37_gpio_led_setup();
+--- a/drivers/gpio/gpio-xra1403.c
++++ b/drivers/gpio/gpio-xra1403.c
+@@ -196,8 +196,6 @@ xra1403_direction_output(struct gpio_chi
+ 	unsigned mask;
+ 	int status;
+ 
+-	//printk("%s %d gpio  %d value  %d \n",__FUNCTION__,__LINE__,offset,value);
+-
+ 	if(offset < 0 || offset >=16)
+ 		return 0;
+ 	mutex_lock(&xra->lock);
+@@ -261,13 +259,16 @@ static int xra1403_probe_one(struct xra1
+ 	xra->chip.dbg_show = xra1403_dbg_show;
+ 
+ 	switch (type) {
+-
+ 	case 0:
+ 		xra->ops = &xra1403_ops;
+ 		xra->chip.ngpio = 16;
+-		xra->chip.label = "xra1403";
++		xra->chip.label = "xra1403-0";
+ 		break;
+-
++	case 1:
++		xra->ops = &xra1403_ops;
++		xra->chip.ngpio = 16;
++		xra->chip.label = "xra1403-1";
++		break;
+ 	default:
+ 		dev_err(dev, "invalid device type (%d)\n", type);
+ 		return -EINVAL;
+@@ -286,6 +287,8 @@ static int xra1403_probe_one(struct xra1
+ 	if (status < 0)
+ 		dev_dbg(dev, "can't setup chip %d, --> %d\n",
+ 			addr, status);
++
++	//printk("%s %d  base %d  \n",__FUNCTION__,__LINE__,xra->chip.base);
+ 	return status;
+ }
+ 
+@@ -347,7 +350,8 @@ static int xra1403_remove(struct spi_dev
+ }
+ 
+ static const struct spi_device_id xra1403_ids[] = {
+-      { "xra1403", 0 },
++      { "xra1403-0", 0 },
++      { "xra1403-1", 1 },
+ 	{ },
+ };
+ MODULE_DEVICE_TABLE(spi, xra1403_ids);

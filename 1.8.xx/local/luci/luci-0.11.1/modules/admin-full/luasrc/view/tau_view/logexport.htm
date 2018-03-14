@@ -1,0 +1,423 @@
+<%+header%>
+
+<% -- Add: by xiaowei, 2016/04/11 19:33 PN: add syslog export %>
+<%
+
+require "lfs"
+local dir_stat  = ""
+local emmc_stat  = ""
+local file_num  = 0
+local file_name = ""
+local file_leng  = ""
+local file_dir  = "/mnt/emmc/logsave/"
+local log_size = uci.get('config','logsave','log_size')
+local packet_space = luci.util.exec("df -h | grep sda1| awk '{print$4}'")
+local packet_total = luci.util.exec("df -h | grep sda1| awk '{print$2}'")
+function attrdir (path)
+	local dirpath = io.open(path,"rb")
+	if dirpath then 
+		dirpath:close()
+	else
+		dir_stat="Not find /mnt/emmc/logsave/ save syslog !"
+		return 
+	end		
+	
+	if io.open ("/tmp/log/read","rb") then 
+		local read_ch =io.open ("/tmp/log/read","rb"):read("*a")
+		io.open ("/tmp/log/read","rb"):close()
+		if string.find(read_ch,"read") then
+			emmc_stat="Error /mnt/emmc vfat Read-only file system !"
+			return 
+		end
+	end
+	
+	for file in lfs.dir(path) do
+		while true do
+		if file ~= "." and file ~= ".." then
+			local f = path..file
+			if io.open (f,"rb") then 
+				local s =io.open (path,"rb"):read("*a")
+				io.open (path,"rb"):close()
+			else
+				break
+			end		
+			local attr = lfs.attributes (f)
+			assert (type(attr) == "table")
+			if attr.mode == "directory" then
+				attrdir (f,fn)
+			else
+				if string.find(f,"_sys") then	
+					local fh =assert(io.open(f, "rb"))
+					local len =assert(fh:seek("end"))
+					
+					if tonumber(len) <= tonumber(1024) then
+						len = string.format("%.1f", tonumber(len)).."B"	
+					elseif tonumber(len) > tonumber(1024) and tonumber(len) <= tonumber(1048576) then
+						len = string.format("%.1f", tonumber(len)/1024).."K"	
+					elseif tonumber(len) > tonumber(1048576) and tonumber(len) <= tonumber(1073741824) then
+						len = string.format("%.1f", tonumber(len)/1024/1024).."M"	
+					else 
+						len = string.format("%.1f", tonumber(len)/1024/1024/1024).."G"	
+					end	
+					io.open (f,"rb"):close()
+					file_leng = file_leng..len..";"
+					file_num = file_num+1
+					--print("["..f.."] ")
+					file_name = file_name..file..";"
+				end	
+			end
+		end
+		break
+		end
+	end
+end	
+attrdir(file_dir)
+local curr_syslog_write = luci.util.exec("cat /tmp/syslog_name")
+curr_syslog_write = curr_syslog_write.gsub(curr_syslog_write,"\n","")
+--file_num = 12
+--file_name = "tau_h2000.log.20160401;tau_h2000.log.20160402;tau_h2000.log.20160403;tau_h2000.log.20160404;tau_h2000.log.20160405;tau_h2000.log.20160406;tau_h2000.log.20160407;tau_h2000.log.20160408;tau_h2000.log.20160409;tau_h2000.log.20160410;tau_h2000.log.20160411;"
+%>
+
+<script type="text/javascript">
+function all_init()
+{
+	//document.getElementById('log_size_id').value = '<%=log_size%>';
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("submit_delete_id").disabled = true;
+	}
+}	
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{param1:data1},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	 
+function syslog_export(file_name)
+{
+	document.getElementById('file_name_id').value= file_name;
+	document.getElementById('file_oper_id').value= "0";
+	document.getElementById('file_type_id').value= "0";
+	document.frmSetup.submit();
+}
+function syslog_delete(file_name)
+{
+	document.getElementById('file_name_id').value= file_name;
+	document.getElementById('file_oper_id').value= "1";
+	document.getElementById('file_type_id').value= "0";
+	document.frmSetup.submit();
+}
+function showFileList()
+{
+	var i,k,file,tmp,j,file1,key,n,filetemp,lengtemp,mlengtemp; 
+	var strs= new Array();
+	var numArray= new Array();
+	var numArr= new Array();
+	var legArray= new Array();
+	var mlegArray= new Array();
+	var mstrs= new Array();
+	var filenames = '<%=file_name%>'
+	var mfilenames = '<%=module_file_name%>'
+	var write_syslog = '<%=curr_syslog_write%>'
+	var write_ltelog = '<%=curr_ltelog_write%>'
+	var filelengs = '<%=file_leng%>'
+	var mfilelengs = '<%=mfile_leng%>'
+	k="<span id='spanFirst' style='margin-left:100px;width:800px'><%:FirstPage%></span> <span id='spanPre'><%:PageUp%></span> <span id='spanNext'><%:PageDown%></span> <span id='spanLast'><%:EndPage%></span> <%:Current%> <span id='spanPageNum'></span> <%:Page%> <span id='spanTotalPage' style='display:none;'></span> <br> <br>";
+	
+	k+="<table  class='cbi-section-table' style='margin-left:100px;width:800px'><tr><td style='width:35px;'><%:Number%></td><td style='width:60px;'><%:FileName%></td><td style='width:48px;'><%:Export%></td><td style='width:33px;'><%:Delete%></td><td style='width:10px;'><%:size%></td></tr></table>";
+	k+="<table id='tablelsw' class='cbi-section-table' style='margin-left:100px;width:800px'>";
+	strs = filenames.split(";");
+	mstrs= mfilenames.split(";");
+	legArray = filelengs.split(";");
+	mlegArray = mfilelengs.split(";");
+	
+	for(i=0;i<strs.length-1;i++)
+	{
+		for(j=0;j<strs.length-i-1;j++)
+		{
+			
+			numArr = strs[j].split("_");
+			tmp =numArr[0]
+			tmp =parseInt(tmp)
+			
+			numArray = strs[j+1].split("_");
+			key =numArray[0]
+			key =parseInt(key)
+			
+			if( key>tmp )
+			{
+				//strs[j+1] = strs[j]
+				filetemp = strs[j]
+				strs[j]  = strs[j+1]
+				strs[j+1] = filetemp
+				
+				
+				lengtemp = legArray[j]
+				legArray[j]  = legArray[j+1]
+				legArray[j+1] = lengtemp
+			}
+	
+		}	
+	}
+	for(i=1;i<strs.length;i++)
+	{
+		if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:260px;'>"+strs[i-1]+"</td><td style='width:190px;'><style='background-color:#90f090;' onclick='syslog_export(\""+strs[i-1]+"\")'></td><td><style='background-color:#f09090' onclick='syslog_delete(\""+strs[i-1]+"\")'></td></tr>");
+		else{
+			if(strs[i-1] == write_syslog || strs[i-1] == write_ltelog){
+				k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:260px;'><font style='font-weight:bold;' color='red' size='2'>"+strs[i-1]+"</td><td style='width:190px;'><input type='hidden' name='export_file' value='<%:Export%>' style='background-color:#90f090;' onclick='syslog_export(\""+strs[i-1]+"\")'></td><td><input type='hidden' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='syslog_delete(\""+strs[i-1]+"\")'></td></tr>");
+			}else{
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:260px;'>"+strs[i-1]+"</td><td style='width:190px;'><input type='submit' name='export_file' value='<%:Export%>' style='background-color:#90f090;' onclick='syslog_export(\""+strs[i-1]+"\")'></td><td><input type='submit' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='syslog_delete(\""+strs[i-1]+"\")'></td><td style='width:120px;'>&nbsp;&nbsp;&nbsp;&nbsp;"+legArray[i-1]+"</font></td></tr>");
+			}
+		}
+	}
+	
+	for(i=1;i<mstrs.length;i++)
+	{
+		if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:260px;'>"+mstrs[i-1]+"</td><td style='width:190px;'><style='background-color:#90f090;' onclick='ltelog_export(\""+mstrs[i-1]+"\")'></td><td><style='background-color:#f09090' onclick='ltelog_delete(\""+mstrs[i-1]+"\")'></td></tr>");
+		else{
+			if(mstrs[i-1] == write_syslog || mstrs[i-1] == write_ltelog){
+				k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:260px;'><font style='font-weight:bold;' color='red' size='2'>"+mstrs[i-1]+"</td><td style='width:190px;'><input type='hidden' name='export_file' value='<%:Export%>' style='background-color:#90f090;' onclick='ltelog_export(\""+mstrs[i-1]+"\")'></td><td><input type='hidden' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='ltelog_delete(\""+mstrs[i-1]+"\")'></td></tr>");
+			}else{
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+i+"</td><td style='width:260px;'>"+mstrs[i-1]+"</td><td style='width:190px;'><input type='submit' name='export_file' value='<%:Export%>' style='background-color:#90f090;' onclick='ltelog_export(\""+mstrs[i-1]+"\")'></td><td><input type='submit' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='ltelog_delete(\""+mstrs[i-1]+"\")'></td><td style='width:120px;'>&nbsp;&nbsp;&nbsp;&nbsp;"+mlegArray[i-1]+"</font></td></tr>");
+			}
+		}
+	}
+	k+="<td></td><td></td><td></td><td></td>";
+
+	//k+="<tr><td><input onclick='selectAll()' type='checkbox'   name='control_all'  id='control_all_id'></td>";
+	//k+="<td>all</td>";
+	//k+="<td>&nbsp;</td>";
+	//k+="<td><input type='button' name='delete_s'  value='files_del' ></td>";
+	k+="</table>";
+	document.write(k);
+}
+/*
+function log_config()
+{
+	
+	var log_size = document.getElementById('log_size_id').value;
+	if ( !check_int(log_size) || log_size == '' )
+	{
+		alert('<%:invalid argument %>');
+		return false;
+	}
+	ajax_set(log_size,'<%=pcdata(luci.dispatcher.build_url("admin/config/log_config"))%>', '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+*/
+function delete_config()
+{
+	ajax_set('0','<%=pcdata(luci.dispatcher.build_url("admin/config/delete_config"))%>', '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+</script>
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Syslog%></a></h2><br/>
+		
+		<fieldset class="cbi-section">
+			<legend><%:Syslog%></legend><br/>
+			<div class="div_class">
+				<table class="table_class" >
+				<tr class="tr_class">
+					<td class="td_class" style="width:300px;text-indent:190px;"><%:total size%>:</td>
+					<td class="td_class" style="text-indent:10px;"><legend><%=packet_total%></legend></td></tr>	
+					<td class="td_class" style="width:300px;text-indent:190px;"><%:The scurrent storage size%>:</td>
+					<td class="td_class" style="text-indent:10px;"><legend><%=packet_space%></legend></td></tr>	
+					<td class="td_class" style="text-indent:10px;"><legend><%=mpacket_total%></legend></td></tr>	
+					<td class="td_class" style="text-indent:10px;"><legend><%=mpacket_space%></legend></td></tr>	
+					<td class="td_class" style="width:300px;text-indent:190px;"><%:all delete%></td>
+					<td class="td_class " >
+						<input type="button" id="submit_delete_id" class="cbi-button cbi-button-apply" value="<%:Delete%>" style="width:100px;" onclick="delete_config()" /></td>
+					
+					</tr>	
+					
+				
+				</table>
+			</div>
+			
+			<div class="cbi-section-descr"><%:log list%>:</div>
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+					<legend style="margin-left:100px;"><font style="font-weight:bold;" color="red" size="3"><%=dir_stat%> <%=emmc_stat%></font></legend><br/>
+					<script>showFileList();</script>
+					<input name="file_name" id="file_name_id" type="text" value="" style="margin-left:100px;width:200px;display:none;" size="12">
+					<input name="file_oper" id="file_oper_id" type="text" value="" style="margin-left:100px;width:200px;display:none;" size="12">
+					<input name="file_type" id="file_type_id" type="text" value="" style="margin-left:100px;width:200px;display:none;" size="12">
+				</div>
+			</div>
+		</fieldset>
+
+	</div>
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+<script>   
+  
+var theTable = document.getElementById("tablelsw");    
+var totalPage = document.getElementById("spanTotalPage");    
+var pageNum = document.getElementById("spanPageNum");    
+   
+var spanPre = document.getElementById("spanPre");    
+var spanNext = document.getElementById("spanNext");    
+var spanFirst = document.getElementById("spanFirst");    
+var spanLast = document.getElementById("spanLast");    
+   
+var numberRowsInTable = theTable.rows.length;    
+var pageSize = 10;	// Accommodate the number of each page 
+var page = 1;    	// The number of pages of the initial
+    
+function next(){    
+   
+    hideTable();    
+        
+    currentRow = pageSize * page;    
+    maxRow = currentRow + pageSize;    
+    if ( maxRow > numberRowsInTable ) maxRow = numberRowsInTable;    
+    for ( var i = currentRow; i< maxRow; i++ ){    
+        theTable.rows[i].style.display = '';    
+    }    
+    page++;    
+
+    if ( maxRow == numberRowsInTable ) { nextText(); lastText(); }  
+    showPage();    
+    preLink();    
+    firstLink();    
+}    
+      
+function pre(){    
+   
+    hideTable();    
+        
+    page--;    
+        
+    currentRow = pageSize * page;    
+    maxRow = currentRow - pageSize;    
+    if ( currentRow > numberRowsInTable ) currentRow = numberRowsInTable;    
+    for ( var i = maxRow; i< currentRow; i++ ){    
+        theTable.rows[i].style.display = '';    
+    }    
+        
+        
+    if ( maxRow == 0 ){ preText(); firstText(); }    
+    showPage();    
+    nextLink();    
+    lastLink();    
+}    
+      
+function first(){    
+    hideTable();    
+    page = 1;    
+    for ( var i = 0; i<pageSize; i++ ){    
+        theTable.rows[i].style.display = '';    
+    }    
+    showPage();    
+        
+    preText();    
+    nextLink();    
+    lastLink();    
+}    
+     
+function last(){    
+    hideTable();    
+    page = pageCount();    
+    currentRow = pageSize * (page - 1);    
+    for ( var i = currentRow; i<numberRowsInTable; i++ ){    
+        theTable.rows[i].style.display = '';    
+    }    
+    showPage();    
+        
+    preLink();    
+    nextText();    
+    firstLink();    
+}    
+   
+function hideTable(){    
+    for ( var i = 0; i<numberRowsInTable; i++ ){    
+        theTable.rows[i].style.display = 'none';    
+    }    
+}    
+   
+function showPage(){     
+ pageNum.innerHTML = page;
+}    
+   
+function pageCount(){    
+    var count = 0;    
+    if ( numberRowsInTable%pageSize != 0 ) count = 1;     
+    return parseInt(numberRowsInTable/pageSize) + count;    
+}    
+   
+function preLink(){ spanPre.innerHTML = "<a href='javascript:pre();'><%:PageUp%></a>";}    
+function preText(){ spanPre.innerHTML = "<%:PageUp%>";}    
+   
+function nextLink(){ spanNext.innerHTML = "<a href='javascript:next();'><%:PageDown%></a>";}    
+function nextText(){ spanNext.innerHTML = "<%:PageDown%>";}    
+   
+function firstLink(){ spanFirst.innerHTML = "<a href='javascript:first();'><%:FirstPage%></a>";}    
+function firstText(){ spanFirst.innerHTML = "<%:FirstPage%>";}    
+   
+function lastLink(){ spanLast.innerHTML = "<a href='javascript:last();'><%:EndPage%></a>";}    
+function lastText(){ spanLast.innerHTML = "<%:EndPage%>";}    
+     
+function hide(){    
+    for ( var i = pageSize; i<numberRowsInTable; i++ ){    
+        theTable.rows[i].style.display = 'none';    
+    }    
+        
+    totalPage.innerHTML = pageCount();
+    pageNum.innerHTML = '1';    
+        
+    nextLink();    
+    lastLink();    
+}    
+hide();    
+
+</script>
+<%+footer%>

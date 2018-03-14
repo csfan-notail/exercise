@@ -1,0 +1,12 @@
+
+
+
+
+#boot success
+if [ "`factory_env get boot_success`" != "boot_success=1" ];then
+  factory_env set boot_success=1
+  factory_env set bootnum=0
+  factory_env commit
+fi
+
+exit 0

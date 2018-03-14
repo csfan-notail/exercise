@@ -1,0 +1,111 @@
+<%+header%>
+
+<%
+	local route_sw_init = uci.get('config','lastroute','switch')
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("lastroute_add_submit_id").disabled=true;
+	}
+	if( '0' == '<%=route_sw_init%>' )
+		document.getElementById('last_sw_id').options[0].selected=true;
+	else
+		document.getElementById('last_sw_id').options['<%=route_sw_init%>'].selected=true;
+	
+}	
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{port_val:data1},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+function last_switch(last_sw)
+{
+	ajax_set(last_sw,'<%=pcdata(luci.dispatcher.build_url("admin/lte/last_switch"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "lte")%>/set_infos/');
+}
+
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:LTE1 Last Route%></a></h2><br/>
+		
+		<fieldset class="cbi-section">
+			<legend><%:Configure%></legend><br/>
+			
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+					<div class="cbi-value-field">
+						<div style="margin-left:0px;"><%:last route on/off%>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	
+							<select  name="last_sw" id="last_sw_id" style="width:180px;">
+								<option value="0"><%:off%></option>
+                    			<option value="1"><%:on%></option>
+							</select>
+							<input type="button" id="lastroute_add_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="last_switch(this.form.last_sw.selectedIndex)" />
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</fieldset>
+
+	</div>
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

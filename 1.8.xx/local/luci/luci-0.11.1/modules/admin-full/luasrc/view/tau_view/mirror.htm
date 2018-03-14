@@ -1,0 +1,230 @@
+<%+header%>
+
+<%
+	local uci = require "luci.model.uci".cursor()
+	local port_sw_init = uci.get('config','mirror','mirror_switch')
+	local port_mi_init = uci.get('config','mirror','mirror_port')
+	local lan1_st_init = uci.get('config','mirror','lan1_status')
+	local lan2_st_init = uci.get('config','mirror','lan2_status')
+	local lan3_st_init = uci.get('config','mirror','lan3_status')
+	local lan4_st_init = uci.get('config','mirror','lan4_status')
+%>
+
+<script type="text/javascript">
+function all_init()
+{
+	document.getElementById('port_sw_id').options['<%=port_sw_init%>'].selected=true;
+	
+	if( 'close' == '<%=port_mi_init%>' )
+		document.getElementById('port_mi_id').options[0].selected=true;
+	else
+		document.getElementById('port_mi_id').options['<%=port_mi_init%>'].selected=true;
+	
+	document.getElementById('lan1_st_id').options[select_opt('<%=lan1_st_init%>')].selected=true;
+	document.getElementById('lan2_st_id').options[select_opt('<%=lan2_st_init%>')].selected=true;
+	document.getElementById('lan3_st_id').options[select_opt('<%=lan3_st_init%>')].selected=true;
+	document.getElementById('lan4_st_id').options[select_opt('<%=lan4_st_init%>')].selected=true;
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("mirror_add_submit_id").disabled=true;
+		document.getElementById("port_mi_submit_id").disabled=true;
+		document.getElementById("lan_st_submit_id").disabled=true;
+	}
+	if( '0' == '<%=port_sw_init%>' )
+	{
+		document.getElementById("port_mi_submit_id").disabled=true;
+		document.getElementById("lan_st_submit_id").disabled=true;
+		document.getElementById("port_mi_submit_id").style.background = "Gray";
+		document.getElementById("lan_st_submit_id").style.background = "Gray";
+	}
+}	
+function select_opt (params) {
+	if( "ingress" == params )
+		return 1;
+	else if( "egress" == params )
+		return 2;
+	else if( "both" == params )
+		return 3;
+	else
+		return 0;
+}
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(url,data1) {
+	$.ajax({
+		url:url,
+		dataType:'json',
+		method:'post',
+		data:{port_val:data1},
+		success:function(r){
+			if(r.result == 'success'){
+				stxhr_get('<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/success');
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get('<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/failed');
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+function port_switch(port_sw)
+{
+	ajax_set('<%=pcdata(luci.dispatcher.build_url("admin/config/port_switch"))%>',port_sw);
+}
+
+function port_mirror(port_mi)
+{
+	ajax_set('<%=pcdata(luci.dispatcher.build_url("admin/config/port_mirror"))%>',port_mi);
+}
+function port_observe(lan1_st,lan2_st,lan3_st,lan4_st)
+{
+	var dates = lan1_st+";"+lan2_st+";"+lan3_st+";"+lan4_st+";";
+	ajax_set('<%=pcdata(luci.dispatcher.build_url("admin/config/port_observe"))%>',dates);
+}
+
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Port Mirror%></a></h2><br/>
+		
+		<fieldset class="cbi-section">
+			<legend><%:Configure%></legend><br/>
+			
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+					<!--<label class="cbi-value-title" for="version"><%:version%>:</label>-->
+					<div class="cbi-value-field">
+						<div style="margin-left:0px;"><%:Mirror on/off%>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	
+						<!--<input type="file" name="versio1n" id="version" />-->
+						<select  name="port_sw" id="port_sw_id" style="width:180px;">
+							<option value="0"><%:off%></option>
+                    		<option value="1"><%:on%></option>
+						</select>
+						<input type="button" id="mirror_add_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="port_switch(this.form.port_sw.selectedIndex)" />
+					</div>
+				</div>
+			</div>
+		</fieldset>
+		
+		
+		
+		<fieldset class="cbi-section">
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+					<div class="cbi-value-field">
+						<div style="margin-left:0px;"><%:Observe port%>:&nbsp;&nbsp;&nbsp;&nbsp;	
+						<select name="lan1_st" id="lan1_st_id" style="width:180px;">
+							<option value="0"><%:lan1 close%></option>
+                   			<option value="1"><%:lan1 rx%></option>
+                   			<option value="2"><%:lan1 tx%></option>
+                   			<option value="3"><%:lan1 rx/tx%></option>
+						</select>
+					</div>
+				</div>
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+					<div class="cbi-value-field">
+						<div style="margin-left:88px;"></br>
+						<select name="lan2_st" id="lan2_st_id" style="width:180px;">
+							<option value="0"><%:lan2 close%></option>
+                   			<option value="1"><%:lan2 rx%></option>
+                   			<option value="2"><%:lan2 tx%></option>
+                   			<option value="3"><%:lan2 rx/tx%></option>
+						</select>
+						</div>
+					</div>
+				</div>
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+					<div class="cbi-value-field">
+						<div style="margin-left:88px;">
+						<select name="lan3_st" id="lan3_st_id" style="width:180px;">
+							<option value="0"><%:lan3 close%></option>
+                   			<option value="1"><%:lan3 rx%></option>
+                   			<option value="2"><%:lan3 tx%></option>
+                   			<option value="3"><%:lan3 rx/tx%></option>
+						</select>
+						</div>
+					</div>
+				</div>
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+					<div class="cbi-value-field">
+						<div style="margin-left:88px;">
+						<select name="lan4_st" id="lan4_st_id" style="width:180px;">
+							<option value="0"><%:lan4 close%></option>
+                   			<option value="1"><%:lan4 rx%></option>
+                   			<option value="2"><%:lan4 tx%></option>
+                   			<option value="3"><%:lan4 rx/tx%></option>
+						</select>
+						<input type="button" id="lan_st_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="port_observe(this.form.lan1_st.selectedIndex,this.form.lan2_st.selectedIndex,this.form.lan3_st.selectedIndex,this.form.lan4_st.selectedIndex)" />
+						</div>
+					</div>
+				</div>
+			</div>
+		</fieldset>
+		<fieldset class="cbi-section">
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">
+					<div class="cbi-value-field">
+						<div style="margin-left:0px;"><%:Mirror port%>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	
+						<select name="port_mi" id="port_mi_id" style="width:180px;">
+							<option value="0"><%:close%></option>
+							<option value="1"><%:lan1%></option>
+                    		<option value="2"><%:lan2%></option>
+                    		<option value="3"><%:lan3%></option>
+                    		<option value="4"><%:lan4%></option>
+						</select>
+						<input type="button" id="port_mi_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="port_mirror(this.form.port_mi.selectedIndex)" />
+					</div>
+				</div>
+			</div>
+		</fieldset>
+	</div>
+		<fieldset class="cbi-section">
+			<div class="cbi-section-descr"></div>
+				<div class="cbi-value-field">	
+					<legend>
+						<font color="red">
+			 				<%:Note%><br>
+			 				<%:mirr data%><br> 				
+			 			</font>
+			 		</legend>
+				</div>
+		</fieldset>
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

@@ -1,0 +1,167 @@
+<%+header%>
+
+<%
+local gdconfig = luci.util.exec("cat /etc/gdcontrl")
+--print(gdconfig)
+
+require "lfs"
+local file_num = 0
+local file_name = "/etc/gdcontrl"
+local gdconfig = ""
+function get_nbr (path)
+	file = io.open(path,"r")
+	if file then
+		for lines in file:lines() do
+			file_num = file_num+1
+			--print(" file_num="..file_num)
+			if 1 == file_num then 
+				gdconfig = Split(lines, ";")
+			end
+			--print(" gdconfig="..gdconfig)
+		end
+		file:close()
+	else
+		gdconfig = ""	
+	end
+end	
+
+get_nbr(file_name)
+
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	var gps_longitude = "<%=gdconfig[1]%>"
+	var gps_latitude = "<%=gdconfig[2]%>"
+	var log_server = "<%=gdconfig[3]%>";
+	var gps_radius = "<%=gdconfig[4]%>";
+	
+	document.getElementById("gps_latitude_id").value=gps_latitude;
+	document.getElementById("gps_longitude_id").value=gps_longitude;
+	document.getElementById("contrl_ip_id").value=log_server;
+	document.getElementById("gps_radius_id").value=gps_radius;
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("gdctl_opr_id").disabled=true;
+	}
+	
+}	
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{value1:data1,value2:data2,value3:data3,value4:data4},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+function zebra_config(operate)
+{
+	
+	var gps_longitude 	= document.getElementById("gps_longitude_id").value;
+	var gps_latitude 	= document.getElementById("gps_latitude_id").value;
+	var contrl_ip 		= document.getElementById("contrl_ip_id").value;
+	var gps_radius 		= document.getElementById("gps_radius_id").value;
+	
+	if( false == check_ipv4_addr(contrl_ip) ){
+		alert('<%:input ip address not legal%>');
+		return false;
+	}
+
+	ajax_set(gps_longitude,gps_latitude,contrl_ip,gps_radius,
+			'<%=pcdata(luci.dispatcher.build_url("admin/config/gd_server"))%>', 
+			'<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:GD Server%></a></h2><br/>
+		<fieldset class="cbi-section">
+			
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="text-indent:100px;"><legend><%:Config%>:</legend></td></tr>
+					
+					<tr class="tr_class">
+						<td class="td_class"style="width:300px;text-indent:200px;"><%:Server IP%>:</td>
+						<td class="td_class">
+						<input name="contrl_ip" id="contrl_ip_id" type="text" style="width:200px;margin-left:0px;"></td></tr>	
+					
+					<tr class="tr_class">
+					   <td class="td_class"style="width:300px;text-indent:200px;"><%:GPS longitude%>:</td>
+						<td class="td_class">
+						<input name="gps_longitude" id="gps_longitude_id" type="text" style="width:200px;margin-left:0px;"></td></tr>	
+					<tr class="tr_class">
+						<td class="td_class"style="width:300px;text-indent:200px;"><%:GPS latitude%>:</td>
+						<td class="td_class">
+						<input name="gps_latitude" id="gps_latitude_id" type="text" style="width:200px;margin-left:0px;"></td></tr>	
+					<tr class="tr_class">
+					   <td class="td_class"style="width:300px;text-indent:200px;"><%:GPS radius%>:</td>
+						<td class="td_class">
+						<input name="gps_radius" id="gps_radius_id" type="text" style="width:200px;margin-left:0px;"></td></tr>	
+						
+					<tr class="tr_class">	
+						<td class="td_class" style="width:300px;text-indent:200px;"></td>
+						<td class="td_class"><select  name="gdctl_opr" id="gdctl_opr_id" style="width:210px;">
+							<option value="0"><%:modify%></option>
+						</select>
+						<input type="button" id="zebra_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="zebra_config(this.form.gdctl_opr.selectedIndex)" /></td></tr>
+				</table>
+			</div>
+		</fieldset>
+	</div>
+			
+		<fieldset class="cbi-section" style="display:none">
+			<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>	
+</form>
+
+<%+footer%>

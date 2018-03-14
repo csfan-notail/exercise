@@ -1,0 +1,95 @@
+#!/bin/sh
+
+#check utils
+if ! type md >/dev/null;then
+  echo "md: not found"
+  return 1;
+fi
+
+#TAR=${1:-"wifi0"}
+TAR=$1
+
+if [ -z "${TAR}" ];then
+  echo "Usage: `basename $0` wifiX"
+  return 1;
+fi
+
+REG_START=`ifconfig ${TAR}  | awk '$0 ~ /Interrupt:.*Memory:.*/ {
+reg_start=$0
+gsub(/^.*Memory:/, "", reg_start)
+gsub(/....-.*$/, "", reg_start)
+print reg_start
+}'`
+
+if [ "${#REG_START}" -ne 4 ];then
+  echo "locate hw base failed"
+  return 1
+fi
+
+if [ "$(( 0x${REG_START} | 0xa000 ))" != "$((0xb810))" ] && \
+   [ "$(( 0x${REG_START} | 0xa000 ))" != "$((0xb000))" ];then
+  echo "unsupported reg start ${REG_START}0000"
+  return 1; 
+fi
+
+printf "%6s%12s%12s%12s%12s%12s%12s%14s%12s%12s%12s\n" "INDEX" "CCA_PER" "EXT_CCA_PER" "RX_PER" "TX_PER" "OTHER_PER" "FREE_PER" "EXT_FREE_PER" "OFDMERR" "CCKERR" "TOTALERR"
+
+INDEX=0
+TF_LAST=0
+RF_LAST=0
+RC_LAST=0
+CC_LAST=0
+EXTRC_LAST=0
+
+while true;
+do
+##read value from register
+eval $(
+md ${REG_START}80ec 4 | awk '
+$0 ~ /^....80ec/ {tf_awk=$3}
+$0 ~ /^....80f0/ {rf_awk=$3}
+$0 ~ /^....80f4/ {rc_awk=$3}
+$0 ~ /^....80f8/ {cc_awk=$3}
+END {printf "TF=%s;RF=%s;RC=%s;CC=%s\n", tf_awk, rf_awk, rc_awk, cc_awk}'
+)
+EXTRC=`md ${REG_START}8328 | awk '{print $3}'`
+OFDMERR=`md ${REG_START}812c | awk '{print $3}'`
+CCKERR=`md ${REG_START}8134 | awk '{print $3}'`
+
+##calculate delta
+TF_DEL=$((TF - TF_LAST))
+RF_DEL=$((RF - RF_LAST))
+RC_DEL=$((RC - RC_LAST))
+CC_DEL=$((CC - CC_LAST))
+EXTRC_DEL=$((EXTRC - EXTRC_LAST))
+OFDMERR_DEL=$((OFDMERR - OFDMERR_LAST))
+[ "${OFDMERR_DEL}" -lt 0 ] && OFDMERR_DEL=${OFDMERR}
+CCKERR_DEL=$((CCKERR - CCKERR_LAST))
+[ "${CCKERR_DEL}" -lt 0 ] && CCKERR_DEL=${CCKERR}
+
+##calculate result
+CCA_PER=$((RC_DEL * 100 / CC_DEL))
+EXT_CCA_PER=$((EXTRC_DEL * 100 / CC_DEL))
+RX_PER=$((RF_DEL * 100 / CC_DEL))
+TX_PER=$((TF_DEL * 100 / CC_DEL))
+OTHER_PER=$((CCA_PER - RX_PER - TX_PER))
+FREE_PER=$((100 - CCA_PER))
+EXT_FREE_PER=$((100 - EXT_CCA_PER))
+TOTALERR=$((OFDMERR_DEL + CCKERR_DEL))
+
+#echo "tf=${TF_DEL}($((TF_DEL*100/CC_DEL))%), rf=${RF_DEL}($((RF_DEL*100/CC_DEL))%), rc=${RC_DEL}($((RC_DEL*100/CC_DEL))%), extrc=${EXTRC_DEL}($((EXTRC_DEL*100/CC_DEL))%), cc=${CC_DEL}"
+[ ${INDEX} -eq 0 ] || printf "%6d%12d%12d%12d%12d%12d%12d%14d%12d%12d%12d\n" ${INDEX} ${CCA_PER} ${EXT_CCA_PER} ${RX_PER} ${TX_PER} ${OTHER_PER} ${FREE_PER} ${EXT_FREE_PER} ${OFDMERR_DEL} ${CCKERR_DEL} ${TOTALERR}
+
+
+##restore historical values
+INDEX=$((INDEX + 1))
+TF_LAST=${TF}
+RF_LAST=${RF}
+RC_LAST=${RC}
+CC_LAST=${CC}
+EXTRC_LAST=${EXTRC}
+OFDMERR_LAST=${OFDMERR}
+CCKERR_LAST=${CCKERR}
+
+sleep 1;
+done

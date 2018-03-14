@@ -1,0 +1,13 @@
+#!/bin/sh
+
+echo "-------------`pwd`"
+paths=`pwd`
+echo "-------------$1"
+cd $1
+
+echo "-------------/sbin/ftpput $2 $3 "
+#/usr/bin/ftpput $2 $3 > /dev/null 2>&1 &
+/usr/bin/ftpput -u anonymous $2 $3
+
+echo "-------------cd $paths"
+cd $paths

@@ -1,0 +1,206 @@
+<%+header%>
+
+<%
+	local uci = require "luci.model.uci".cursor()
+	local select_sw = uci.get('config','attenuator','select_sw')
+	local attenuation_level = uci.get('config','attenuator','attenuation_strength')
+%>
+
+<script type="text/javascript">
+
+function all_init () {
+
+	document.getElementById('id_sw_attenuator').options['<%=select_sw%>'].selected = true;
+	document.getElementById('id_attenuation_strength').value = '<%=attenuation_level%>';
+
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("id_button_attenuator").disabled=true;
+		
+	}
+}
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,data6,data7,data8,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{param1:data1,param2:data2,param3:data3,param4:data4,param5:data5,param6:data6,param7:data7,param8:data8},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	 
+
+function attenuator_config (select_sw) {
+	
+	var attenuation_strength = document.getElementById('id_attenuation_strength').value;
+
+	if( !check_int(attenuation_strength) )
+	{
+		alert('<%:invalid argument%>');
+		return -1;
+	}
+
+	if( attenuation_strength >= 11 )
+	{
+		alert('<%:range 1-10%>');
+		return -1;
+	}
+
+	var zero_bit   = 1;
+	var first_bit  = 1;
+	var second_bit = 1;
+	var third_bit  = 1;
+	var fourth_bit = 1;
+	var fifth_bit  = 1;
+	if(select_sw==1)
+	{	switch(attenuation_strength)
+		{
+		case '1':
+			first_bit  = 0;
+			second_bit = 1;
+			third_bit  = 1;
+			fourth_bit = 1;
+			break;
+		case '2':
+			first_bit  = 1;
+			second_bit = 0;
+			third_bit  = 1;
+			fourth_bit = 1;
+			break;
+		case '3':
+			first_bit  = 0;
+			second_bit = 0;
+			third_bit  = 1;
+			fourth_bit = 1;
+			break;
+		case '4':
+			first_bit  = 1;
+			second_bit = 1;
+			third_bit  = 0;
+			fourth_bit = 1;
+			break;
+		case '5':
+			first_bit  = 0;
+			second_bit = 1;
+			third_bit  = 0;
+			fourth_bit = 1;
+			break;
+		case '6':
+			first_bit  = 1;
+			second_bit = 0;
+			third_bit  = 0;
+			fourth_bit = 1;
+			break;
+		case '7':
+			first_bit  = 0;
+			second_bit = 0;
+			third_bit  = 0;
+			fourth_bit = 1;
+			break;
+		case '8':
+			first_bit  = 1;
+			second_bit = 1;
+			third_bit  = 1;
+			fourth_bit = 0;
+			break;
+		case '9':
+			first_bit  = 0;
+			second_bit = 1;
+			third_bit  = 1;
+			fourth_bit = 0;
+			break;
+		case '10':
+			first_bit  = 1;
+			second_bit = 0;
+			third_bit  = 1;
+			fourth_bit = 0;
+			break;
+		}
+	}
+	ajax_set(select_sw,zero_bit,first_bit,second_bit,third_bit,fourth_bit,fifth_bit,attenuation_strength,'<%=pcdata(luci.dispatcher.build_url("admin/config/attenuator_set"))%>', '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Attenuator%></a></h2><br/>
+		<fieldset class="cbi-section">
+			<legend><%:attenuator config%></legend>
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:on/off%>:</td>
+						<td class="td_class"><select  name="attenuator_sw" id="id_sw_attenuator" style="width:180px;">
+							<option value="0"><%:off%></option>
+                			<option value="1"><%:on%></option>
+						</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:attenuation strength%>:</td>
+						<td class="td_class"><input id="id_attenuation_strength" type="text" >
+						<input type="button" id="id_button_attenuator" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;"  onclick="attenuator_config(this.form.attenuator_sw.selectedIndex)" />	</td>
+						</tr>
+				</table>
+			</div>			
+		</fieldset>
+		
+		<fieldset class="cbi-section">
+			<div class="cbi-section-descr"></div>
+				<div class="cbi-value-field">	
+					<legend>
+						<font color="red">
+			 				<%:Note%><br>
+			 				<%:range 1-10%><br>
+			 				<%:it maybe has 1db deviation%>
+			 		</legend>
+				</div>
+		</fieldset>
+
+
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>	
+</form>
+
+<%+footer%>

@@ -1,0 +1,75 @@
+<%+header%>
+
+<%
+	--local get_mem = tonumber(luci.sys.exec("free |head -n 2 |awk '{print$4}' | tail -n 1"))
+	
+	local swver = uci.get('lte','module_info','swver')
+	local isover = uci.get('lte','module_info','isover')
+	local dload_type = uci.get('lte','module_info','dload_type')
+	local product_name = uci.get('lte','module_info','product_name')
+	local dload_ver_info = uci.get('lte','module_info','dload_ver_info')
+%>
+
+<script>
+function all_init () {
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("id_submit_update").disabled=true;
+	}
+}
+</script>
+
+<h2><a id="content" name="content"><%:LTE Update%></a></h2><br></br>
+	<fieldset class="cbi-section">
+		<legend><%:Upgrade new version%></legend>
+			<form method="post" action="<%=REQUEST_URI%>" enctype="multipart/form-data">
+				<div class="cbi-section-descr"><%:Upload a version image here to upgrade current software. %></div>
+				<div class="cbi-section-node">			
+						<label class="cbi-value-title" for="version"><%:Version%>:</label>
+						<div class="cbi-value-field">
+							<input type="file" name="version" id="version" />
+							<input type="hidden" name="version_step" value="2" />
+							<input type="submit" id="id_submit_update" class="cbi-button cbi-input-apply" value="<%:Upgrade version%>..."/>
+						</div>
+				</div>				
+			</form>	
+	</fieldset>
+	
+	<fieldset class="cbi-section">
+		<div class="div_class">
+			<table class="table_class" >
+				<tr class="tr_class">
+					<td class="td_class" style="width:300px;text-indent:176px;"><%:isover%>:</td>
+					<td class="td_class" style="width:300px;text-indent:0px;"><%=isover%></td></tr>
+				<tr class="tr_class">
+					<td class="td_class" style="width:300px;text-indent:176px;"><%:swver%>:</td>
+					<td class="td_class"><%=swver%></td></tr>
+				<tr class="tr_class">
+					<td class="td_class" style="width:300px;text-indent:176px;"><%:dload_type%>:</td>
+					<td class="td_class"><%=dload_type%></td></tr>
+				<tr class="tr_class">
+					<td class="td_class" style="width:300px;text-indent:176px;"><%:product_name%>:</td>
+					<td class="td_class"><%=product_name%></td></tr>
+				<tr class="tr_class">
+					<td class="td_class" style="width:300px;text-indent:176px;"><%:dload_ver_info%>:</td>
+					<td class="td_class"><%=dload_ver_info%></td></tr>	
+			</table>
+		</div>
+	</fieldset>
+
+		<fieldset class="cbi-section">
+			<div class="cbi-section-descr"></div>
+				<div class="cbi-value-field">	
+					<legend>
+						<font color="red">
+			 				<%:Note%><br>
+			 				<%:Whether the upgrade was successful, you have to restart !!!%><br>
+			 				<%:After the error occurred, please keep all error messages %><br> 				
+			 			</font>
+			 		</legend>
+				</div>
+		</fieldset>
+	<script>all_init()</script>
+
+<%+footer%>

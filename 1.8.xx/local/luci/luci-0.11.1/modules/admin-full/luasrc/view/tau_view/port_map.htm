@@ -1,0 +1,164 @@
+<%+header%>
+<% -- Add: by xiaowei, 2016/5/30 14:33 PN: add port map iptables config %>
+<%
+	local port_num = uci.get('portmap','map','map_num')
+	local uci = require "luci.model.uci".cursor()
+	local usernum = port_num
+	local configname = "port"
+	local port_dip = ""
+	local userauth = ""
+	for i=1,usernum  do
+		configname = "@"..configname..i.."[0]"
+		if luci.util.exec("uci get portmap."..configname..".dip") ~= "" then
+			port_dip = port_dip..luci.util.exec("uci get portmap."..configname..".dip").gsub(luci.util.exec("uci get portmap."..configname..".dip"),"\n","")..";"
+			--userauth = userauth..luci.util.exec("uci get webuser."..configname..".authority").gsub(luci.util.exec("uci get webuser."..configname..".authority"),"\n","")..";"
+			--userauth = userauth..uci.get('webuser',configname,'authority')..";"
+		else
+			usernum=usernum-1
+		end	
+		configname = "port"
+	end
+	--print(port_dip)
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("port_submit_id").disabled=true;
+	}
+}	
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,data6,data7,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{value1:data1,value2:data2,value3:data3,value4:data4,value5:data5,value6:data6,value7:data7},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}
+function port_map_config(port_prot,port_nat,port_opr)
+{ 
+	var port_sip = document.getElementById("port_sip_id").value;
+	var port_sport = document.getElementById("port_sport_id").value;
+	var port_dip = document.getElementById("port_dip_id").value;
+	var port_dport = document.getElementById("port_dport_id").value;
+	
+	if( "" == port_sip || "" == port_sport ||"" == port_dip ||"" == port_dport )
+	{
+		alert('<%:input ip address/port number null%>');
+		return false;
+	}
+	if( false == check_ipv4_addr(port_sip) || false == check_ipv4_addr(port_dip) ){
+		alert('<%:input ip address not legal%>');
+		return false;
+	}
+	if( false == check_int(port_sport) || false == check_int(port_dport) ){
+		alert('<%:input port number not legal%>');
+		return false;
+	}
+	
+	ajax_set(port_prot,port_sip,port_sport,port_nat,port_dip,port_dport,port_opr,'<%=pcdata(luci.dispatcher.build_url("admin/config/port_map"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Port map%></a></h2><br/>
+		<fieldset class="cbi-section">
+			
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:config protocol%>:</td>
+						<td class="td_class"><select  name="port_prot" id="port_prot_id" style="width:210px;">
+							<option value="0"><%:tcp%></option>
+                    		<option value="1"><%:udp%></option>
+						</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:mapped ipaddr%>:</td>
+						<td class="td_class">
+						<input name="port_sip" id="port_sip_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:mapped port%>:</td>
+						<td class="td_class">
+						<input name="port_sport" id="port_sport_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:320px;text-indent:200px;"><%:address transpond%>:</td>
+						<td class="td_class"><select  name="port_nat" id="port_nat_id" style="width:210px;">
+							<option value="0"><%:SNAT%></option>
+                    		<!--<option value="1"><%:DNAT%></option>-->
+						</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:mapping ipaddr%>:</td>
+						<td class="td_class">
+						<input name="port_dip" id="port_dip_id" type="text" style="width:200px;margin-left:0px;"></td></tr>					
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:mapping port%>:</td>
+						<td class="td_class">
+						<input name="port_dport" id="port_dport_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">	
+						<td class="td_class" style="width:300px;text-indent:200px;"></td>
+						<td class="td_class"><select  name="port_opr" id="port_opr_id" style="width:210px;">
+							<option value="0"><%:add%></option>
+                    		<option value="1"><%:del%></option>
+						</select>
+						<input type="button" id="port_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="port_map_config(this.form.port_prot.selectedIndex,this.form.port_nat.selectedIndex,this.form.port_opr.selectedIndex)" /></td></tr>
+				</table>
+			</div>
+
+		</fieldset>
+	</div>
+	
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

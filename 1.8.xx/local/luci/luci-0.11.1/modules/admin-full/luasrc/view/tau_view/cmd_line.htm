@@ -1,0 +1,69 @@
+<%+header%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("submit_id").disabled=true;
+	}
+}	
+
+function ajax_set(data1,a_url) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+	
+	legend.parentNode.style.display = 'block';
+	legend.style.display = 'inline';
+	
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{value1:data1},
+		success:function(r){
+			legend.style.display = 'none';
+			output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', r.result);
+		}
+	});
+}	
+function cmdline_config()
+{
+	var cmdline = document.getElementById('cmdline_id').value;
+	ajax_set(cmdline,'<%=pcdata(luci.dispatcher.build_url("admin/config/cmd_line"))%>');
+}
+
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Cmd line%></a></h2><br/>
+		
+		<fieldset class="cbi-section">
+			
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:Cmd line%>:</td>
+						<td class="td_class"><input name="cmdline" id="cmdline_id" type="text" style="width:300px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">	
+						<td class="td_class" style="width:300px;text-indent:200px;"></td>
+						<td class="td_class"><input type="button" id="submit_id" class="cbi-button" value="<%:Execute%>" style="width:100px;" onclick="cmdline_config()" />
+						</br></br>
+						</td></tr>
+				</table>
+			</div>
+			
+		</fieldset>
+		
+	</div>
+	
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"></font></legend>
+				<span id="diag-rc-output"></span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

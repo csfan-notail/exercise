@@ -1,0 +1,47 @@
+#!/bin/sh
+
+#
+# miscellaneous hooks used to init local environment
+#
+
+
+custom_boot_default()
+{
+
+	if [ "`factory_env get BOOT_DEFAULT`" = "BOOT_DEFAULT=1" ];then
+		echo "resetting user data..."
+		mtd erase rootfs_data && \
+		factory_env unset BOOT_DEFAULT && factory_env commit
+	fi
+
+}
+
+
+ramoverlay_mtest() {
+	mkdir -p /tmp/root_mtest
+	mount -t tmpfs -o mode=0755 root /tmp/root_mtest
+	fopivot /tmp/root_mtest /rom 1
+}
+
+custom_mtest_skip_mount()
+{
+
+	if [ "`vflag whichmode`" = "ART mode" ];then
+		ramoverlay_mtest && pi_mount_skip_next=true
+	fi
+
+}
+
+custom_caldata()
+{
+	ln -s "$(find_mtd_part art)" /dev/caldata
+}
+
+
+
+boot_hook_add preinit_mount_root custom_boot_default
+boot_hook_add preinit_mount_root custom_mtest_skip_mount
+
+boot_hook_add preinit_main custom_caldata
+
+

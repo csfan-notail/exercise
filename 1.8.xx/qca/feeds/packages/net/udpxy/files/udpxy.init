@@ -1,0 +1,28 @@
+#!/bin/sh /etc/rc.common
+
+# To open multicast traffic, add the following rule at the end of
+# /etc/config/firewall file:
+#
+# config 'rule'
+#     option 'target' 'ACCEPT'
+#     option '_name' 'multicast'
+#     option 'src' 'wan'
+#     option 'proto' 'all'
+#     option 'dest_ip' '224.0.0.0/4'
+
+#START=99
+STOP=10
+
+GMP_OPTS="-p 8080 -a 192.168.77.252"
+IGMP_BIN="/usr/bin/udpxy"
+PID_F="/var/run/udpxy.pid"
+
+start() {
+        echo "Starting udpxy"
+        start-stop-daemon -S -x $IGMP_BIN -p $PID_F -b -m -- $IGMP_OPTS
+}
+
+stop() {
+       echo "Stopping udpxy"
+       start-stop-daemon -K -x $IGMP_BIN -p $PID_F -q
+} 

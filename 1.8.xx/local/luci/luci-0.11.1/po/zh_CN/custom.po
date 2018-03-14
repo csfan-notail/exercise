@@ -1,0 +1,1875 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-10-16 23:08+0200\n"
+"PO-Revision-Date: 2015-10-18 15:00+0200\n"
+"Last-Translator: liyugao\n"
+"Language-Team: \n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Pootle 2.0.6\n"
+
+
+msgid "Upgrade new version"
+msgstr "升级新版本"
+
+msgid "Upload a version image here to upgrade current software."
+msgstr "上传新版本并升级"
+
+msgid "Upgrade version"
+msgstr "升级版本"
+
+msgid "The uploaded version file does not contain a supported format."
+msgstr "无法识别所上传的版本文件"
+
+msgid "Sorry, there is no version upgrade support present, a new version image must be flashed manually. Please refer to our documents for instructions."
+msgstr "对不起, 当前系统不支持版本升级, 需要手动升级. 请参考说明文档中的方法."
+
+msgid "The version image was uploaded.<br /> Click \"Proceed\" below to start the flash procedure."
+msgstr "版本已上传. 请点击\"执行\"按钮执行版本升级操作.<br />写入过程中请勿断电!"
+
+msgid "Upgrade failed"
+msgstr "升级失败"
+
+msgid "Upgrade success"
+msgstr "升级成功"
+
+msgid "Upgrade success, reboot now?"
+msgstr "升级成功,是否立即重启?"
+
+msgid "The system is flashing now.<br /> DO NOT POWER OFF THE DEVICE!<br /> Wait a few minutes please..."
+msgstr "升级中...<br /> 切勿关闭电源! DO NOT POWER OFF THE DEVICE!<br /> 请稍等几分钟..."
+
+msgid "Error messages"
+msgstr "错误信息"
+
+msgid "Device Model"
+msgstr "设备型号"
+
+msgid "Serial Number"
+msgstr "序列号"
+
+msgid "Hardware Version"
+msgstr "硬件版本"
+
+msgid "Centigrade"
+msgstr "摄氏度"
+
+msgid "CPU Temperature"
+msgstr "CPU 温度"
+
+msgid "CPU Utilization"
+msgstr "CPU使用率"
+
+msgid "Memory Utilization"
+msgstr "内存使用率"
+
+
+msgid "Gateway Config"
+msgstr "网关配置"
+
+msgid "Gateway Status"
+msgstr "网关状态"
+
+
+msgid "Hotspot Config"
+msgstr "热点配置"
+
+msgid "Hotspot Online"
+msgstr "热点在线状态"
+
+msgid "Hotspot Switch"
+msgstr "热点开关"
+
+msgid "Hotspot Name"
+msgstr "热点ID"
+
+
+msgid "Platform Address"
+msgstr "平台地址"
+
+msgid "Platform PATH"
+msgstr "平台路径"
+
+msgid "Third-party certification"
+msgstr "第三方认证"
+
+
+msgid "Auth"
+msgstr "认证配置"
+
+msgid "Global Free Auth"
+msgstr "全局免认证配置"
+
+msgid "Port Free Auth"
+msgstr "端口免认证配置"
+
+msgid "choose ports needs free auth,you can choose more than one port"
+msgstr "选择需要免认证的端口，可以同时勾选多个"
+
+	
+msgid "Remote Manage"
+msgstr "远程管理"
+
+msgid "Remote manage Online"
+msgstr "远程管理在线状态"
+
+msgid "Remote Manage Switch"
+msgstr "远程管理开关"
+
+msgid "Remote Manage Server"
+msgstr "远程管理服务器"
+
+msgid "Dispaly wifidog/sta online status"
+msgstr "显示热点在线状态"
+
+msgid "Online"
+msgstr "在线"
+
+msgid "Offline"
+msgstr "离线"
+
+msgid "Mini Snmpd"
+msgstr "SNMP管理"
+
+msgid "Given password must include big, lowercase letters, Numbers, special symbols such as class character of 3 class 4 or above!"
+msgid "密码必须包含大、小写英文字母，数字、特殊符号等4类字符中的3类或以上！"
+
+msgid "Password number should not be less than 5!"
+msgid "密码位数不得小于5位！"
+
+msgid "Password include unsupport character!"
+msgid "密码中包含不支持的特殊符号"
+
+#~	------------------
+#~		public
+#~	------------------
+
+msgid "Configuration Success ..."
+msgstr "配置成功..."
+
+msgid "Configuration failed ..."
+msgstr "配置失败..."
+
+msgid "Configure"
+msgstr "配置"
+
+msgid "Config"
+msgstr "配置"
+
+msgid "Setting"
+msgstr "配置"
+
+#~	------------------
+#~		端口镜像
+#~	------------------
+
+msgid "Port Mirror"
+msgstr "端口镜像"
+
+msgid "Mirror on/off"
+msgstr "功能开关"
+
+msgid "off"
+msgstr "关闭"
+
+msgid "on"
+msgstr "开启"
+
+msgid "Mirror port"
+msgstr "镜像端口"
+
+msgid "close"
+msgstr "关闭"
+
+msgid "Observe port"
+msgstr "被观察端口"
+
+msgid "mirr data"
+msgstr "rx/tx是从LAN口出去/进来的数据"
+
+#~	------------------
+#~		后路由
+#~	------------------
+
+msgid "Last Route"
+msgstr "LTE后路由"
+
+msgid "LTE1 Last Route"
+msgstr "LTE1后路由"
+
+msgid "LTE2 Last Route"
+msgstr "LTE2后路由"
+
+
+msgid "last route on/off"
+msgstr "功能开关"
+
+#~	------------------
+#~	LTE- WAN配置
+#~	------------------
+
+msgid "LTE WAN"
+msgstr "LTE1拨号方式配置"
+
+msgid "LTE2 WAN"
+msgstr "LTE2拨号方式配置"
+
+msgid "WAN Config"
+msgstr "WAN 配置"
+
+msgid "WAN dial way"
+msgstr "拨号方式"
+
+msgid "auto"
+msgstr "自动拨号"
+
+msgid "manual"
+msgstr "手动拨号"
+
+msgid "IP adress"
+msgstr "IP 地址"
+
+msgid "Net mask"
+msgstr "子网掩码"
+
+msgid "Gateway1"
+msgstr "网	关"
+
+msgid "DNS server1"
+msgstr "DNS主地址"
+
+msgid "DNS server2"
+msgstr "DNS备地址"
+
+
+#~  -------------------
+#~   GRE(通用路由封装)
+#~  -------------------
+
+msgid "GRE"
+msgstr "GRE管理"
+
+msgid "GRE on/off"
+msgstr "功能开关"
+
+msgid "Tunnel Name"
+msgstr "隧道名称"
+
+msgid "Initial Address"
+msgstr "封装前地址"
+
+msgid "Encapsulated Address"
+msgstr "封装后地址"
+
+msgid "Please input actual source ip"
+msgstr "请输入实际源ip"
+
+msgid "Please input actual destination sip"
+msgstr "请输入实际目的ip"
+
+msgid "Please input encapsulated source ip"
+msgstr "请输入封装后源ip"
+
+msgid "Please input encapsulated destination ip"
+msgstr "请输入封装后目的ip"
+
+#~	------------------
+#~	LTE- LTE状态信息
+#~	------------------
+
+msgid "LTE Setting"
+msgstr "LTE配置"
+
+msgid "LTE Status Information"
+msgstr "LTE状态信息"
+
+msgid "LTE1 Status Information"
+msgstr "LTE1状态信息"
+
+msgid "LTE2 Status Information"
+msgstr "LTE2状态信息"
+
+msgid "SIM Status"
+msgstr "SIM卡状态"
+
+msgid "SIM imsi"
+msgstr "SIM卡IMSI"
+
+msgid "SIM iccid"
+msgstr "SIM卡ICCID"
+
+msgid "sim success"
+msgstr "已检测到sim卡"
+
+msgid "sim fail"
+msgstr "未检测到sim卡"
+
+msgid "dial success"
+msgid "拨号成功"
+
+msgid "dial fail"
+msgid "未拨号"
+
+msgid "SIM Info"
+msgstr "SIM信息(IMSI/ICCID)"
+
+msgid "Module Info"
+msgstr "模块信息(IMEI)"
+
+msgid "PIN Status"
+msgstr "PIN状态"
+
+msgid "Dial Status"
+msgstr "拨号状态"
+
+msgid "Current Access Network"
+msgstr "当前接入网络"
+
+msgid "Operator"
+msgstr "运营商"
+
+msgid "IPv4 Address"
+msgstr "IPv4地址"
+
+msgid "Community ID"
+msgstr "小区ID(EnodeB-LCld)"
+
+msgid "Physical Community ID"
+msgstr "物理小区ID"
+
+msgid "Access Frequency"
+msgstr "接入频点"
+
+msgid "Access Spectrum"
+msgstr "接入频段(BAND)"
+
+msgid "Lock Spectrum"
+msgstr "锁定频段(BAND)"
+
+msgid "Info RSSI"
+msgstr "信号RSSI(dBm)"
+
+msgid "Info RSRP"
+msgstr "主信号RSRP(dBm)"
+
+msgid "Auxiliary RSRP"
+msgstr "辅信号RSRP(dBm)"
+
+msgid "Info RSRQ"
+msgstr "信号RSRQ(dB)"
+
+msgid "Info SINR"
+msgstr "信号SINR(dB)"
+
+msgid "qos cid"
+msgstr "服务质量CID"
+
+msgid "qos qci"
+msgstr "服务质量QCI"
+
+msgid "qos dlgbr"
+msgstr "服务质量DL_GBR(kbit/s)"
+
+msgid "qos ulgbr"
+msgstr "服务质量UL_GBR(kbit/s)"
+
+msgid "qos dlmbr"
+msgstr "服务质量DL_MBR(kbit/s)"
+
+msgid "qos ulmbr"
+msgstr "服务质量UL_MBR(kbit/s)"
+
+#~	------------------
+#~	LTE- LTE单双模配置
+#~	------------------
+
+msgid "single module"
+msgstr "单模块"
+
+msgid "double module"
+msgstr "双模块"
+
+msgid "Single Double Module Set"
+msgstr "LTE单双模块设置"
+
+msgid "LTE Single Double Set"
+msgstr "LTE单双模配置"
+
+msgid "Module Current Status"
+msgstr "单双模块状态："
+
+msgid "Configuration Success Please Reboot ..."
+msgstr "配置成功，重启生效！"
+
+#~	------------------
+#~	LTE- 基本配置
+#~	------------------
+
+msgid "LTE Basic Setting"
+msgstr "LTE基本配置"
+
+msgid "Basic Setting"
+msgstr "LTE1基本配置"
+
+msgid "LTE2 Basic Setting"
+msgstr "LTE2基本配置"
+
+msgid "APN Setting"
+msgstr "APN配置"
+
+msgid "Keeplive Setting"
+msgstr "保活配置"
+
+msgid "LET Dial Status"
+msgstr "LTE拨号状态"
+
+msgid "LTE Access"
+msgstr "LTE接入"
+
+msgid "enable"
+msgstr "启用"
+
+msgid "disable"
+msgstr "禁用"
+
+msgid "manual"
+msgstr "手动"
+
+msgid "auto"
+msgstr "自动"
+
+msgid "Dial Way"
+msgstr "拨号方式"
+
+msgid "Dial"
+msgstr "拨号"
+
+msgid "Keeplive function"
+msgstr "保活功能"
+
+msgid "LTE auto connect time set"
+msgstr "LTE自动拨号间隔"
+
+msgid "While zero is setted,means set by default value :10s"
+msgstr "当设置参数为0时，自动拨号时间默认设置为10"
+
+#~	------------------
+#~	LTE- 高级配置
+#~	------------------
+
+
+msgid "LTE Higt Setting"
+msgstr "LTE高级配置"
+
+msgid "LTE1 Hight Setting"
+msgstr "LTE1高级配置"
+
+msgid "LTE2 Hight Setting"
+msgstr "LTE2高级配置"
+
+msgid "invalid range"
+msgstr "无效的范围"
+
+msgid "invalid argument"
+msgstr "无效的参数"
+
+msgid "Access Setting"
+msgstr "LTE1接入配置"
+
+msgid "LTE2 Access Setting"
+msgstr "LTE2接入配置"
+
+msgid "Lock Frequency Switch"
+msgstr "锁频开关"
+
+msgid "Lock Band start"
+msgstr "起始频点"
+
+msgid "Lock Band end"
+msgstr "终止频点"
+
+msgid "lock band"
+msgstr "锁频段"
+
+msgid "lock frequency"
+msgstr "锁频点"
+
+msgid "lock cell"
+msgstr "锁小区"
+
+msgid "Access Community"
+msgstr "接入小区"
+
+msgid "Lock physical community"
+msgstr "锁小区"
+
+msgid "Lock Frequency"
+msgstr "锁频点"
+
+msgid "Lock Bands"
+msgstr "锁频段"
+
+msgid "PIN Setting"
+msgstr "PIN配置"
+
+msgid "Cell Setting"
+msgstr "基站配置"
+
+msgid "Network Access Mode"
+msgstr "网络接入模式"
+
+msgid "4G"
+msgstr "仅4G模式"
+
+msgid "Lock Screen Switch"
+msgstr "锁频开关"
+
+msgid "Internet Management Options"
+msgstr "上网管理选项"
+
+msgid "Community management"
+msgstr "小区管理"
+
+msgid "EnodeB management"
+msgstr "EnodeB 管理"
+
+msgid "Tac management"
+msgstr "Tac 管理"
+
+msgid "sim Lock Switch"
+msgstr "sim卡锁定开关"
+
+msgid "Lock Disable"
+msgstr "锁定禁用"
+
+msgid "Lock Enable"
+msgstr "锁定启用"
+
+msgid "sim Exchange"
+msgstr "sim卡更换"
+
+msgid "sim lock Setting"
+msgstr "sim卡锁配置"
+
+msgid "PIN Operation Choice"
+msgstr "PIN操作选择"
+
+msgid "PIN Function Disable"
+msgstr "PIN功能禁用"
+
+msgid "PIN Function Enable"
+msgstr "PIN功能启用"
+
+msgid "Modify PIN"
+msgstr "修改PIN码"
+
+msgid "Current PIN Status"
+msgstr "当前PIN状态"
+
+msgid "Old PIN Code"
+msgstr "原PIN码"
+
+msgid "New PIN Code"
+msgstr "新PIN码"
+
+msgid "Sim Exchange"
+msgstr "SIM卡更换"
+
+msgid "Setting completed,effect after restart"
+msgstr "重启生效"
+
+msgid "While select lock mode,please unlock module"
+msgstr "当选择锁频模式时，需先解锁模块"
+
+msgid "While select lock band mode,lock band start and lock band end must be infilled"
+msgstr "当选择锁频段后，起始频点和终止频点必须填入"
+
+msgid "While select lock frequency mode,lock frequency must be infilled"
+msgstr "当选择锁频点后，锁定的频点必须填入"
+
+msgid "While select lock cell mode,frequency and cellid must be infilled"
+msgstr "当选择锁小区后，锁定的频点和小区ID必须填入"
+
+#~	------------------
+#~	LTE-QOS承载配置
+#~	------------------
+msgid "LTE QOS"
+msgstr "QOS承载配置"
+
+msgid "QOS config"
+msgstr "QOS配置"
+
+msgid "qos_cid"
+msgstr "CID"
+
+msgid "qos_qci"
+msgstr "QCI"
+
+msgid "qos dl_gbr"
+msgstr "DL_GBR"
+
+msgid "qos ul_gbr"
+msgstr "UL_GBR"
+
+msgid "qos dl_mbr"
+msgstr "DL_MBR"
+
+msgid "qos ul_mbr"
+msgstr "UL_MBR"
+
+msgid "cid rang 1-32"
+msgstr "CID的范围1-32"
+
+msgid "Cid Range 1-32"
+msgstr "Cid的范围1-32"
+
+msgid "Qci Range 0-9"
+msgstr "Qci的范围1-32"
+
+msgid "Dlgbr Range 0-262144"
+msgstr "Dlgbr的范围0-262144"
+
+msgid "Ulgbr Range 0-262144"
+msgstr "Ulgbr的范围0-262144"
+
+msgid "Dlmbr Range 0-262144"
+msgstr "Dlmbr的范围0-262144"
+
+msgid "Ulmbr Range 0-262144"
+msgstr "Ulmbr的范围0-262144"
+
+msgid "Illegal configuration"
+msgstr "非法配置"
+
+msgid "No qos configuration to be deleted"
+msgstr "没有qos的配置要删除"
+
+
+#~	------------------
+#~	LTE- 模块升级
+#~	------------------
+
+msgid "LTE Update"
+msgstr "LTE模块升级"
+
+msgid "Note"
+msgstr "提示"
+
+msgid "isover"
+msgstr "后台版本"
+
+msgid "swver"
+msgstr "当前软件版本"
+
+msgid "dload_type"
+msgstr "下载类型"
+
+msgid "product_name"
+msgstr "产品名称"
+
+msgid "dload_ver_info"
+msgstr "下载版本协议信息"
+
+msgid "Whether the upgrade was successful, you have to restart !!!"
+msgstr "无论升级是否成功，必须重启！！！"
+
+msgid "After the error occurred, please keep all error messages"
+msgstr "出错后，请记录好错误信息，以便处理。"
+
+msgid "The system is flashing now."
+msgstr "升级中。。。"
+
+msgid "Wait ten minutes please..."
+msgstr "请等十分钟左右"
+
+msgid "Upgrade failed, reboot now?"
+msgstr "升级失败，是否重启？"
+
+
+
+#~	------------------
+#~	LTE- NAT配置
+#~	------------------
+
+msgid "LTE NAT"
+msgstr "NAT管理"
+
+msgid "Nat config"
+msgstr "NAT配置"
+
+msgid "Nat switch"
+msgstr "NAT功能开关"
+
+msgid "Nat default switch"
+msgstr "缺省NAT规则开关"
+
+msgid "nat rule config"
+msgstr "NAT规则配置"
+
+msgid "rule index"
+msgstr "规则索引"
+
+msgid "rule type"
+msgstr "规则类型"
+
+msgid "rule src ip"
+msgstr "源IP"
+
+msgid "src netmask"
+msgstr "源IP掩码"
+
+msgid "rule dst ip"
+msgstr "目的IP"
+
+msgid "rule_index"
+msgstr "规则索引"
+
+msgid "rule_type"
+msgstr "规则类型"
+
+msgid "source_ip"
+msgstr "源IP"
+
+msgid "source_mask"
+msgstr "源IP掩码"
+
+msgid "destion_ip"
+msgstr "目的IP"
+
+msgid "index range is 1-32"
+msgstr "索引的范围是1-32"
+
+msgid "input data is in list"
+msgstr "添加的规则已经存在"
+
+msgid "Mapped address and mapped addresses not be the same"
+msgstr "被映射地址和映射地址不能相同"
+
+
+#~	------------------
+#~		状态-总览
+#~	------------------
+
+msgid "WAN Access"
+msgstr "WAN 连接方式"
+
+msgid "WAN Address"
+msgstr "WAN IP地址"
+
+msgid "WAN Netmask"
+msgstr "WAN 子网掩码"
+
+msgid "WAN Netmask"
+msgstr "WAN 子网掩码"
+
+msgid "Sim Status"
+msgstr "SIM 卡状态"
+
+msgid "LTE Dial Status"
+msgstr "LTE 拨号状态"
+
+msgid "LAN RX Package"
+msgstr "LAN RX发包/错包/丢包"
+
+msgid "LAN TX Package"
+msgstr "LAN TX发包/错包/丢包"
+
+msgid "LAN Rate"
+msgstr "LAN 平均速率"
+
+msgid "Not dial"
+msgstr "未拨号"
+
+msgid "Dial OK"
+msgstr "已拨号"
+
+msgid "VRRP Status"
+msgstr "主备状态"
+
+msgid "Manual connection"
+msgstr "手动连接"
+
+msgid "Auto connection"
+msgstr "自动连接"
+
+msgid "Not SIM card"
+msgstr "未插入SIM卡"
+
+msgid "SIM card ok"
+msgstr "已插入SIM卡"
+
+msgid "LAN1 RX/TX"
+msgstr "LAN1 RX/TX统计"
+
+msgid "LAN2 RX/TX"
+msgstr "LAN2 RX/TX统计"
+
+msgid "LAN3 RX/TX"
+msgstr "LAN3 RX/TX统计"
+
+msgid "LAN4 RX/TX"
+msgstr "LAN4 RX/TX统计"
+
+#~	------------------
+#~		配置-系统日志
+#~	------------------
+
+msgid "Log export"
+msgstr "日志管理"
+
+msgid "Syslog"
+msgstr "日志管理"
+
+msgid "log list"
+msgstr "日志列表"
+
+msgid "Page"
+msgstr "页"
+
+msgid "PageUp"
+msgstr "上一页"
+
+msgid "PageDown"
+msgstr "下一页"
+
+msgid "FirstPage"
+msgstr "首页"
+
+msgid "EndPage"
+msgstr "尾页"
+
+msgid "Current"
+msgstr "第"
+
+msgid "Page / All"
+msgstr "页 / 共"
+
+msgid "Number"
+msgstr "序号"
+
+msgid "FileName"
+msgstr "文件名"
+
+msgid "Export"
+msgstr "导出"
+
+msgid "Delete"
+msgstr "删除"
+
+msgid "log size"
+msgstr "日志分片大小"
+
+msgid "total size"
+msgstr "系统日志总空间"
+
+msgid "The scurrent storage size"
+msgstr "系统日志剩余空间"
+
+msgid "log_danwei"
+msgstr "单位 KB"
+
+msgid "all delete"
+msgstr "删除所有日志"
+
+#~	------------------
+#~		系统-系统时间
+#~	------------------
+
+msgid "Please enter the time manually configure parameters !"
+msgstr "请输入手动配置时间数值!"
+
+msgid "Please enter the correct range year : 1970-2049 mon : 1-12 date : 1-31 "
+msgstr "请输入正确的时间日期 年:1970-2049 月:1-12 日:1-31"
+
+msgid "Please enter the correct range hour : 0-23 min and sec : 0-59"
+msgstr "请输入正确的时间 时:0-23 分/秒:0-59"
+
+msgid "Year"
+msgstr "年"
+
+msgid "Mont"
+msgstr "月"
+
+msgid "Date"
+msgstr "日"
+
+msgid "Hour"
+msgstr "时"
+
+msgid "Minu"
+msgstr "分"
+
+msgid "Secs"
+msgstr "秒"
+
+msgid "Manual Setting"
+msgstr "手动设置"
+
+#~	------------------
+#~		安全
+#~	------------------
+
+msgid "Secure"
+msgstr "安全"
+
+msgid "IP Filter"
+msgstr "IP过滤"
+
+msgid "MAC Filter"
+msgstr "MAC过滤"
+
+msgid "URL Filter"
+msgstr "网址过滤"
+
+msgid "SERVE Filter"
+msgstr "服务接入控制"
+
+msgid "Server Access Control"
+msgstr "服务接入控制"
+
+msgid "Input IP Address"
+msgstr "请输入IP地址"
+
+msgid "Input MAC Address"
+msgstr "请输入MAC地址"
+
+msgid "Input URL Address"
+msgstr "请输入URL地址"
+
+msgid "Input SERVICE Address"
+msgstr "请输入服务器地址"
+
+msgid "input mac address not legal"
+msgstr "输入的MAC地址不合法"
+
+msgid "input ip address not legal"
+msgstr "输入的IP地址不合法"
+
+msgid "input port not legal"
+msgstr "输入的端口不合法"
+
+msgid "input url not legal"
+msgstr "输入的URL不合法"
+
+msgid "This ip and port is in the whitelist"
+msgstr "这个ip和端口已经在白名单里了"
+
+msgid "This ip and port is in the blacklist"
+msgstr "这个ip和端口已经在黑名单里了"
+
+msgid "Enter the range of ports and port ranges whitelist overlap"
+msgstr "输入的端口和白名单里的端口有重叠"
+
+msgid "Enter the range of ports and port ranges blacklist overlap"
+msgstr "输入的端口和黑名单里的端口有重叠"
+
+msgid "This interface and protocol is in the list"
+msgstr "这个协议和网口已经在名单里了"
+
+msgid "This url is in the blacklist"
+msgstr "这个url已经在黑名单里了"
+
+msgid "This url is in the whitelist"
+msgstr "这个url已经在白名单里了"
+
+msgid "Black Add"
+msgstr "添加黑名单"
+
+msgid "White Add"
+msgstr "添加白名单"
+
+msgid "protocol"
+msgstr "协议"
+
+msgid "port"
+msgstr "端口"
+
+msgid "intface"
+msgstr "网口"
+
+msgid "IpAddr"
+msgstr "ip地址"
+
+msgid "MacAddr"
+msgstr "mac地址"
+
+msgid "Url"
+msgstr "URL"
+
+msgid "SevAddr"
+msgstr "服务器地址"
+
+msgid "Intf"
+msgstr "网口"
+
+msgid "input port not legal"
+msgstr "输入的网口不合法"
+
+msgid "White list"
+msgstr "白名单"
+
+msgid "Black list"
+msgstr "黑名单"
+
+msgid "mac is in blacklist"
+msgstr "mac地址已经在黑名单里了"
+
+msgid "mac is in whitelist"
+msgstr "mac地址已经在白名单里了"
+
+msgid "Vlan Filter"
+msgstr "VLAN隔离"
+
+msgid "Please select two VLAN ID"
+msgstr "请选择两个VLAN ID"
+
+msgid "Filter List"
+msgstr "隔离列表"
+
+msgid "Vlan Filter Err2"
+msgstr "添加隔离VLAN出错，请根据VLAN ID检查 接口 配置"
+
+msgid "Vlan Filter Err3"
+msgstr "删除隔离VLAN出错，请根据VLAN ID检查 接口 配置"
+
+msgid "The two VLAN IDs can not be the same"
+msgstr "两个VLAN ID 不能相同！"
+
+msgid "Existing configuration, please check the isolation list"
+msgstr "已有的配置，请检查隔离列表！"
+
+#~	------------------
+#~		VRRP
+#~	------------------
+
+msgid "VRRP"
+msgstr "主备管理"
+
+msgid "VRRP Setting"
+msgstr "VRRP 配置"
+
+msgid "VRRP Status"
+msgstr "VRRP 状态"
+
+msgid "VRRP on/off"
+msgstr "VRRP 开关"
+
+msgid "on/off"
+msgstr "功能开关"
+
+msgid "Password 0-65535"
+msgstr "密码范围0-65535"
+
+msgid "Global Configure"
+msgstr "全局配置"
+
+msgid "Router ID"
+msgstr "路由ID"
+
+msgid "VRRP Configure"
+msgstr "VRRP实例配置"
+
+msgid "WAN Virtual IP Address"
+msgstr "WAN口虚拟IP"
+
+msgid "Track interface"
+msgstr "观察接口"
+
+msgid "VID/LAN"
+msgstr "<VID>/<LAN>"
+
+msgid "CUT"
+msgstr "/"
+
+msgid "Delay Time"
+msgstr "延时"
+
+msgid "Delay Time 1-10"
+msgstr "延时1-10"
+
+msgid "Master&Backup"
+msgstr "主机&从机"
+
+msgid "Master"
+msgstr "主机"
+
+msgid "Backup"
+msgstr "从机"
+
+msgid "Nopreempt&Preempt"
+msgstr "抢占&非抢占"
+
+msgid "Nopreempt"
+msgstr "非抢占式"
+
+msgid "Preempt"
+msgstr "抢占式"
+
+msgid "Virtual Router Id"
+msgstr "虚拟路由ID"
+
+msgid "Priority"
+msgstr "优先级"
+
+msgid "Authentication Type"
+msgstr "认证方式"
+
+msgid "Virtual IP Address"
+msgstr "虚拟IP"
+
+msgid "While TAU ip as same as virtual ip,Setting completed,effect after restart"
+msgstr "当TAU（WAN/LAN）地址作为虚拟IP时，重启生效"
+
+msgid "Virtual Server Configure"
+msgstr "虚拟服务器配置"
+
+msgid "Virtual Server Address"
+msgstr "虚拟服务器IP"
+
+msgid "Real Server"
+msgstr "实际服务器IP"
+
+msgid "Weight"
+msgstr "权重"
+
+msgid "Lb_algo"
+msgstr "负载调度算法"
+
+msgid "Lb_kind"
+msgstr "负载均衡模式"
+
+msgid "rr"
+msgstr "轮叫调度"
+
+msgid "wrr"
+msgstr "加权轮叫调度"
+
+msgid "lc"
+msgstr "最小链接调度"
+
+msgid "wlc"
+msgstr "加权最小链接调度"
+
+msgid "lblc"
+msgstr "基于局部性的最少链接"
+
+msgid "lblcr"
+msgstr "带复制的基于局部性最少链接"
+
+msgid "dh"
+msgstr "目标地址散列调度"
+
+msgid "sh"
+msgstr "源地址散列调度"
+
+#~	------------------
+#~		用户管理
+#~	------------------
+msgid "Web user"
+msgstr "用户管理"
+
+msgid "username"
+msgstr "用户名"
+
+msgid "Add username"
+msgstr "用户名称"
+
+msgid "User password"
+msgstr "用户密码"
+
+msgid "User authority"
+msgstr "用户权限"
+
+msgid "Administrator"
+msgstr "管理员"
+
+msgid "Operators"
+msgstr "操作员"
+
+msgid "Maintainer"
+msgstr "维护员"
+
+msgid "User List"
+msgstr "用户列表"
+
+msgid "UserName"
+msgstr "用户名"
+
+msgid "Authority"
+msgstr "权限"
+
+msgid "not delete admin !"
+msgstr "不能删除最终管理员用户!"
+
+msgid "not add admin !"
+msgstr "不能添加admin名称的用户!"
+
+msgid "only add user number ten !"
+msgstr "仅只能添加10个用户人员!"
+
+msgid "not add user already exists !"
+msgstr "添加的用户名已存在!"
+
+msgid "not add null !"
+msgstr "不能设置用户名和密码为空!"
+
+
+#~	------------------
+#~		配置-ospf配置
+#~	------------------
+
+msgid "Ospf config"
+msgstr "动态路由"
+
+msgid "ospf switch"
+msgstr "动态路由开关"
+
+msgid "switch"
+msgstr "开关:"
+
+msgid "zebra config"
+msgstr "zebra 配置"
+
+msgid "interface"
+msgstr "接口"
+
+msgid "ip address"
+msgstr "IP地址"
+
+msgid "netmask"
+msgstr "子网掩码"
+
+msgid "add"
+msgstr "添加"
+
+msgid "del"
+msgstr "删除"
+
+msgid "ospf config"
+msgstr "ospf 配置"
+
+msgid "route id"
+msgstr "路由ID"
+
+msgid "network"
+msgstr "网段"
+
+msgid "area"
+msgstr "区域"
+
+msgid "ospf neighbor"
+msgstr "ospf 邻居关系"
+
+msgid "input ip address not legal"
+msgstr "输入的IP地址不合法"
+
+msgid "input netmask not legal"
+msgstr "输入的子网掩码不合法"
+
+msgid "input router id or area NULL"
+msgstr "ospf路由ID或区域为空"
+
+#~	------------------
+#~		端口映射
+#~	------------------
+msgid "Port map"
+msgstr "端口映射"
+
+msgid "config protocol"
+msgstr "配置协议"
+
+msgid "mapping ipaddr"
+msgstr "映射地址"
+
+msgid "mapping port"
+msgstr "映射端口"
+
+msgid "address transpond"
+msgstr "转发类型"
+
+msgid "mapped ipaddr"
+msgstr "被映射地址"
+
+msgid "mapped port"
+msgstr "被映射端口"
+
+msgid "input port number not legal"
+msgstr "输入的端口号不合法"
+
+msgid "input ip address not legal"
+msgstr "输入的ip地址不合法"
+
+msgid "input ip address/port number null"
+msgstr "输入ip地址和端口号不能为空"
+
+#~	------------------
+#~	    IPsec--PSK
+#~	------------------
+
+msgid "IPSec Config"
+msgstr "IPSec 配置"
+
+msgid "IPSec Switch"
+msgstr "IPSec 功能开关"
+
+msgid "IPSec"
+msgstr "IPSEC管理"
+
+msgid "IPsec status"
+msgstr "连接状态"
+
+msgid "DISCONNECT"
+msgid "未连接"
+
+msgid "CONNECT"
+msgid "已连接"
+
+msgid "PSK Auth Config"
+msgstr "PSK认证设置"
+
+msgid "Pfs"
+msgstr "完全向前保密"
+
+msgid "Ike"
+msgstr "1阶段认证加密"
+
+msgid "Ikelifetime"
+msgstr "IKE生存时间"
+
+msgid "Salifetime"
+msgstr "SA生存时间"
+
+msgid "Phase2"
+msgstr "SA类型"
+
+msgid "Phase2alg"
+msgstr "2阶段认证加密"
+
+msgid "psk"
+msgstr "共享秘钥"
+
+msgid "PSK basic setting"
+msgstr "PSK基本设置"
+
+msgid "Source IP"
+msgstr "本地IP"
+
+msgid "Source subnet/Mask"
+msgstr "本地网段/掩码"
+
+msgid "Source nexthop"
+msgstr "本地网段下一跳"
+
+msgid "Destination IP"
+msgstr "对端IP"
+
+msgid "Destination subnet/Mask"
+msgstr "对端网段/掩码"
+
+msgid "Destination nexthop"
+msgstr "对端网段下一跳"
+
+msgid "Lifetime 1-24"
+msgstr "生存时间1-24H"
+
+msgid "Mask 8-32"
+msgstr "掩码8-32"
+
+msgid "Only LETTER and NUMBER"
+msgstr "仅支持数字及字母"
+
+#~	------------------
+#~	    IPsec--RSA
+#~	------------------
+
+msgid "RSA Auth Config"
+msgstr "RSA认证配置"
+
+msgid "RSA basic setting"
+msgstr "RSA基本配置"
+
+msgid "key"
+msgstr "本地秘钥"
+
+msgid "Generate"
+msgstr "生成"
+
+msgid "Local ID"
+msgstr "本端ID"
+
+msgid "Remote ID"
+msgstr "对端ID"
+
+msgid "Remote Key"
+msgstr "对端秘钥"
+
+msgid "In the secret key is generated, please do not perform other operations when you click OK"
+msgstr "秘钥生成中，点击确定后请勿进行其他操作。"
+
+#~	------------------
+#~	    IPsec--x509
+#~	------------------
+
+msgid "X509 Auth Config"
+msgstr "X509认证配置"
+
+msgid "X509 basic setting"
+msgstr "X509基本配置"
+
+msgid "Certificate&Secret Key Import"
+msgstr "证书&秘钥导入"
+
+msgid "CA cert Imports"
+msgstr "根证书导入"
+
+msgid "Local Cert Imports"
+msgstr "本端证书导入"
+
+msgid "Remote Cert Imports"
+msgstr "对端证书导入"
+
+msgid "Private Key Imports"
+msgstr "私钥导入"
+
+msgid "Crl Imports"
+msgstr "Crl导入"
+
+#~	------------------
+#~		命令行
+#~	------------------
+
+msgid "Cmd line"
+msgstr "调试命令行"
+
+msgid "Execute"
+msgstr "执行"
+
+
+#~	------------------
+#~	    组播
+#~	------------------
+
+msgid "Muticast"
+msgstr "组播管理"
+
+msgid "Muticast Config"
+msgstr "组播配置"
+
+msgid "muticast interface"
+msgstr "接口选择"
+
+msgid "bsr-candidate priority"
+msgstr "BSR 选举优先级"
+
+msgid "gourp-prefix"
+msgstr "组前缀"
+
+msgid "rp-candidate time"
+msgstr "RP选举时间"
+
+msgid "rp-candidate priority"
+msgstr "RP选举优先级"
+
+msgid "rp-candidate addr"
+msgstr "RP IP地址"
+
+msgid "rp-candidate group_addr"
+msgstr "RP组IP"
+
+msgid "Priority Range 0-255"
+msgstr "优先级范围0-255"
+
+msgid "Time Range 0-16383"
+msgstr "时间范围0-16383（秒）"
+
+msgid "Mask Range 1-32"
+msgstr "掩码范围1-32"
+
+msgid "Bigger value means higher priority"
+msgstr "值越大优先级越高"
+
+msgid "Smaller value means higher priority"
+msgstr "值越小优先级越高"
+
+msgid "DR interface"
+msgstr "DR 接口"
+
+msgid "DR priority"
+msgstr "DR 优先级"
+
+#~	------------------
+#~	    衰减器
+#~	------------------
+
+msgid "Attenuator"
+msgstr "功率控制管理"
+
+msgid "attenuator config"
+msgstr "衰减器配"
+
+msgid "zero bit"
+msgstr "0.5dbm"
+
+msgid "first bit"
+msgstr "1dbm"
+
+msgid "second bit"
+msgstr "2dbm"
+
+msgid "third bit"
+msgstr "4dbm"
+
+msgid "fourth bit"
+msgstr "8dbm"
+
+msgid "fifth bit"
+msgstr "16dbm"
+
+msgid "attenuation strength"
+msgstr "衰减强度"
+
+msgid "range 1-10"
+msgstr "衰减范围 1-10"
+
+msgid "it maybe has 1db deviation"
+msgstr "可能有1db左右的误差"
+#~	------------------
+#~	    时间设置
+#~	------------------
+
+msgid "Manual Setting Time"
+msgstr "时间管理配置"
+
+msgid "time setting"
+msgstr "时间设置"
+
+
+#~	------------------
+#~		数据包
+#~	------------------
+
+msgid "Pack export"
+msgstr "内部数据管理"
+
+msgid "Packet"
+msgstr "数据包"
+
+msgid "filter rule set"
+msgstr "过滤规则"
+
+msgid "dst ip"
+msgstr "目的ip"
+
+msgid "src ip"
+msgstr "源ip"
+
+msgid "filter set ip"
+msgstr "过滤ip"
+
+msgid "remote switch"
+msgstr "远程开关"
+
+msgid "remote sever"
+msgstr "远程FTP地址"
+
+msgid "packet switch"
+msgstr "配置开关"
+
+msgid "The current storage size"
+msgstr "剩余空间"
+
+msgid "packet delete"
+msgstr "删除所有内部数据:"
+
+msgid "In the export... Please check the FTP server receives !"
+msgstr "导出中... 请查看FTP服务端接收 !"
+
+msgid "export FTP"
+msgstr "导出FTP地址"
+
+msgid "lan sever"
+msgstr "下位机地址"
+
+msgid "wan sever"
+msgstr "上位机地址"
+
+msgid "export time"
+msgstr "分片时间"
+
+msgid "export size"
+msgstr "文件分片大小"
+
+msgid "If you want to export file, please fill in the export file FTP server address!"
+msgstr "如果需要导出文件,请填写导出FTP服务器地址!"
+
+msgid "Marked with the red file called packets that are being saved, if necessary please stop this function was derived, the configuration switch off!"
+msgstr "红色标记的文件名是当前正在保存的数据包文件,如果需要导出,请关闭数据包保存配置开关!"
+
+
+#~	------------------
+#~		时间同步
+#~	------------------
+
+msgid "Time Synchronization config"
+msgstr "NTP时间同步配置"
+
+msgid "auto time syn"
+msgstr "自动时间同步"
+
+msgid "manual time syn"
+msgstr "手动时间同步"
+
+msgid "the syntime"
+msgstr " 同步周期"
+
+msgid "the primary"
+msgstr "主服务器地址"
+
+msgid "the standby"
+msgstr "备服务器地址"
+
+msgid "server port"
+msgstr "服务器端口"
+
+#~	------------------
+#~		lte sim switch
+#~	------------------
+
+msgid "LTE SIM"
+msgstr "LTE SIM 模式"
+
+msgid "LTE1 SIM"
+msgstr "LTE1 SIM 模式"
+
+msgid "LTE2 SIM"
+msgstr "LTE2 SIM 模式"
+
+msgid "Lte sim config"
+msgstr "LTE1 sim 模式配置"
+
+msgid "Lte2 sim config"
+msgstr "LTE2 sim 模式配置"
+
+msgid "sim_switch"
+msgstr "sim 模式"
+
+msgid "sim_imsi"
+msgstr "IMSI 值"
+
+msgid "sim_mnc_len"
+msgstr "MNC 长度"
+
+msgid "sim_suauthpara"
+msgstr "全鉴参数"
+
+msgid "sim_sualg"
+msgstr "算法模式"
+
+msgid "sim_key"
+msgstr "KI 值"
+
+msgid "sim_op"
+msgstr "OP 值"
+
+msgid "soft"
+msgstr "软模式"
+
+msgid "hard"
+msgstr "硬模式"
+
+msgid "Configuration Success ... please reboor !"
+msgstr "配置成功,重启生效!"
+
+msgid "SIM soft mode please input all data !"
+msgstr "配置软SIM模式请填写所有数据!"
+
+msgid "If setting sim soft mode , please reboot !"
+msgstr "如配置SIM卡模式,请重启设备生效!"
+
+#~	------------------
+#~		tr069 config
+#~	------------------
+
+msgid "Tr069 config"
+msgstr "TR069 配置"
+
+msgid "tr069 config"
+msgstr "TR069 配置"
+
+msgid "tr069 switch"
+msgstr "功能开关"
+
+msgid "server url"
+msgstr "服务器URL"
+
+msgid "device url"
+msgstr "设备WAN URL"
+
+msgid "device lan ip"
+msgstr "设备LAN地址"
+
+#~	------------------
+#~		GD contrl
+#~	------------------
+
+msgid "GD Contrl"
+msgstr "GD控制"
+
+msgid "Index"
+msgstr "序号"
+
+msgid "Crossing ID"
+msgstr "道口ID"
+
+msgid "Crossing Name"
+msgstr "道口别名"
+
+msgid "Contrl IP"
+msgstr "控制口IP"
+
+msgid "GPS position"
+msgstr "GPS触发位置"
+
+msgid "GPS longitude"
+msgstr "GPS触发经度"
+
+msgid "GPS latitude"
+msgstr "GPS触发纬度"
+
+msgid "Sensor ID"
+msgstr "传感器ID"
+
+msgid "Sensor Status"
+msgstr "传感器状态"
+
+msgid "start"
+msgstr "开启"
+
+msgid "stop"
+msgstr "停止"
+
+msgid "Add data according to the sequence number!"
+msgstr "添加数据请按照序号顺序添加!!!"
+
+msgid "After the configuration is added or deleted, reboot the device to take effect!"
+msgstr "配置添加或删除后,请重启设备生效!!!"
+
+msgid "GD Contrl List"
+msgstr "GD控制列表:"
+
+msgid "GD Server"
+msgstr "GD 服务"
+
+msgid "Server IP"
+msgstr "服务器IP"
+
+msgid "modify"
+msgstr "修改"
+
+msgid "GPS radius"
+msgstr "GPS触发半径"
+
+#~	------------------
+#~		LTE Unlocked
+#~	------------------
+
+msgid "LTE Unlocked"
+msgstr "LTE模块解锁"
+
+msgid "LTE1 Unlocked"
+msgstr "LTE1模块解锁"
+
+msgid "LTE2 Unlocked"
+msgstr "LTE2模块解锁"
+
+msgid "Lte unlogk config"
+msgstr "Lte1模块解锁配置"
+
+msgid "Lte2 unlogk config"
+msgstr "Lte2模块解锁配置"
+
+msgid "unlocked number"
+msgstr "解锁码"
+
+msgid "please input unlocked number !"
+msgstr "请输入对应LTE模块解锁码!"
+
+#~	------------------
+#~		Policy Router
+#~	------------------
+
+msgid "Policy Router"
+msgstr "策略路由"
+
+msgid "Policy Router Config"
+msgstr "策略路由配置"
+
+msgid "gateway"
+msgstr "网关"
+
+msgid "table"
+msgstr "路由表"
+
+msgid "ip_way"
+msgstr "IP类型"
+
+msgid "dst"
+msgstr "目的地址"
+
+msgid "src"
+msgstr "源地址"
+
+msgid "ip_addr"
+msgstr "IP地址"
+
+msgid "ip_mask"
+msgstr "子网掩码"
+
+msgid "Table name only numbers, range is 100 ~ 1000"
+msgstr "路由表名只能是数字,范围100~1000"
+
+msgid "Existing configuration, please check the route list"
+msgstr "已存在的配置，请检查配置列表"
+
+#~	------------------
+#~		Router Config
+#~	------------------
+
+msgid "Router Config"
+msgstr "路由配置"
+
+msgid "Configure the network interface is empty"
+msgstr "输入的网络接口为空"
+
+msgid "Netmask and route address conflict"
+msgstr "网络掩码和路由地址冲突"
+
+#~	------------------
+#~		Virtual IP
+#~	------------------
+msgid "Virtual IP"
+msgstr "虚拟IP"
+
+msgid "Virtual Interface Name"
+msgstr "接口别名"
+
+msgid "Vip Errno1"
+msgstr "已存在的虚拟IP，请换一个IP地址！"
+
+msgid "Vip Errno2"
+msgstr "已存在的虚拟接口名，请换一个接口名！"
+
+msgid "Vip Errno3"
+msgstr "添加虚拟IP时，命令执行错误，请检查参数是否合法！"
+
+msgid "Vip Errno4"
+msgstr "删除虚拟IP时，命令执行错误，请检查参数是否合法！"
+
+msgid "Configure the network interface name not legal"
+msgstr "虚拟接口名称不规范！仅支持数字0~254!"
+

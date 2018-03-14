@@ -1,0 +1,294 @@
+<%+header%>
+
+<%
+	local uci = require "luci.model.uci".cursor()
+	local ospf_sw = uci.get('config','ospf','ospf_sw')
+	local snmpd_switch = uci.get('config','mini_snmpd','switch')
+	local snmpd_trap_ip = uci.get('config','mini_snmpd','trap_ip')
+	local snmpd_status = uci.get('config','mini_snmpd','status')
+	--local ospf_nbr_sta = luci.util.exec("cat /tmp/ospf_nbr")
+	--print(ospf_nbr_sta)
+	
+require "lfs"
+local file_num = 0
+local file_name = "/tmp/ospf_nbr"
+local ospf_nbr_sta = ""
+function get_nbr (path)
+	file = io.open(path,"r")
+	if file then
+			for lines in file:lines() do
+			if string.len(lines) <= 3 then 
+				return
+			end	
+			ospf_nbr_sta = ospf_nbr_sta..lines.."#"
+			file_num = file_num+1
+		end
+		file:close()
+	else
+		ospf_nbr_sta = ""	
+	end
+end	
+
+get_nbr(file_name)
+
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+	var i,k,file; 
+	var filenames = '<%=ospf_nbr_sta%>'
+	
+	document.getElementById('ospf_sw_opr').options['<%=ospf_sw%>'].selected=true;
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("ospf_sw_submit_id").disabled=true;                                                         
+    //document.getElementById("zebra_submit_id").disabled=true;                                                           
+    document.getElementById("ospf_submit_id").disabled=true;
+	}
+	if( '0' == '<%=ospf_sw%>' )                                                                                                 
+  {                                                                                                                           
+    //document.getElementById('zebra_submit_id').disabled = true;                                                         
+    document.getElementById('ospfd_submit_id').disabled = true;                                                         
+    //document.getElementById('zebra_submit_id').style.background = 'Gray';                                               
+    document.getElementById('ospfd_submit_id').style.background = 'Gray';                                               
+  }                            
+	for(i=1;i<='<%=file_num%>';i++)
+	{
+		file = filenames.split('#')[0];
+		filenames = filenames.substring(file.length+1);
+		document.getElementById('legend_ospf_nbr').innerText = document.getElementById('legend_ospf_nbr').innerText + file + '\n';
+	}
+	
+	
+}	
+function netmaskNum(ipAddress){
+	if( ipAddress != "0.0.0.0" )
+	{	
+		var numArray = ipAddress.split(".");
+		var returnIpStr = "";
+		for (var i = 0; i < 4; i++) {
+			var curr_num = numArray[i];
+			var number_Bin = parseInt(curr_num);
+			number_Bin = number_Bin.toString(2);
+			var iCount = 8-number_Bin.length;
+			for (var j = 0; j < iCount; j++) {
+				number_Bin = "0"+number_Bin;
+			}
+			returnIpStr += number_Bin;
+		}
+		//return returnIpStr;
+		//var reg = /[a-zA-Z]/g;
+		var reg = /[1]/g;
+		return returnIpStr.match(reg).length;
+	}
+	else{
+		return 0;
+	}
+}
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,data6,data7,data8,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{value1:data1,value2:data2,value3:data3,value4:data4,value5:data5,value6:data6,value7:data7,value8:data8},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+function ospf_sw_config(operate)
+{
+	ajax_set("","","","","",operate,"","",'<%=pcdata(luci.dispatcher.build_url("admin/config/ospf_sw_config"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/')
+}	
+/*
+function zebra_config(operate)
+{
+	var zebra_ip = document.getElementById("zebra_ip_id").value;
+	var zebra_mask = document.getElementById("zebra_mask_id").value;
+	var zebra_index =	document.getElementById("zebra_int_id").selectedIndex;
+	var zebra_int = document.getElementById("zebra_int_id").options[zebra_index].text; 
+
+	if( false == check_ipv4_addr(zebra_ip) ){
+		alert('<%:input ip address not legal%>');
+		return false;
+	}
+	if( false == checkMask(zebra_mask) ){
+		alert('<%:input netmask not legal%>');
+		return false;
+	}
+	zebra_ip = zebra_ip +'/'+netmaskNum(zebra_mask);
+	ajax_set("zebra",zebra_int,zebra_ip,"","",operate,"","",'<%=pcdata(luci.dispatcher.build_url("admin/config/ospf_config"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+*/
+function ospf_config(operate)
+{
+	var ospf_id = document.getElementById('ospf_id_id').value;
+	var ospf_ip = document.getElementById('ospf_ip_id').value;
+	var ospf_mask = document.getElementById('ospf_mask_id').value;
+	var ospf_area = document.getElementById('ospf_area_id').value;
+	var ospf_int = document.getElementById('ospf_int_id').value;
+	var ospf_cost = document.getElementById('ospf_cost_id').value;
+	
+	if( false == check_ipv4_addr(ospf_ip) || false == check_ipv4_addr(ospf_id) ){
+		alert('<%:input ip address not legal%>');
+		return false;
+	}
+	if( false == checkMask(ospf_mask) ){
+		alert('<%:input netmask not legal%>');
+		return false;
+	}
+	if( "" == ospf_id || "" == ospf_area || "" == ospf_int || "" == ospf_cost){
+		alert('<%:input router id or area NULL%>');
+		return false;
+	}
+	ospf_ip = ospf_ip +'/'+netmaskNum(ospf_mask);
+	ajax_set("ospf","",ospf_id,ospf_ip,ospf_area,operate,ospf_int,ospf_cost,'<%=pcdata(luci.dispatcher.build_url("admin/config/ospf_config"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Ospf config%></a></h2><br/>
+		<fieldset class="cbi-section">
+			<div class="div_class">                                                                                     
+        <table class="table_class" >                                                                        
+          <tr class="tr_class">                                                                       
+            <td class="td_class" style="text-indent:100px;"><legend><%:ospf switch%>:</legend></td></tr>
+          <tr class="tr_class">                                                                       
+            <td class="td_class" style="width:300px;text-indent:200px;"><%:switch%></></td>                   
+            <td class="td_class"><select  name="ospf_sw" id="ospf_sw_opr" style="width:210px;"> 
+              <option value="0"><%:off%></option>                                         
+                 <option value="1"><%:on%></option>                                                          
+                      </select>                                                                           
+           <input type="button" id="ospf_sw_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="ospf_sw_config(this.form.ospf_sw.selectedIndex)" /></td></tr>
+        </table>                                                                                            
+       </div>
+			<!--
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="text-indent:100px;"><legend><%:zebra config%>:</legend></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:interface%>:</td>
+						<td class="td_class"><select  name="zebra_int" id="zebra_int_id" style="width:210px;">
+							<option value="0"><%:LAN%></option>
+                    		<option value="1"><%:WAN%></option>
+						</select></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:ip address%>:</td>
+						<td class="td_class">
+						<input name="zebra_ip" id="zebra_ip_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:netmask%>:</td>
+						<td class="td_class">
+						<input name="zebra_mas" id="zebra_mask_id" type="text" style="width:200px;margin-left:0px;"></td></tr>	
+					<tr class="tr_class">	
+						<td class="td_class" style="width:300px;text-indent:200px;"></td>
+						<td class="td_class"><select  name="zebra_opr" id="zebra_opr_id" style="width:210px;">
+							<option value="0"><%:add%></option>
+                    		<option value="1"><%:del%></option>
+						</select>
+						<input type="button" id="zebra_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="zebra_config(this.form.zebra_opr.selectedIndex)" /></td></tr>
+				</table>
+			</div>
+			-->
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="text-indent:100px;"><legend><%:ospf config%>:</legend></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:route id%>:</td>
+						<td class="td_class"><input name="ospf_id" id="ospf_id_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:ip address%>:</td>
+						<td class="td_class"><input name="ospf_ip" id="ospf_ip_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+										<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:netmask%>:</td>
+						<td class="td_class"><input name="ospf_mask" id="ospf_mask_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">	
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:area%>:</td>
+						<td class="td_class">
+						<input name="ospf_area" id="ospf_area_id" type="text" style="width:200px;margin-left:0px;"></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:interface%>:</td>
+						<td class="td_class">
+						<input name="ospf_int" id="ospf_int_id" type="text" style="width:200px;margin-left:0px;"></td></tr>		
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:cost%>:</td>
+						<td class="td_class">
+						<input name="ospf_cost" id="ospf_cost_id" type="text" style="width:200px;margin-left:0px;"></td></tr>		
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"></td>	
+						<td class="td_class"><select  name="ospf_opr" id="ospf_opr_id" style="width:210px;">
+							<option value="0"><%:add%></option>
+                    		<option value="1"><%:del%></option>
+						</select>
+						<input type="button" id="ospfd_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:100px;" onclick="ospf_config(this.form.ospf_opr.selectedIndex)" /></td></tr>
+					<tr class="tr_class">
+						<td class="td_class" style="text-indent:100px;"><legend><%:ospf neighbor%>:</legend></td></tr>	
+				</table>
+			</div>
+			
+			<div class="div_class" style="margin-left:100px;">
+				<table class="table_class" style="margin-left:100px;">
+					<tr class="tr_class" >
+						<td class="td_class" >
+							<font size="3" id="legend_ospf_nbr" color="blue" ></font>
+						</td></tr>
+				</table>
+			</div>
+				
+		</fieldset>
+	</div>
+	
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+	<script type="text/javascript">all_init();</script>		
+</form>
+
+<%+footer%>

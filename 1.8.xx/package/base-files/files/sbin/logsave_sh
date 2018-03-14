@@ -1,0 +1,86 @@
+#!/bin/sh
+
+M=`date | awk  '{print $2}'`
+if [ `date +%d` -lt 10   ]; then
+	D=`date +%d | tr -d 0`
+else
+	D=`date +%d`
+fi
+
+
+while [ 1 ]
+do
+	Y=`date | awk  '{print $6}'`
+	M=`date | awk  '{print $2}'`
+	Mou=`date +%m`
+	H=`date | awk  '{print $4}' | cut -d: -f1`
+	Min=`date | awk  '{print $4}' | cut -d: -f2`
+	date_n=`date | awk  '{printf $2" "$3" "$4" "}'`
+	if [ `date +%d` -lt 10   ]; then
+		Dn=`date +%d | tr -d 0`
+	else
+		Dn=`date +%d`
+	fi
+	if [ $D -ne $Dn ]; then 
+		D=$Dn
+	fi
+	
+	touch /tmp/log/read
+	
+	read_ch=`touch /mnt/emmc/read`
+	
+	if [ -z $read_ch  ]; then 
+		echo "0" > /tmp/log/read
+		read_flag=`cat /var/log/read`
+		if [ "0" == $read_flag ]; then
+	
+			if [ -d "/mnt/emmc/logsave/" ]; then
+				size_f=`cat /var/log/syslog.log | wc -c`
+				if [ $size_f -gt 12288 ]; then
+
+					if [ $H == "00"  ]; then
+						if [ $Min -le "10" ]; then
+							Yea=$Y
+							Dat=30
+
+							if [ `date +%m` == "01" ] || [ `date +%m` == "02" ]|| [ `date +%m` == "04" ]|| [ `date +%m` == "06" ] || [ `date +%m` == "08" ]|| [ `date +%m` == "09" ]|| [ `date +%m` == "11" ]; then
+								Dat=31
+							fi
+
+							if [ `date +%d` == "01" ]; then
+								if [ `date +%m` -ne "01" ]; then
+									if [ $Mou == "09" ]; then
+										Mou=08
+									elif [ $Mou == "08" ]; then
+										Mou=07
+									else
+										Mou=` echo "$(($Mou-1))" | awk '{ printf "%02d",$1 }' `
+									fi
+								else
+									Mou=12
+									Yea=$(($Y-1))
+								fi
+								D_yesday=$Dat
+							else
+								D_yesday=` echo "$(($D-1))" | awk '{ printf "%02d",$1 }' `
+							fi	
+							Mou_g=` date +"%b" -d'-1' `
+							cat /var/log/syslog.log | grep "$Mou_g"  | awk '$2 == '$D_yesday'' >> /mnt/emmc/logsave/tau_h2000.log.$Yea$Mou$D_yesday
+							#sed  '/'$D_yesday'/p' /var/log/syslog.log  > /var/log/syslog.log
+						fi
+					fi
+					cat /var/log/syslog.log | grep "$M"  | awk '$2 == '$D'' >> /mnt/emmc/logsave/tau_h2000.log.`date +%Y%m%d`
+					sed  '/'$D'/p' /var/log/syslog.log  > /var/log/syslog.log
+				fi
+			else
+				echo $date_n"syslog: Warning /mnt/emmc/logsave not find !" >> /var/log/syslog.log
+			fi
+		fi
+	
+	else
+		echo $date_n"syslog: Error /mnt/emmc vfat Read-only file system !" >> /var/log/syslog.log
+		echo "read" > /tmp/log/read
+	fi
+	
+	sleep 10s
+done

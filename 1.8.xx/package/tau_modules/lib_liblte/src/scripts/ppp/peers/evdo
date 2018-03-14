@@ -1,0 +1,12 @@
+# Usage: root>pppd call evdo
+/dev/ttyUSB0
+115200
+connect '/usr/sbin/chat -v -f /etc/ppp/chat/evdo-connect-chat'
+debug
+nodetach
+ipcp-accept-local
+ipcp-accept-remote
+usepeerdns
+defaultroute
+user card
+

@@ -1,0 +1,63 @@
+#!/bin/sh
+
+#get oem info
+##ssid##
+default_ssid=`oem getparam extension ssid_prefixion`
+if [ "$default_ssid" == "" ];then
+	default_ssid="WIFI"
+fi
+
+##hotspot##
+default_device_hotspot_name_prefix=`oem getparam extension device_hotspot_name`
+if [ "$default_device_hotspot_name_prefix" = ""  ];then
+	default_device_hotspot_name_prefix="WIFI-"
+fi
+
+devid=`factory_env get devid| cut -d "=" -f2`
+echo $devid
+
+default_device_hotspot_name_postfix=${devid:6}
+default_device_hotspot_name="$default_device_hotspot_name_prefix""$default_device_hotspot_name_postfix"
+echo $default_device_hotspot_name
+
+default_device_hotspot_url=`oem getparam extension device_hotspot_url`
+if [ "$default_device_hotspot_url" = ""  ];then
+	default_device_hotspot_url="www.login-wifi.com"
+fi
+default_device_hotspot_path=`oem getparam extension device_hotspot_path`
+if [ "$default_device_hotspot_path" = ""  ];then
+	default_device_hotspot_path="/cmps/admin.php/api/"
+fi
+
+if [ -f /etc/config/gateway ]; then
+	rm -rf /etc/config/gateway
+fi
+
+touch /etc/config/gateway
+uci -q batch <<-EOT
+	add gateway gateway
+	set gateway.@gateway[0].ag_server_port=15513
+	set gateway.@gateway[0].device_hotspot_name=$default_device_hotspot_name
+	set gateway.@gateway[0].device_hotspot_url=$default_device_hotspot_url
+	set gateway.@gateway[0].device_hotspot_path=$default_device_hotspot_path
+	set gateway.@gateway[0].wifidog_switch=1
+	set gateway.@gateway[0].trap_switch=1
+	set gateway.@gateway[0].trap_ip=www.login-wifi.com
+	set gateway.@gateway[0].trap_port=162
+	set gateway.@gateway[0].ccsserver=http://www.login-wifi.com:8888/ccs/tr069
+	set gateway.@gateway[0].vlanfc_rule=0
+
+	commit gateway
+
+	del ucitrack.@wifidog[0]
+	add ucitrack wifidog
+	set ucitrack.@wifidog[0].init=wifidog
+	del_list ucitrack.@firewall[0].affects=wifidog	
+	add_list ucitrack.@firewall[0].affects=wifidog
+	del_list ucitrack.@firewall[0].affects=snmpagentd	
+	add_list ucitrack.@firewall[0].affects=snmpagentd
+	del_list ucitrack.@wifidog[0].affects=snmpagentd	
+	add_list ucitrack.@wifidog[0].affects=snmpagentd
+	commit ucitrack
+EOT
+exit 0

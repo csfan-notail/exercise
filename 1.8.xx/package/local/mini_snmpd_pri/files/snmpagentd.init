@@ -1,0 +1,42 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+
+SERVICE_MATCH_NAME=1
+SERVICE_DAEMONIZE=1
+
+START=50
+
+
+start() {
+	service_start /usr/sbin/snmpagentd
+}
+
+stop() {
+	service_stop /usr/sbin/snmpagentd
+}
+
+trap_switch=0
+
+run_snmp()
+{
+        config_get trap_switch $1 trap_switch
+	echo $trap_switch
+                 
+}  
+
+reload()
+{
+	config_load gateway
+	config_foreach run_snmp gateway
+	
+	if [ $trap_switch = "0" ]; then                                           
+	        service_stop /usr/sbin/snmpagentd                                      
+	        /etc/init.d/snmpagentd disable                                    
+		exit                                                                       
+	else                                                                         
+		/etc/init.d/snmpagentd enable
+	fi             
+	service_stop /usr/sbin/snmpagentd	
+	service_start /usr/sbin/snmpagentd
+}

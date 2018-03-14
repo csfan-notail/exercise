@@ -1,0 +1,163 @@
+<%+header%>
+<script type="text/javascript">
+
+function all_init ()
+{	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		document.getElementById("manual_set_submit_id").disabled=true;
+		document.getElementById("browser_sync_submit_id").disabled=true;
+	
+	}	
+	
+}
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{value1:data1},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+function config_time (btn) {
+		//alert(Math.floor((new Date()).getTime() / 1000));
+		//alert(Math.floor(Date.parse(new Date()) / 1000));
+		var getyear = document.getElementById("time_year_id").value;
+		var getmont = document.getElementById("time_mont_id").value;
+		var getdate = document.getElementById("time_date_id").value;
+		var gethour = document.getElementById("time_hour_id").value;
+		var getminu = document.getElementById("time_minu_id").value;
+		var getseco = document.getElementById("time_secon_id").value;
+		if ( "" == getyear || "" == getmont || "" == getdate || "" == gethour || "" == getminu || "" == getseco  ) 
+		{
+			alert("<%:Please enter the time manually configure parameters !%>");
+			return false;
+		}
+		if ( false == check_int_range(getyear,1970,2049,10) || false == check_int_range(getmont,1,12,10) || false == check_int_range(getdate,1,31,10) )
+		{
+			alert("<%:Please enter the correct range year : 1970-2049 mon : 1-12 date : 1-31 %>")
+			return false;
+		}
+		if ( false == check_int_range(gethour,0,23,10) || false == check_int_range(getminu,0,59,10) || false == check_int_range(getseco,0,59,10) )
+		{
+			alert("<%:Please enter the correct range hour : 0-23 min and sec : 0-59 %>")
+			return false;
+		}
+		btn.style.display="none";
+		//var stringTime = getyear+"-"+getmont+"-"+getdate+" "+gethour+":"+getminu+":"+getseco;
+		//var setTimeNum = Math.floor(Date.parse(new Date(stringTime)) / 1000);
+		if(getmont < 10)
+		{
+			getmont = "0"+getmont;
+		}
+		if(getdate < 10)
+		{
+			getdate = "0"+getdate;
+		}
+		if(gethour < 10)
+		{
+			gethour = "0"+gethour;
+		}
+		if(getminu < 10)
+		{
+			getminu = "0"+getminu;
+		}
+		if(getseco < 10)
+		{
+			getseco = "0"+getseco;
+		}
+		var stringTime = getyear+"-"+getmont+"-"+getdate+" "+gethour+":"+getminu+":"+getseco;
+		//alert(stringTime);
+
+		btn.disabled = true;
+		btn.value    = '<%:Synchronizing...%>';
+
+		ajax_set(stringTime,'<%=pcdata(luci.dispatcher.build_url("admin/config/time_set"))%>', 
+					 '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+		//return false;	
+}
+ 
+</script>
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+		<div class="cbi-map"><h2><a id="content" name="content"><%:Manual Setting Time%></a></h2><br/>
+	
+		<fieldset class="cbi-section">
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:time setting%>:</td>
+						<td class="td_class">
+						
+				<input type="text" name="time_y" id="time_year_id" style="width:30px;"><%:Year%>
+				<input type="text" name="time_mont" id="time_mont_id" style="width:15px;"><%:Mont%>
+				<input type="text" name="time_date" id="time_date_id" style="width:15px;"><%:Date%>
+				<input type="text" name="time_hour" id="time_hour_id" style="width:15px;"><%:Hour%>
+				<input type="text" name="time_minu" id="time_minu_id" style="width:15px;"><%:Minu%>
+				<input type="text" name="time_secon" id="time_secon_id" style="width:15px;"><%:Secs%>
+				<input type="button" id="manual_set_submit_id" class="cbi-button cbi-button-apply" value="<%:Setting%>" style="width:120px;" onclick="config_time(this)" />
+				</td></tr>
+				</table>
+			</div>
+		</fieldset>
+		
+		<fieldset class="cbi-section">
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">	
+					<script>showFileList();</script>
+			</div>
+		</div>
+		</fieldset>
+
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+
+		<script>
+			all_init();
+		</script>
+</form>
+
+<%+footer%>

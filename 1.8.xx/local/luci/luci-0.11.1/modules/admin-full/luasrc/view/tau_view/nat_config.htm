@@ -1,0 +1,284 @@
+<%+header%>
+
+<%
+local uci = require "luci.model.uci".cursor()
+local src_ip_all  = ""
+local dst_ip_all  = ""
+local type_all  = ""
+local index_all  = ""
+
+
+local sercure_nat_num = ""
+
+function secure_get ()
+	sercure_nat_num = uci.get("nat","nat","nat_num")
+	local ip_addr = ""
+	local dst_addr = ""
+	local type_addr =""
+	local index_addr =""
+	
+	for num=1 , tonumber(sercure_nat_num) do
+		local ip_str = "srcip_"..num
+		local dst_str ="dstip_"..num
+		local type_str ="type_"..num
+		local index_str="index_"..num
+		
+		ip_addr = uci.get("nat","nat",ip_str)
+		dst_addr = uci.get("nat","nat",dst_str)
+		type_addr = uci.get("nat","nat",type_str)
+		index_addr = uci.get("nat","nat",index_str)
+		
+		if ip_addr == nil then 
+			sercure_nat_num = num-1
+			return
+		end
+		src_ip_all = src_ip_all..ip_addr..";"
+		dst_ip_all = dst_ip_all..dst_addr..";"
+		type_all = type_all..type_addr..";"
+		index_all = index_all..index_addr..";"
+		
+	end	
+end
+
+secure_get();
+
+%>
+
+<script type="text/javascript">
+
+function all_init()
+{
+
+	
+	if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+	{
+		
+		document.getElementById("add_mac_ip_add_submit_id").disabled=true;
+	}
+	
+}	
+
+function stxhr_get(datas) {
+	var legend = document.getElementById('diag-rc-legend');
+	var output = document.getElementById('diag-rc-output');
+
+	if (legend && output)
+	{
+		output.innerHTML =
+			'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+			'<font size="3" color="red"><%:Waiting for command to complete ...%></font>';
+		legend.parentNode.style.display = 'block';
+		legend.style.display = 'inline';
+		
+		stxhr.get(datas, null,
+			function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="3" color="blue" ><b>%h</b></font></pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre><font size="5" color="red" style="font-weight:bold"><b>Error:<%:Configure failed !%></b></font></span>');
+					}
+				}
+		);
+	}
+}
+function ajax_set(data1,data2,data3,data4,data5,a_url,s_url) {
+	$.ajax({
+		url:a_url,
+		dataType:'json',
+		method:'post',
+		data:{value1:data1,value2:data2,value3:data3,value4:data4,value5:data5},
+		success:function(r){
+			stxhr_get(s_url+ r.result);
+			if(r.result == 'success'){
+				alert("<%:Configuration Success ...%>");
+				setInterval("window.location.reload()",1000);
+			}
+			else 
+			{
+				stxhr_get(s_url+ r.result);
+				alert("<%:Configuration failed ...%>");
+			}
+		}
+	});
+}	
+
+function add_nat_web()
+{
+	
+	var i,k,file,file1,file2,file3,file4,type;
+	var filenames = '<%=src_ip_all%>'
+	var filenames1 = '<%=dst_ip_all%>'
+	var filenames2 = '<%=type_all%>'
+	var filenames3 = '<%=index_all%>'
+	var nat_rule_index = document.getElementById("id_addindex").value;
+	var nat_rule_type = document.getElementById("last_sw_id3").value;
+	var nat_rule_src_ip = document.getElementById("id_addrule_src_ip_id").value;
+	var nat_rule_dst_ip = document.getElementById("id_addrule_dst_ip_id").value;
+	if( nat_rule_index < 1 || nat_rule_index > 32 )
+	{
+		alert('<%:index range is 1-32%>');
+		return false;
+	}
+	/*if( !check_ipv4_addr(nat_rule_src_ip) || !check_ipv4_addr(nat_rule_dst_ip) )
+	{
+		alert('<%:input ip address not legal%>');
+		return false;
+	}*/
+	
+	if( nat_rule_src_ip == nat_rule_dst_ip )
+	{
+		alert('<%:Mapped address and mapped addresses not be the same%>');
+		return false;
+	}
+	for(i=1;i<='<%=sercure_nat_num%>';i++)
+	{
+		file = filenames.split(';')[0];
+		filenames = filenames.substring(file.length+1)
+		
+		file1 = filenames1.split(';')[0];
+		filenames1 = filenames1.substring(file1.length+1)
+		
+		file2 = filenames2.split(';')[0];
+		filenames2 = filenames2.substring(file2.length+1)
+		
+		file3 = filenames3.split(';')[0];
+		filenames3 = filenames3.substring(file3.length+1)
+		
+		if( nat_rule_index == file3 )
+		{
+			alert('<%:input data is in list%>');
+			return false;
+		}
+		
+		if( nat_rule_type == file2 && nat_rule_src_ip == file && nat_rule_dst_ip == file1 )
+		{
+			alert('<%:input data is in list%>');
+			return false;
+		}
+		
+		
+	
+	}
+	
+	
+	ajax_set(nat_rule_index,nat_rule_type,nat_rule_src_ip,nat_rule_dst_ip,1,'<%=pcdata(luci.dispatcher.build_url("admin/config/nat_config"))%>', '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+function del_black_ip_web(srcip,dstip,type,index)
+{
+	ajax_set(index,type,srcip,dstip,0,'<%=pcdata(luci.dispatcher.build_url("admin/config/nat_config"))%>', '<%=luci.dispatcher.build_url("admin", "config")%>/set_infos/');
+}
+function showFileList()
+{
+	var i,k,file,file1,file2,file3,file4,type; 
+	var filenames = '<%=src_ip_all%>'
+	var filenames1 = '<%=dst_ip_all%>'
+	var filenames2 = '<%=type_all%>'
+	var filenames3 = '<%=index_all%>'
+	k="<table  class='cbi-section-table' style='margin-left:100px;width:800px'><tr><td style='width:35px;'><%:rule_index%></td><td style='width:60px;'><%:rule_type%></td><td style='width:48px;'><%:source_ip%></td><td style='width:60px;'><%:destion_ip%></td><td style='width:1px;'><%:Delete%></td></tr></table>";
+	k+="<table id='tablelsw' class='cbi-section-table' style='margin-left:100px;width:800px'>";
+	for(i=1;i<='<%=sercure_nat_num%>';i++)
+	{
+		file = filenames.split(';')[0];
+		filenames = filenames.substring(file.length+1)
+		
+		file1 = filenames1.split(';')[0];
+		filenames1 = filenames1.substring(file1.length+1)
+		
+		file2 = filenames2.split(';')[0];
+		filenames2 = filenames2.substring(file2.length+1)
+		if(file2 == '0')
+		{
+			type="SNAT"
+		}
+		if(file2 == '1')
+		{
+			type="DNAT"
+		}
+		
+		file3 = filenames3.split(';')[0];
+		filenames3 = filenames3.substring(file3.length+1)
+		
+		
+		if( '0' != getauthority("currauth") && '1' != getauthority("currauth"))
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+file3+"</td><td style='width:260px;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+type+"</td><td style='width:230px;'>"+file+"</td><td style='width:300px;'>"+file1+"</td><td><style='background-color:#f09090' onclick='del_black_ip_web(\""+file+"\",\""+file1+"\",\""+file2+"\",\""+file3+"\")'></td></tr>");
+		else
+			k+=("<tr><td style='width:120px;'>&nbsp;&nbsp;&nbsp;"+file3+"</td><td style='width:260px;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+type+"</td><td style='width:230px;'>"+file+"</td><td style='width:300px;'>"+file1+"</td><td><input type='submit' name='delete_file' value='<%:Delete%>' style='background-color:#f09090' onclick='del_black_ip_web(\""+file+"\",\""+file1+"\",\""+file2+"\",\""+file3+"\")'></td></tr>");
+	}
+	k+="<td></td><td></td><td></td><td></td>";
+	k+="</table>";
+	document.write(k);
+}
+
+</script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+		<div class="cbi-map">
+			<h2><a id="content" name="content"><%:Nat config%></a></h2>
+		<br/>
+	
+		<fieldset class="cbi-section">
+			<legend><%:nat rule config%></legend>
+			<div class="div_class">
+				<table class="table_class" >
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:rule index%>:</td>
+						<td class="td_class">
+						<input type="text" id="rule_index_id" style="width:20px;display:none;" />
+						<input type="text" id="id_addindex" style="width:180px;" onkeypress="timer(event)" />
+						<font color=" gray"><%:范围%> 1-32</font>
+						</td>
+					</tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:rule type%>:</td>
+						<td class="td_class">
+						<input type="text" id="rule_type_id" style="width:20px;display:none;" />
+						<select  name="last_sw" id="last_sw_id3" style="width:190px;">
+								<option value="0"><%:SNAT%></option>
+                    			<option value="1"><%:DNAT%></option>			
+						</select>
+						</td>
+					</tr>				
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:rule src ip%>:</td>
+						<td class="td_class">
+						<input type="text" id="rule_src_ip_id" style="width:20px;display:none;" />
+						<input type="text" id="id_addrule_src_ip_id" style="width:182px;" onkeypress="timer(event)" />
+						</td>
+					</tr>
+					<tr class="tr_class">
+						<td class="td_class" style="width:300px;text-indent:200px;"><%:rule dst ip %>:</td>
+						<td class="td_class">
+						<input type="text" id="rule_dst_ip_id" style="width:20px;display:none;" />
+						<input type="text" id="id_addrule_dst_ip_id" style="width:185px;" onkeypress="timer(event)" />
+						</td</tr>
+						<input type="button"  id="add_mac_ip_add_submit_id" class="cbi-button cbi-button-apply" value="<%:Add%>" style="width:100px;" onclick="add_nat_web()"/>				
+				</table>
+			</div>
+		</fieldset>
+		
+		<fieldset class="cbi-section">
+			<div class="cbi-section-node">
+				<div class="cbi-value cbi-value-last<% if version_inval then %> cbi-value-error<% end %>">	
+				<td class="td_class"></td>
+					<script>showFileList();</script>
+			</div>
+		</div>
+		
+
+		<fieldset class="cbi-section" style="display:none">
+				<legend id="diag-rc-legend"><font size="3" color="red"><%:In the configuration...%></font></legend>
+				<span id="diag-rc-output">1</span>
+		</fieldset>
+
+		<script>
+			all_init();
+		</script>
+</form>
+
+<%+footer%>

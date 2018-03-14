@@ -1,0 +1,79 @@
+mrouted (3.9.6-1) unstable; urgency=low
+
+  * New upstream release.
+  * Fix: Breakage caused by link list refactor.
+
+ -- Joachim Nilsson <troglobit@gmail.com>  Sun,  9 Jun 2013 22:45:00 +0100
+
+mrouted (3.9.5-1) unstable; urgency=low
+
+  * New upstream release.
+  * Fix: Insecure file creation in /var/tmp, files now in /var/run/mrouted
+
+ -- Joachim Nilsson <troglobit@vmlinux.org>  Sun,  5 Mar 2011 21:30:00 +0100
+
+mrouted (3.9.4-1) unstable; urgency=low
+
+  * New upstream release.
+  * Fix: mrouted exits with error when trying to remove interface gone down.
+
+ -- Joachim Nilsson <troglobit@vmlinux.org>  Sun,  3 Oct 2010 01:42:00 +0100
+
+mrouted (3.9.3-1) unstable; urgency=low
+
+  * New upstream release.
+  * Removes restriction on interfaces not having a 255.255.255.255 netmask.
+    Fixes issues for users with OpenVPN, PPTP, L2TP tunnels or PPP links.
+    See http://openvpn.net/archive/openvpn-users/2004-04/msg00003.html
+  * Fixes segfaults at start with interfaces having no address.
+
+ -- Joachim Nilsson <troglobit@vmlinux.org>  Sun,  3 Oct 2010 01:42:00 +0100
+
+mrouted (3.9.2-1) unstable; urgency=low
+
+  * New upstream (bugfix) release.
+  * New maintainer and new upstream.
+  * Move package back to main, the OpenBSD team has freed it!
+  * Conflicts with pimd, for obvious reasons.
+  * Conflicts with smcroute, due to it also having a daemon using the same
+    interfaces in the kernel.
+  * Added lintian-overrides for empty-debian-diff as debian dir is maintained
+    along the upstream sources
+  * Changed to use debhelper to manage debian/rules file.
+
+ -- Joachim Nilsson <troglobit@vmlinux.org>  Tue, 17 Aug 2010 08:32:02 +0100
+
+mrouted (3.9-beta3-3) unstable; urgency=low
+
+  * New maintainer (close: #121397)
+  * Added mrouted.conf installation
+  * Added man pages
+
+ -- Jean-Francois Dive <jef@linuxbe.org>  Wed, 20 Feb 2002 18:39:57 +1100
+
+mrouted (3.9-beta3-2) unstable; urgency=low
+
+  * add support for RSRR (closes: #94509)
+  * add builddepends for yacc (closes: #102782)
+  * try to load module ipip for tunneling (closes: #39668)
+  * include NMU fixes (Closes: Bug#91018, Bug#91597, Bug#93844)
+
+ -- Christoph Martin <christoph.martin@uni-mainz.de>  Sat, 10 Nov 2001 17:29:52 +0100
+
+mrouted (3.9-beta3-1.1) unstable; urgency=low
+
+  * Non-Maintainer upload
+  * Rebuilt with latest debmake (Closes: Bug#91018, Bug#91597)
+  * Added missing #include (Closes: Bug#93844)
+  * Bumped standards-version, and added build-deps
+
+ -- Gergely Nagy <8@free.bsd.hu>  Fri, 13 Apr 2001 16:17:17 +0200
+
+mrouted (3.9-beta3-1) unstable; urgency=low
+
+  * Initial Release.
+  * Move package to nonfree
+
+ -- Christoph Martin <christoph.martin@uni-mainz.de>  Mon,  1 Mar 1999 21:36:23 +0100
+
+
